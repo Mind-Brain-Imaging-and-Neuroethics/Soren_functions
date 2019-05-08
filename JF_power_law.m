@@ -6,7 +6,7 @@ Fs = 1/TR;
 [pxx,f] = pwelch(time_series,[],[],2^nextpow2((3/low_range)*Fs),Fs); %want 3 cycles of lowest frequency in window
 %     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
 power_data = pxx;
-power_freq = f;
+power_freq = linspace(min(f),max(f),length(f));;
 
 slope_index = find(power_freq > low_range & power_freq < high_range);
 p = polyfit(log(power_freq(slope_index)),log(power_data(slope_index)),1);
