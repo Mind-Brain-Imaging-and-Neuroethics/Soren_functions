@@ -1,0 +1,18 @@
+def autoreject_epochs(raw_file,ft_file,out_file):
+    import mne
+    import autoreject
+
+    # Load the file
+    info = mne.io.read_info(raw_file)
+    epochs = mne.read_epochs_fieldtrip(ft_file,info)
+    
+    # Resample the data
+    epochs.resample(500,npad='auto')
+
+    # Apply autoreject    
+    ar = autoreject.AutoReject()
+    epochs = ar.fit_transform(epochs)
+    
+    #Save data to file
+    epochs_clean.save(out_file)
+    return
