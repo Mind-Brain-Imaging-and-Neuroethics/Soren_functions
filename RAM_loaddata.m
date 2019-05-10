@@ -14,10 +14,12 @@ sourcefield = sourcefield{1};
 
 sortchans = sort(channum);
 for c = 1:length(files)
+    if contains(files(c).name,experiment)
     chan = str2num(char(extractAfter(files(c).name,'.')));
     if ismember(chan,channum)
         fid = fopen(fullfile(sessiondir,'noreref',files(c).name));
         cont_data.trial{1}(find(chan == sortchans),:) = fread(fid,sources.(sourcefield).data_format);
+    end
     end
 end
 

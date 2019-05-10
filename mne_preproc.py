@@ -16,7 +16,7 @@ def autoreject_log(raw_file,ft_file,out_file):
     reject_log = ar.get_reject_log(epochs)
 
     reject_log = reject_log.bad_epochs
-    reject_log = reject_log.to_list()
+    reject_log = reject_log.tolist()
 
     # Write to disk
     with open(out_file,'w') as f:

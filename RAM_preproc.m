@@ -12,7 +12,6 @@ end
 cfg.bsfilter = 'yes'; cfg.bsfreq = [57 63; 118 122; 178 182];
 cont_data = ft_preprocessing(cfg,cont_data);
 
-
 %% Find and remove bad channels
 % Reference: Tuyisenge et al. (2018). Automatic bad channel detection in intracranial
 % electroencephalographic recordings using ensemble machine learning. Clinical Neurophysiology.
@@ -60,6 +59,11 @@ end
 
 data.trialinfo = ones(length(data.sampleinfo),1);
 
+%% Resample to 500 Hz
+
+cfg = []; cfg.resamplefs = 500; 
+cont_data = ft_resampledata(cfg,cont_data);
+
 %% Convert to MNE, get rejection threshold with autoreject
 % Reference: Jas et al. (2016). Autoreject: Automated artifact rejection
 % for MEG and EEG data. Neuroimage.
@@ -73,8 +77,12 @@ fin = fullfile(pwd,subid,[subid '_epochs.mat']);
 fout = fullfile(pwd,subid,[subid '_threshold.json']);
 fprintf(pyscript,['autoreject_threshold(''' fin ...
     ''',''' fout ''')'])
-system(['python ' subid '_pyscript.py'])
+[a,b] = system(['python ' subid '_pyscript.py']);
 system(['rm ' subid '_pyscript.py'])
+
+if a == 1
+   error(['Error using autoreject - message was: ' b])
+end
 
 threshold = jsonread(fullfile(pwd,subid,[subid '_threshold.json']));
 threshold = threshold.eeg;

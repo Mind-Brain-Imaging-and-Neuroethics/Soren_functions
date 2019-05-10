@@ -9,13 +9,13 @@ fields = fieldnames(contacts.(subid).contacts);
 for c = 1:length(fields)
     channum(c) = contacts.(subid).contacts.(fields{c}).channel;
     if isfield(contacts.(subid).contacts.(fields{c}).atlases,'mni')
-        pos(c,1) = contacts.(subid).contacts.(fields{c}).atlases.mni.x;
-        pos(c,2) = contacts.(subid).contacts.(fields{c}).atlases.mni.y;
-        pos(c,3) = contacts.(subid).contacts.(fields{c}).atlases.mni.z;
+        pos(c,1) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.mni.x);
+        pos(c,2) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.mni.y);
+        pos(c,3) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.mni.z);
     elseif isfield(contacts.(subid).contacts.(fields{c}).atlases,'tal')
-        pos(c,1) = contacts.(subid).contacts.(fields{c}).atlases.tal.x;
-        pos(c,2) = contacts.(subid).contacts.(fields{c}).atlases.tal.y;
-        pos(c,3) = contacts.(subid).contacts.(fields{c}).atlases.tal.z;
+        pos(c,1) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.tal.x);
+        pos(c,2) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.tal.y);
+        pos(c,3) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.tal.z);
     end
 end
 if isfield(contacts.(subid).contacts.(fields{c}).atlases,'tal')
@@ -32,3 +32,15 @@ elec.label = fields(sorted);
 elec.elecpos = pos(sorted,:);
 elec.chanpos = pos(sorted,:);
 elec.tra = eye(length(elec.label));
+
+end
+
+function [output] = test_str2num(input)
+
+if ischar(input) || isstr(input)
+    output = str2num(input);
+else
+    output = input;
+end
+
+end
