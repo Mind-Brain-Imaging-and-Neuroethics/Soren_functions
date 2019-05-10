@@ -35,11 +35,11 @@ if ~exist('cont_data','var')
     
     pyscript = fopen([subid '_pyscript.py'],'w');
     fprintf(pyscript,'import sys \n')
-    fprintf(pyscript,"sys.path.insert(0, '/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions') \n")
+    fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
     fprintf(pyscript,'from mne_preproc import autoreject_log \n')
     fprintf(pyscript,['autoreject_log(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat'])...
         ''',''' fullfile(basedir,['sub-' subid],[subid '_badsegs.json']) ''')'])
-    system(['python -c ''' subid '_pyscript.py'''])
+    system(['python ' subid '_pyscript.py'])
     system(['rm ' subid '_pyscript.py'])
     
     bads = jsonread(fullfile(basedir,['sub-' subid],[subid '_badsegs.json']));

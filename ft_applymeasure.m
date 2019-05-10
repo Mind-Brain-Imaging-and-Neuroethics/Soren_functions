@@ -342,10 +342,10 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
     end
     
 else
-    
+    %% Parallel version
     
     if cfgcheck(cfg,'format','fieldtrip')
-        allvars1 = parload(fullfile(files(i).folder,filename));
+        allvars = parload(fullfile(files(1).folder,filename));
         if ~cfgcheck(cfg,'ftvar')
             names = fieldnames(allvars);
             for c = 1:length(names)
@@ -361,6 +361,7 @@ else
         end
     else
         EEG = pop_loadset('filename',files(1).name,'filepath',files(1).folder);
+        outputs.chanlocs = EEG.chanlocs;
         tmpdata = eeglab2fieldtrip(EEG,'preprocessing','none');
     end
     
@@ -572,7 +573,7 @@ if cfgcheck(cfg,'irasa','yes')
     if exist([EEG.filename '_IRASA_specs.mat'],'file')
         EEG = parload(EEG.filename,'EEG');
     else
-        EEG = IRASA_window(EEG.data',EEG.srate);
+        EEG = IRASA_window(EEG.data,EEG.srate);
     end
     
     if cfgcheck(cfg,'irasa_save_specs','yes')

@@ -15,7 +15,8 @@ def autoreject_log(raw_file,ft_file,out_file):
     ar.fit(epochs)
     reject_log = ar.get_reject_log(epochs)
 
-	reject_log = reject_log.bad_epochs
+    reject_log = reject_log.bad_epochs
+    reject_log = reject_log.to_list()
 
     # Write to disk
     with open(out_file,'w') as f:
@@ -42,7 +43,7 @@ def autoreject_epochs(raw_file,ft_file,out_file):
     epochs_clean.save(out_file)
     return
 
-def autoreject_threshold(ft_file,out_file,raw_file=0)
+def autoreject_threshold(ft_file,out_file,raw_file=0):
     import sys
     import mne
     import autoreject

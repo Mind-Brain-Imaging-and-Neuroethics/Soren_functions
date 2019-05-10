@@ -1,4 +1,4 @@
-function [OsciFrac] = OsciFrac_EEG_handle(spec,frange)
+function [OsciFrac] = OsciFrac_EEG_wrapper(spec,frange)
 
 OsciFrac = zeros(1,size(spec.osci,2));
 
