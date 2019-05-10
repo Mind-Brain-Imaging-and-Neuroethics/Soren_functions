@@ -27,7 +27,7 @@ function [outputs] = ft_applymeasure(cfg)
 %      Data transformations:
 %
 %      filter: band-pass filters the data into the input range [low_cutoff,
-%         high_cutoff] using a Butterworth filter (default = not set)
+%         high_cutoff] using a Butterworth filter (default = 'no')
 %      hilbert: take the Hilbert envelope of the signal (required for DFA).
 %         Uses the implementation in the NBT toolbox (default = 'no')
 %      irasa: decompose the data using IRASA. By default uses a 10-second
@@ -46,6 +46,8 @@ function [outputs] = ft_applymeasure(cfg)
 %      parallel: a structure with the following options:
 %         use_parallel: use parallel processing (default = 'no');
 %         pool: size of parallel pool (default = system default pool size)
+%      irasa_save_specs: for irasa - option to save spectra output from
+%         IRASA to make future computations faster (default = 'no')
 %
 %      Surrogating and subsampling:
 %
@@ -103,6 +105,10 @@ if ~cfgcheck(cfg,'concatenate')
     cfg.concatenate = 'yes';
 end
 
+if ~cfgcheck(cfg,'filter')
+    cfg.filter = 'no';
+end
+
 if ~cfgcheck(cfg,'hilbert')
     cfg.hilbert = 'no';
 end
@@ -111,16 +117,20 @@ if ~cfgcheck(cfg,'irasa')
     cfg.irasa = 'no';
 end
 
+if ~cfgcheck(cfg,'irasa_save_specs')
+   cfg.irasa_save_specs = 'no'; 
+end
+
 if ~cfgcheck(cfg,'continue')
     cfg.continue = 'no';
 end
 
 if ~cfgcheck(cfg,'parallel')
-   cfg.parallel.do_parallel = 'no';
+    cfg.parallel.do_parallel = 'no';
 end
 
 if ~cfgcheck(cfg.parallel,'pool')
-   cfg.parallel.pool = 'default'; 
+    cfg.parallel.pool = 'default';
 end
 
 if ~cfgcheck(cfg,'surrogate')
@@ -249,43 +259,12 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
             end
         end
         
-        %% Apply transformation options
-        
-        if cfgcheck(cfg,'filter')
-            data = eeglab2fieldtrip(EEG,'preprocessing','none');
-            
-            tmpcfg = []; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.filter;
-            tmpcfg.bpinstabilityfix = 'split';
-            
-            data = ft_preprocessing(tmpcfg,data);
-            
-            EEG = ft2eeglab(data);
-        end
-        
-        if cfgcheck(cfg,'amplitude','yes')
-            disp(' ')
-            disp('Getting amplitude envelope...')
-            Signal = EEG.data;
-            
-            Signal = transpose(Signal); %now channels are columns, time is rows. Needed for the DFA function
-            
-            SignalInfo = nbt_Info; %this initializes an Info Object
-            SignalInfo.converted_sample_frequency = EEG.srate;
-            
-            bpfreqs = EasyParse(varargin,'AmpEn');
-            AmplitudeEnvelope = nbt_GetAmplitudeEnvelope(Signal, SignalInfo, bpfreqs(1), bpfreqs(2), 2*(1/bpfreqs(1)));
-            
-            EEG.data = AmplitudeEnvelope';
-        end
-        
-        if cfgcheck(cfg,'irasa','yes')
-            disp(' ')
-            disp('Performing IRASA...')
-            EEG = IRASA_window(EEG.data',EEG.srate);
-        end
+        EEG.filename = fullfile(files(i).folder,files(i).name);
+
         
         %% Subsample, surrogate, and apply the measures
         if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
+            EEG = transform_data(cfg,EEG);
             for c = 1:length(cfg.measure)
                 outputs.data(i,:,c) = cfg.measure{c}(EEG);
             end
@@ -293,7 +272,19 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
         elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
             disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
             for q = 1:cfg.subsample.bootstrap
-                newEEG = SubSample(EEG,cfg);
+                                tmpcfg = cfg;
+                tmpcfg.irasa = 'no';
+                EEG = transform_data(cfg,EEG);
+                
+                newEEG = SubSample(cfg,EEG);
+                
+                if cfgcheck(cfg,'irasa','yes')
+                    tmpcfg = cfg;
+                    tmpcfg.hilbert = 'no';
+                    tmpcfg.filter = 'no';
+                    EEG = transform_data(tmpcfg,EEG);
+                end
+                
                 fprintf([num2str(q) ' '])
                 for c = 1:length(cfg.measure)
                     outputs.data(i,:,q,c) = cfg.measure{c}(newEEG);
@@ -303,6 +294,13 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
             for c = 1:EEG.nbchan
                 disp(' ')
                 disp(['Creating surrogates for channel ' num2str(c)])
+                if ~cfgcheck(cfg,'filter','no')
+                    tmpcfg = cfg; 
+                    tmpcfg.irasa = 'no';
+                    tmpcfg.hilbert = 'no';
+                    EEG = transform_data(tmpcfg,EEG);
+                end
+                
                 switch cfg.surrogate.method
                     case 'aaft'
                         tmp = AAFT(EEG.data(c,:),cfg.surrogate.nsurr);
@@ -317,6 +315,13 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
                 newEEG = EEG;
                 newEEG.data = tmp';
                 newEEG.nbchan = cfg.surrogate.nsurr;
+                
+                if cfgcheck(cfg,'irasa','yes') || cfgcheck(cfg,'hilbert','yes')
+                    tmpcfg = cfg; 
+                    tmpcfg.filter = 'no';
+                    EEG = transform_data(tmpcfg,EEG);
+                end
+                
                 for cc = 1:length(cfg.measure)
                     outputs.data(i,c,cc,:) = cfg.measure{cc}(newEEG);
                 end
@@ -369,7 +374,7 @@ else
     end
     
     if ~cfgcheck(cfg.parallel,'pool','default')
-        delete(gcp('nocreate')) 
+        delete(gcp('nocreate'))
         parpool(cfg.parallel.pool)
     end
     
@@ -416,43 +421,11 @@ else
             EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
         end
         
-        %% Apply transformation options
-        
-        if cfgcheck(cfg,'filter')
-            data = eeglab2fieldtrip(EEG,'preprocessing','none');
-            
-            tmpcfg = []; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.filter;
-            tmpcfg.bpinstabilityfix = 'split';
-            
-            data = ft_preprocessing(tmpcfg,data);
-            
-            EEG = ft2eeglab(data);
-        end
-        
-        if cfgcheck(cfg,'amplitude','yes')
-            disp(' ')
-            disp('Getting amplitude envelope...')
-            Signal = EEG.data;
-            
-            Signal = transpose(Signal); %now channels are columns, time is rows. Needed for the DFA function
-            
-            SignalInfo = nbt_Info; %this initializes an Info Object
-            SignalInfo.converted_sample_frequency = EEG.srate;
-            
-            bpfreqs = EasyParse(varargin,'AmpEn');
-            AmplitudeEnvelope = nbt_GetAmplitudeEnvelope(Signal, SignalInfo, bpfreqs(1), bpfreqs(2), 2*(1/bpfreqs(1)));
-            
-            EEG.data = AmplitudeEnvelope';
-        end
-        
-        if cfgcheck(cfg,'irasa','yes')
-            disp(' ')
-            disp('Performing IRASA...')
-            EEG = IRASA_window(EEG.data',EEG.srate);
-        end
+        EEG.filename = fullfile(files(i).folder,files(i).name);
         
         %% Subsample, surrogate, and apply the measures
         if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
+            EEG = transform_data(cfg,EEG);
             for c = 1:length(cfg.measure)
                 outdata{i}(1,:,c) = cfg.measure{c}(EEG);
             end
@@ -460,8 +433,21 @@ else
         elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
             disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
             for q = 1:cfg.subsample.bootstrap
-                newEEG = SubSample(EEG,cfg);
+                tmpcfg = cfg;
+                tmpcfg.irasa = 'no';
+                EEG = transform_data(cfg,EEG);
+                
+                newEEG = SubSample(cfg,EEG);
+                
+                if cfgcheck(cfg,'irasa','yes')
+                    tmpcfg = cfg;
+                    tmpcfg.hilbert = 'no';
+                    tmpcfg.filter = 'no';
+                    EEG = transform_data(tmpcfg,EEG);
+                end
+                
                 fprintf([num2str(q) ' '])
+                EEG = transform_data(cfg,EEG);
                 for c = 1:length(cfg.measure)
                     outdata{i}(1,:,q,c) = cfg.measure{c}(newEEG);
                 end
@@ -470,6 +456,13 @@ else
             for c = 1:EEG.nbchan
                 disp(' ')
                 disp(['Creating surrogates for channel ' num2str(c)])
+                if ~cfgcheck(cfg,'filter','no')
+                    tmpcfg = cfg; 
+                    tmpcfg.irasa = 'no';
+                    tmpcfg.hilbert = 'no';
+                    EEG = transform_data(tmpcfg,EEG);
+                end
+                
                 switch cfg.surrogate.method
                     case 'aaft'
                         tmp = AAFT(EEG.data(c,:),cfg.surrogate.nsurr);
@@ -484,6 +477,13 @@ else
                 newEEG = EEG;
                 newEEG.data = tmp';
                 newEEG.nbchan = cfg.surrogate.nsurr;
+                
+                if cfgcheck(cfg,'irasa','yes') || cfgcheck(cfg,'hilbert','yes')
+                    tmpcfg = cfg; 
+                    tmpcfg.filter = 'no';
+                    EEG = transform_data(tmpcfg,EEG);
+                end
+                
                 for cc = 1:length(cfg.measure)
                     outdata{i}(1,c,cc,:) = cfg.measure{cc}(newEEG);
                 end
@@ -491,7 +491,7 @@ else
         elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','yes')
             % finish later
         end
-       
+        
         
     end
     
@@ -512,7 +512,7 @@ end
 end
 
 %%
-function [EEG] = SubSample(EEG,cfg)
+function [EEG] = SubSample(cfg,EEG)
 sampleSize = cfg.subsample.length;
 
 if cfgcheck(cfg.subsample,'startpoint','random') %if no startpoint specified, pick a random one
@@ -532,5 +532,51 @@ else
     disp(['Continuing with ' num2str(length(EEG.data)-startPoint) ' samples...'])
     disp([num2str(startPoint+sampleSize-length(EEG.data)) ' samples missing...'])
     EEG.data = EEG.data(:,startPoint:end);
+end
+end
+
+function [EEG] = transform_data(cfg,EEG)
+
+%% Apply transformation options
+
+if ~cfgcheck(cfg,'filter','no')
+    data = eeglab2fieldtrip(EEG,'preprocessing','none');
+    
+    tmpcfg = []; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.filter;
+    tmpcfg.bpinstabilityfix = 'split';
+    
+    data = ft_preprocessing(tmpcfg,data);
+    
+    EEG = ft2eeglab(data);
+end
+
+if cfgcheck(cfg,'amplitude','yes')
+    disp(' ')
+    disp('Getting amplitude envelope...')
+    Signal = EEG.data;
+    
+    Signal = transpose(Signal); %now channels are columns, time is rows. Needed for the DFA function
+    
+    SignalInfo = nbt_Info; %this initializes an Info Object
+    SignalInfo.converted_sample_frequency = EEG.srate;
+    
+    bpfreqs = EasyParse(varargin,'AmpEn');
+    AmplitudeEnvelope = nbt_GetAmplitudeEnvelope(Signal, SignalInfo, bpfreqs(1), bpfreqs(2), 2*(1/bpfreqs(1)));
+    
+    EEG.data = AmplitudeEnvelope';
+end
+
+if cfgcheck(cfg,'irasa','yes')
+    disp(' ')
+    disp('Performing IRASA...')
+    if exist([EEG.filename '_IRASA_specs.mat'],'file')
+        EEG = parload(EEG.filename,'EEG');
+    else
+        EEG = IRASA_window(EEG.data',EEG.srate);
+    end
+    
+    if cfgcheck(cfg,'irasa_save_specs','yes')
+       save([EEG.filename '_IRASA_specs.mat'],'EEG');
+    end
 end
 end
