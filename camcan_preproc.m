@@ -1,16 +1,17 @@
-function [data,cont_data] = camcan_preproc(subid,cont_data)
+function [data,cont_data] = camcan_preproc(subid,filename,cont_data)
 
 % Assuming ComputeCanada
-basedir = '/scratch/sorenwt/camcan/cc700/mri/pipeline/release004/BIDSsep/megmax_task';
+basedir = extractBefore(filename,['sub-' subid]);
+%basedir = '/scratch/sorenwt/camcan/cc700/mri/pipeline/release004/BIDSsep/megmax_task';
 
 % Option to input the continuous data in case something goes wrong and you
 % only want to do the epoched preprocessing
-if ~exist(cont_data,'var')
+if ~exist('cont_data','var')
     
     %% First do movement compensation in MNE somehow
     
     %% Load in the file
-    rawfile = fullfile(basedir,['sub-' subid'],'meg','transdef_transrest_mf2pt2_task.fif');
+    rawfile = filename;
     hdr = ft_read_header(rawfile);
     
     
@@ -36,9 +37,9 @@ if ~exist(cont_data,'var')
     fprintf(pyscript,'import sys \n')
     fprintf(pyscript,"sys.path.insert(0, '/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions') \n")
     fprintf(pyscript,'from mne_preproc import autoreject_log \n')
-    fprintf(pyscript,['autoreject_log(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid 'cont_epochs_.mat'])...
+    fprintf(pyscript,['autoreject_log(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat'])...
         ''',''' fullfile(basedir,['sub-' subid],[subid '_badsegs.json']) ''')'])
-    system(['python -c ' subid '_pyscript.py'])
+    system(['python -c ''' subid '_pyscript.py'''])
     system(['rm ' subid '_pyscript.py'])
     
     bads = jsonread(fullfile(basedir,['sub-' subid],[subid '_badsegs.json']));
@@ -62,7 +63,7 @@ if ~exist(cont_data,'var')
     
     D = spm_eeg_ft2spm(cont_data_clean,fullfile(basedir,['sub-' subid],'tmp'));
     D = osl_africa(D,'used_maxfilter',true); 
-    system(['rm ' fullfile(basedir,['sub-' subid],'tmp')])
+    system(['rm ' fullfile(basedir,['sub-' subid],'tmp*')])
 %     cont_data_clean = spm2fieldtrip(D);
 %     cont_data_clean.hdr = hdr; cont_data_clean.fsample = hdr.Fs;
     cont_data_clean = [];

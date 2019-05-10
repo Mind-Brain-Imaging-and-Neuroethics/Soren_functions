@@ -81,12 +81,13 @@ if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'nrand')
 end
 
 if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'minnbchan')
-    cfg.cluster.nrand = 1;
+    cfg.cluster.minnbchan = 1;
 end
 
 %% Select channels
 if isfield(data{1},'elec')
     chans = ft_channelselection(cfg.channel,data{1}.elec);
+    chans = Subset_index(data{1}.chan,chans);
 elseif isfield(data{1},'grad')
     chans = ft_channelselection(cfg.channel,data{1}.grad);
     chans = Subset_index(data{1}.chan,chans);
@@ -98,29 +99,29 @@ for c = 1:length(data)
     
     %dimns = tokenize(data{1}.dimord,'_');
     %chans = find(strcmpi(dimns,'chan'));
-    data{c} = data{c}(:,chans,:,:);
+    data{c} = data{c}.data(:,chans,:,:);
 end
 
 %% Calculate stats
-for i = 1:length(data{1}.measure)
+for i = 1:length(data{1}.meas)
     %dimns = tokenize(data{1}.dimord,'_');
-    for c = 1:length(data{1}.chans)
+    for c = 1:length(data{1}.chan)
         switch cfg.test
             case 'ttest'
-                [~,stats{i}.p(c)] =  ttest(data{1}(:,c,i)-data{2}(:,c,i));
+                [~,stats{i}.p(c)] =  ttest(data{1}.data(:,c,i)-data{2}.data(:,c,i));
             case 'ttest2'
-                [~,stats{i}.p(c)] = ttest2(data{1}(:,c,i),data{1}(:,c,i));
+                [~,stats{i}.p(c)] = ttest2(data{1}.data(:,c,i),data{2}.data(:,c,i));
             case 'ranksum'
-                stats{i}.p(c) = ranksum(data{1}(:,c,i),data{2}(:,c,i));
+                stats{i}.p(c) = ranksum(data{1}.data(:,c,i),data{2}.data(:,c,i));
             case 'signrank'
-                stats{i}.p(c) = signrank(data{1}(:,c,i),data{2}(:,c,i));
+                stats{i}.p(c) = signrank(data{1}.data(:,c,i),data{2}.data(:,c,i));
             case 'empirical'
                 % finish later
         end
         stats{i}.effsize{c} = mes(data{1}(:,c,i),data{2}(:,c,i),cfg.effectsize);
     end
     
-    switch settings.multcompare
+    switch cfg.multcompare
         case 'cluster'
             if isfield(data{1},'elec')
                 datasetinfo.elec = data{1}.elec;
@@ -129,9 +130,9 @@ for i = 1:length(data{1}.measure)
             end
             datasetinfo.label = data{1}.chan;
             for c = 1:length(data)
-                input{c} = data{c}.data(:,:,i);
+                input{c} = data{c}.data(:,:,i)';
             end
-            stats{i}.cluster = EasyClusterCorrect(input,datasetinfo,cfg.statfun,cfg.cluster);
+            stats{i}.cluster = EasyClusterCorrect(input,datasetinfo,cfg.cluster.statfun,cfg.cluster);
         case 'fdr'
             stats{i}.fdr = mafdr(stats{i}.p(c),'BHFDR',true);
     end

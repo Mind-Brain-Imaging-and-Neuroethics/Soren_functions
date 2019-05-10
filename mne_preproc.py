@@ -15,6 +15,8 @@ def autoreject_log(raw_file,ft_file,out_file):
     ar.fit(epochs)
     reject_log = ar.get_reject_log(epochs)
 
+	reject_log = reject_log.bad_epochs
+
     # Write to disk
     with open(out_file,'w') as f:
         json.dump(reject_log,f)

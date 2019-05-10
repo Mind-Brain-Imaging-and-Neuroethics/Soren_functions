@@ -221,7 +221,7 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
                 data = ft_concat(data);
             end
             
-            if i == outputs.startsub
+            if i == outputs.startsub-1
                 if isfield(data,'label')
                     outputs.chan = data.label;
                 end
@@ -235,7 +235,8 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
             EEG = ft2eeglab(data);
         else
             EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
-            if i == outputs.startsub
+            outputs.chanlocs = EEG.chanlocs;
+            if i == outputs.startsub-1
                 data = eeglab2fieldtrip(EEG,'preprocessing','none');
                 if isfield(data,'label')
                     outputs.chan = data.label;
