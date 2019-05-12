@@ -1,7 +1,7 @@
-function [roidata,voxeldata,sources] = SourceEst_HCP(data,headmodel,sourcemodel,atlas,noise_avg)
+function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atlas,noise_avg)
 
-[~,ftpath] = ft_version;
-%ftpath = '/group/northoff/share/fieldtrip-master';
+%[~,ftpath] = ft_version;
+ftpath = '/group/northoff/share/fieldtrip-master';
 
 % % Convert the data to Fieldtrip format
 % data = eeglab2fieldtrip(EEG,'preprocessing','none');
@@ -30,7 +30,7 @@ end
 cfg = []; cfg.grad = data.grad; cfg.channel = {'MEG'};
 sourcemodel = ft_convert_units(sourcemodel,'mm');
 cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
-cfg.headmodel = vol;
+cfg.headmodel = headmodel;
 leadfield = ft_prepare_leadfield(cfg);
 
 % % Select only the EEG channels

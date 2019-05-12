@@ -146,7 +146,7 @@ end
 
 if ~cfgcheck(cfg,'subsample')
     cfg.subsample.do_subsample = 'no';
-elseif cfgcheck(cfg,'subsample','yes')
+elseif cfgcheck(cfg.subsample,'do_subsample','yes')
     if ~cfgcheck(cfg.subsample,'startpoint')
         cfg.subsample.startpoint = 'random';
     end
@@ -345,7 +345,7 @@ else
     %% Parallel version
     
     if cfgcheck(cfg,'format','fieldtrip')
-        allvars = parload(fullfile(files(1).folder,filename));
+        allvars = parload(fullfile(files(1).folder,files(1).name));
         if ~cfgcheck(cfg,'ftvar')
             names = fieldnames(allvars);
             for c = 1:length(names)
@@ -570,6 +570,7 @@ end
 if cfgcheck(cfg,'irasa','yes')
     disp(' ')
     disp('Performing IRASA...')
+    fname = EEG.filename;
     if exist([EEG.filename '_IRASA_specs.mat'],'file')
         EEG = parload(EEG.filename,'EEG');
     else
@@ -577,7 +578,7 @@ if cfgcheck(cfg,'irasa','yes')
     end
     
     if cfgcheck(cfg,'irasa_save_specs','yes')
-       save([EEG.filename '_IRASA_specs.mat'],'EEG');
+       save([fname '_IRASA_specs.mat'],'EEG');
     end
 end
 end

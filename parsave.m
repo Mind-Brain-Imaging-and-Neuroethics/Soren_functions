@@ -6,4 +6,4 @@ for c = 1:2:length(varargin)
     eval([varname '=input;']);
 end
 
-save(filepath,varname)
+save(filepath,varname,'-v7.3')
