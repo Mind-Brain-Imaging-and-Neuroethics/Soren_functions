@@ -46,15 +46,18 @@ if ~exist('cont_data','var')
 
     %% Remove bad segments and re-concatenate, filter at 1 Hz for ICA
     
-    cfg = []; cfg.trials = ~bads;
+    cfg = []; cfg.trials = ~bads; 
     data = ft_selectdata(cfg,data);
     
-    cont_data_clean = data;
-    cont_data_clean.trial = []; 
-    cont_data_clean.trial{1} = cat(2,data.trial{:});
-    cont_data_clean.time = []; 
-    cont_data_clean.time{1} = linspace(0,length(cont_data_clean.trial{1})/data.fsample,length(cont_data_clean.trial{1}));
-    data = [];
+    cont_data_clean = ft_concat(data);
+    cont_data_clean = rmfield(cont_data_clean,'trialinfo');
+    cont_data_clean = rmfield(cont_data_clean,'sampleinfo');
+%     cont_data_clean = data;
+%     cont_data_clean.trial = []; 
+%     cont_data_clean.trial{1} = cat(2,data.trial{:});
+%     cont_data_clean.time = []; 
+%     cont_data_clean.time{1} = linspace(0,length(cont_data_clean.trial{1})/data.fsample,length(cont_data_clean.trial{1}));
+%     data = [];
     
     cfg = []; cfg.hpfilter = 'yes'; cfg.hpfreq = 1; 
     cont_data_clean = ft_preprocessing(cfg,cont_data_clean);
@@ -74,7 +77,7 @@ if ~exist('cont_data','var')
     comp = ft_componentanalysis(cfg,cont_data);
     
     cfg = []; cfg.component = D.ica.bad_components; 
-    cont_data = ft_rejectcomponent(cfg,cont_data);
+    cont_data = ft_rejectcomponent(cfg,comp,cont_data);
     
 end
 
@@ -98,11 +101,11 @@ data = [];
 
 pyscript = fopen([subid '_pyscript.py'],'w');
 fprintf(pyscript,'import sys \n')
-fprintf(pyscript,"sys.path.insert(0, '/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions') \n")
+fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
 fprintf(pyscript,'from mne_preproc import autoreject_epochs \n')
-fprintf(pyscript,['autoreject_epochs(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid 'cont_epochs_.mat'])...
+fprintf(pyscript,['autoreject_epochs(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
     ''',''' fullfile(basedir,['sub-' subid],[subid '_mne.fif']) ''')'])
-system(['python -c ' subid '_pyscript.py'])
+system(['python ' subid '_pyscript.py'])
 system(['rm ' subid '_pyscript.py'])
     
 

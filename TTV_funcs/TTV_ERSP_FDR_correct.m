@@ -11,19 +11,23 @@ allpvals = [];
 sourceindex = [];
 for c = 1:length(fields)
     data = getfield_nest(alloutputs,fields{c});
-    for cc = 1:length(data)
-        if isfield(data{cc},'posclusters') && ~isempty(data{cc}.posclusters)
-            allpvals = [allpvals horz(extractfield(data{cc}.posclusters,'prob'))];
-            for ccc = 1:length(extractfield(data{cc}.posclusters,'prob'))
-                sourceindex = [sourceindex {['alloutputs.' fields{c} '{' num2str(cc) '}.posclusters(' num2str(ccc) ').prob']}];
+    if iscell(data)
+        for cc = 1:length(data)
+            if isfield(data{cc},'posclusters') && ~isempty(data{cc}.posclusters)
+                allpvals = [allpvals horz(extractfield(data{cc}.posclusters,'prob'))];
+                for ccc = 1:length(extractfield(data{cc}.posclusters,'prob'))
+                    sourceindex = [sourceindex {['alloutputs.' fields{c} '{' num2str(cc) '}.posclusters(' num2str(ccc) ').prob']}];
+                end
+            end
+            if isfield(data{cc},'negclusters') && ~isempty(data{cc}.negclusters)
+                allpvals = [allpvals horz(extractfield(data{cc}.negclusters,'prob'))];
+                for ccc = 1:length(extractfield(data{cc}.negclusters,'prob'))
+                    sourceindex = [sourceindex {['alloutputs.' fields{c} '{' num2str(cc) '}.negclusters(' num2str(ccc) ').prob']}];
+                end
             end
         end
-        if isfield(data{cc},'negclusters') && ~isempty(data{cc}.negclusters)
-            allpvals = [allpvals horz(extractfield(data{cc}.negclusters,'prob'))];
-            for ccc = 1:length(extractfield(data{cc}.negclusters,'prob'))
-                sourceindex = [sourceindex {['alloutputs.' fields{c} '{' num2str(cc) '}.negclusters(' num2str(ccc) ').prob']}];
-            end
-        end
+    elseif isnumeric(data)
+        allpvals = [allpvals horz(data)];
     end
 end
 
@@ -32,26 +36,31 @@ if isfield(settings,'rest')
     
     for c = 1:length(fields)
         data = getfield_nest(restmeas,fields{c});
-        for cc = 1:length(data)
-            if isfield(data{cc},'posclusters') && ~isempty(data{cc}.posclusters)
-                allpvals = [allpvals horz(extractfield(data{cc}.posclusters,'prob'))];
-                for ccc = 1:length(extractfield(data{cc}.posclusters,'prob'))
-                    sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.posclusters(' num2str(ccc) ').prob']}];
+        if iscell(data)
+            for cc = 1:length(data)
+                if isfield(data{cc},'posclusters') && ~isempty(data{cc}.posclusters)
+                    allpvals = [allpvals horz(extractfield(data{cc}.posclusters,'prob'))];
+                    for ccc = 1:length(extractfield(data{cc}.posclusters,'prob'))
+                        sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.posclusters(' num2str(ccc) ').prob']}];
+                    end
+                end
+                if isfield(data{cc},'negclusters') && ~isempty(data{cc}.negclusters)
+                    allpvals = [allpvals horz(extractfield(data{cc}.negclusters,'prob'))];
+                    for ccc = 1:length(extractfield(data{cc}.negclusters,'prob'))
+                        sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.negclusters(' num2str(ccc) ').prob']}];
+                    end
+                end
+                if isfield(data{cc},'sobel')
+                    allpvals = [allpvals data{cc}.sobel.p];
+                    sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.sobel.p']}];
+                    allpvals = [allpvals data{cc}.montecarlo.p];
+                    sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.montecarlo.p']}];
                 end
             end
-            if isfield(data{cc},'negclusters') && ~isempty(data{cc}.negclusters)
-                allpvals = [allpvals horz(extractfield(data{cc}.negclusters,'prob'))];
-                for ccc = 1:length(extractfield(data{cc}.negclusters,'prob'))
-                    sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.negclusters(' num2str(ccc) ').prob']}];
-                end
-            end
-            if isfield(data{cc},'sobel')
-                allpvals = [allpvals data{cc}.sobel.p];
-                sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.sobel.p']}];
-                allpvals = [allpvals data{cc}.montecarlo.p];
-                sourceindex = [sourceindex {['restmeas.' fields{c} '{' num2str(cc) '}.montecarlo.p']}];
-            end
+        elseif isnumeric(data)
+            allpvals = [allpvals horz(data)];
         end
+        
     end
 end
 

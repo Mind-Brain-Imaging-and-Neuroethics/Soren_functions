@@ -40,7 +40,7 @@ def autoreject_epochs(raw_file,ft_file,out_file):
     epochs = ar.fit_transform(epochs)
     
     #Save data to file
-    epochs_clean.save(out_file)
+    epochs.save(out_file)
     return
 
 def autoreject_threshold(ft_file,out_file,raw_file=0):
