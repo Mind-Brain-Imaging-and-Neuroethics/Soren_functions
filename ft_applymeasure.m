@@ -436,9 +436,9 @@ else
             for q = 1:cfg.subsample.bootstrap
                 tmpcfg = cfg;
                 tmpcfg.irasa = 'no';
-                EEG = transform_data(cfg,EEG);
+                EEG = transform_data(tmpcfg,EEG);
                 
-                newEEG = SubSample(cfg,EEG);
+                EEG = SubSample(cfg,EEG);
                 
                 if cfgcheck(cfg,'irasa','yes')
                     tmpcfg = cfg;
@@ -448,9 +448,9 @@ else
                 end
                 
                 fprintf([num2str(q) ' '])
-                EEG = transform_data(cfg,EEG);
+                %EEG = transform_data(cfg,EEG);
                 for c = 1:length(cfg.measure)
-                    outdata{i}(1,:,q,c) = cfg.measure{c}(newEEG);
+                    outdata{i}(1,:,q,c) = cfg.measure{c}(EEG);
                 end
             end
         elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','no')
@@ -475,9 +475,8 @@ else
                             tmp(q,:) = EEG.data(c,randperm(length(EEG.data)));
                         end
                 end
-                newEEG = EEG;
-                newEEG.data = tmp';
-                newEEG.nbchan = cfg.surrogate.nsurr;
+                EEG.data = tmp';
+                EEG.nbchan = cfg.surrogate.nsurr;
                 
                 if cfgcheck(cfg,'irasa','yes') || cfgcheck(cfg,'hilbert','yes')
                     tmpcfg = cfg; 
@@ -486,7 +485,7 @@ else
                 end
                 
                 for cc = 1:length(cfg.measure)
-                    outdata{i}(1,c,cc,:) = cfg.measure{cc}(newEEG);
+                    outdata{i}(1,c,cc,:) = cfg.measure{cc}(EEG);
                 end
             end
         elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','yes')
@@ -572,7 +571,7 @@ if cfgcheck(cfg,'irasa','yes')
     disp('Performing IRASA...')
     fname = EEG.filename;
     if exist([EEG.filename '_IRASA_specs.mat'],'file')
-        EEG = parload(EEG.filename,'EEG');
+        EEG = parload([EEG.filename '_IRASA_specs.mat'],'EEG');
     else
         EEG = IRASA_window(EEG.data,EEG.srate);
     end
