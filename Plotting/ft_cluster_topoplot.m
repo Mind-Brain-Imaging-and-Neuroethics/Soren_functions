@@ -20,7 +20,7 @@ cfg.highlight = {'on','on'};
 cfg.highlightchannel = {intersect(find(sig < 0.05),find(~sigmask)),find(sigmask)};
 cfg.highlightsymbol = {'o','o'};
 cfg.highlightcolor = {[0 0 0], [1 1 1]};
-cfg.highlightsize = {[2],[5]}
+cfg.highlightsize = {[2],[5]};
 
 ft_topoplotER(cfg,tlock);
 

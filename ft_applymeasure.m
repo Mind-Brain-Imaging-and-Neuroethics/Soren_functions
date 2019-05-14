@@ -28,11 +28,30 @@ function [outputs] = ft_applymeasure(cfg)
 %
 %      filter: band-pass filters the data into the input range [low_cutoff,
 %         high_cutoff] using a Butterworth filter (default = 'no')
-%      hilbert: take the Hilbert envelope of the signal (required for DFA).
-%         Uses the implementation in the NBT toolbox (default = 'no')
-%      irasa: decompose the data using IRASA. By default uses a 10-second
-%         window size, non-overlapping, with additional resampling factors
-%         (as in Muthukumaraswamy and Liley, 2017). (default = 'no')
+%      envelope: take the amplitude/power envelope of the signal (required
+%         for DFA)
+%         do_envelope: default = 'no'
+%         method: 'fieldtrip','nbt' or 'irasa' (default = 'fieldtrip')
+%         bandpass: required input for nbt or irasa methods - otherwise,
+%            use the 'filter' option instead
+%         save_envelope: save the enveloped data to make future
+%            computations faster - mostly used for irasa (default = 'no')
+%         load_envelope: load precomputed envelope from a previous run - 
+%            set 'no' if you've changed some settings (default = 'yes')
+%         winsize, overlap,hset: options as in irasa (below) for the irasa
+%            method (default winsize = 3, default overlap = 0.95, default
+%            hset as below)
+%      irasa: decompose the data using IRASA
+%         do_irasa: default = 'no'
+%         winsize: window size in seconds (default = 10)
+%         overlap: overlap size in seconds (default = 0)
+%         hset: resampling factors for the IRASA method (default =
+%            [1.1:0.05:1.95 2.05:0.05:2.9], as in Muthukumaraswamy and
+%            Liley, 2017)
+%         save_specs: save spectra output from IRASA to make future
+%            computations faster (default = 'no')
+%         load_specs: load precomputed spectra from a previous run - set
+%            'no' if you've changed some settings (default = 'yes')
 %
 %      Other options:
 %
@@ -46,8 +65,6 @@ function [outputs] = ft_applymeasure(cfg)
 %      parallel: a structure with the following options:
 %         use_parallel: use parallel processing (default = 'no');
 %         pool: size of parallel pool (default = system default pool size)
-%      irasa_save_specs: for irasa - option to save spectra output from
-%         IRASA to make future computations faster (default = 'no')
 %
 %      Surrogating and subsampling:
 %
@@ -58,7 +75,6 @@ function [outputs] = ft_applymeasure(cfg)
 %         'iaaft' (default = 'aaft')
 %      subsample: you can specify a sub-range of the data on which to apply
 %         the measures. This is a structure with the following options
-%
 %         do_subsample: do the subsampling or not (default = 'no');
 %         length: the length of the subsample (required input if you input
 %            a subsample structure)
@@ -85,9 +101,7 @@ function [outputs] = ft_applymeasure(cfg)
 
 
 %% Set up defaults
-if ~cfgcheck(cfg,'format')
-    cfg.format = 'eeglab';
-end
+cfg = setdefault(cfg,'format','eeglab');
 
 if ~cfgcheck(cfg,'files')
     if cfgcheck(cfg,'format','eeglab')
@@ -97,62 +111,55 @@ if ~cfgcheck(cfg,'files')
     end
 end
 
-if ~cfgcheck(cfg,'outfile')
-    cfg.outfile = fullfile(pwd,'outputs.mat');
-end
+cfg = setdefault(cfg,outfile,fullfile(pwd,'outputs.mat'));
 
-if ~cfgcheck(cfg,'concatenate')
-    cfg.concatenate = 'yes';
-end
+cfg = setdefault(cfg,'filter','no');
 
-if ~cfgcheck(cfg,'filter')
-    cfg.filter = 'no';
-end
-
-if ~cfgcheck(cfg,'hilbert')
-    cfg.hilbert = 'no';
+if ~cfgcheck(cfg,'envelope')
+    cfg.envelope.do_envelope = 'no';
+elseif cfgcheck(cfg.envelope,'do_envelope','yes')
+    cfg.envelope = setdefault(cfg.envelope,'method','fieldtrip');
+    cfg.envelope = setdefault(cfg.envelope,'save_envelope','no');
+    if cfgcheck(cfg.envelope,'method','irasa')
+        cfg.envelope = setdefault(cfg.envelope,'winsize',3);
+        cfg.envelope = setdefault(cfg.envelope,'overlap',0.95);
+        cfg.envelope = setdefault(cfg.envelope,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
+    end
 end
 
 if ~cfgcheck(cfg,'irasa')
-    cfg.irasa = 'no';
+    cfg.irasa.do_irasa = 'no';
+elseif cfgcheck(cfg.irasa,'do_irasa','yes')
+    cfg.irasa = setdefault(cfg.irasa,'winsize',10);
+    cfg.irasa = setdefault(cfg.irasa,'overlap',0);
+    cfg.irasa = setdefault(cfg.irasa,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
+    cfg.irasa = setdefault(cfg.irasa,'save_specs','no');
 end
 
-if ~cfgcheck(cfg,'irasa_save_specs')
-   cfg.irasa_save_specs = 'no'; 
-end
+cfg = setdefault(cfg,'continue','no');
 
-if ~cfgcheck(cfg,'continue')
-    cfg.continue = 'no';
-end
+cfg = setdefault(cfg,'concatenate','yes');
+
+cfg = setdefault(cfg,'ftvar','data');
 
 if ~cfgcheck(cfg,'parallel')
     cfg.parallel.do_parallel = 'no';
 end
 
-if ~cfgcheck(cfg.parallel,'pool')
-    cfg.parallel.pool = 'default';
-end
+cfg.parallel = setdefault(cfg.parallel,'pool','default');
 
 if ~cfgcheck(cfg,'surrogate')
     cfg.surrogate.do_surr = 'no';
 elseif cfgcheck(cfg,'surrogate','yes')
-    if ~cfgcheck(cfg.surrogate,'nsurr')
-        cfg.surrogate.nsurr = 200;
-    end
-    if ~cfgcheck(cfg.surrogate,'method')
-        cfg.surrogate.method = 'aaft';
-    end
+    cfg.surrogate = setdefault(cfg.surrogate,'nsurr',200);
+    cfg.surrogate = setdefault(cfg.surrogate,'method','aaft');
 end
 
 if ~cfgcheck(cfg,'subsample')
     cfg.subsample.do_subsample = 'no';
 elseif cfgcheck(cfg.subsample,'do_subsample','yes')
-    if ~cfgcheck(cfg.subsample,'startpoint')
-        cfg.subsample.startpoint = 'random';
-    end
-    if ~cfgcheck(cfg.subsample,'bootstrap')
-        cfg.subsample.bootstrap = 1;
-    end
+    cfg.subsample = setdefault(cfg.subsample,'startpoint','random');
+    cfg.subsample = setdefault(cfg.subsample,'bootstrap',1);
 end
 
 
@@ -260,7 +267,7 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
         end
         
         EEG.filename = fullfile(files(i).folder,files(i).name);
-
+        
         
         %% Subsample, surrogate, and apply the measures
         if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
@@ -272,15 +279,15 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
         elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
             disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
             for q = 1:cfg.subsample.bootstrap
-                                tmpcfg = cfg;
+                tmpcfg = cfg;
                 tmpcfg.irasa = 'no';
                 EEG = transform_data(cfg,EEG);
                 
                 newEEG = SubSample(cfg,EEG);
                 
-                if cfgcheck(cfg,'irasa','yes')
+                if cfgcheck(cfg.irasa,'do_irasa','yes')
                     tmpcfg = cfg;
-                    tmpcfg.hilbert = 'no';
+                    tmpcfg.envelope.do_envelope = 'no';
                     tmpcfg.filter = 'no';
                     EEG = transform_data(tmpcfg,EEG);
                 end
@@ -295,9 +302,9 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
                 disp(' ')
                 disp(['Creating surrogates for channel ' num2str(c)])
                 if ~cfgcheck(cfg,'filter','no')
-                    tmpcfg = cfg; 
-                    tmpcfg.irasa = 'no';
-                    tmpcfg.hilbert = 'no';
+                    tmpcfg = cfg;
+                    tmpcfg.irasa.do_irasa = 'no';
+                    tmpcfg.envelope.do_envelope = 'no';
                     EEG = transform_data(tmpcfg,EEG);
                 end
                 
@@ -316,8 +323,8 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
                 newEEG.data = tmp';
                 newEEG.nbchan = cfg.surrogate.nsurr;
                 
-                if cfgcheck(cfg,'irasa','yes') || cfgcheck(cfg,'hilbert','yes')
-                    tmpcfg = cfg; 
+                if cfgcheck(cfg.irasa,'do_irasa','yes') || cfgcheck(cfg.envelope,'do_envelope','yes')
+                    tmpcfg = cfg;
                     tmpcfg.filter = 'no';
                     EEG = transform_data(tmpcfg,EEG);
                 end
@@ -435,14 +442,14 @@ else
             disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
             for q = 1:cfg.subsample.bootstrap
                 tmpcfg = cfg;
-                tmpcfg.irasa = 'no';
+                tmpcfg.irasa.do_irasa = 'no';
                 EEG = transform_data(tmpcfg,EEG);
                 
                 EEG = SubSample(cfg,EEG);
                 
-                if cfgcheck(cfg,'irasa','yes')
+                if cfgcheck(cfg.irasa,'do_irasa','yes')
                     tmpcfg = cfg;
-                    tmpcfg.hilbert = 'no';
+                    tmpcfg.envelope.do_envelope = 'no';
                     tmpcfg.filter = 'no';
                     EEG = transform_data(tmpcfg,EEG);
                 end
@@ -450,7 +457,7 @@ else
                 fprintf([num2str(q) ' '])
                 %EEG = transform_data(cfg,EEG);
                 for c = 1:length(cfg.measure)
-                    outdata{i}(1,:,q,c) = cfg.measure{c}(EEG);
+                    outdata{i}(1,:,c,q) = cfg.measure{c}(EEG);
                 end
             end
         elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','no')
@@ -458,9 +465,9 @@ else
                 disp(' ')
                 disp(['Creating surrogates for channel ' num2str(c)])
                 if ~cfgcheck(cfg,'filter','no')
-                    tmpcfg = cfg; 
-                    tmpcfg.irasa = 'no';
-                    tmpcfg.hilbert = 'no';
+                    tmpcfg = cfg;
+                    tmpcfg.irasa.do_irasa = 'no';
+                    tmpcfg.envelope.do_envelope = 'no';
                     EEG = transform_data(tmpcfg,EEG);
                 end
                 
@@ -478,8 +485,8 @@ else
                 EEG.data = tmp';
                 EEG.nbchan = cfg.surrogate.nsurr;
                 
-                if cfgcheck(cfg,'irasa','yes') || cfgcheck(cfg,'hilbert','yes')
-                    tmpcfg = cfg; 
+                if cfgcheck(cfg.irasa,'do_irasa','yes') || cfgcheck(cfg.envelope,'do_envelope','yes')
+                    tmpcfg = cfg;
                     tmpcfg.filter = 'no';
                     EEG = transform_data(tmpcfg,EEG);
                 end
@@ -550,34 +557,55 @@ if ~cfgcheck(cfg,'filter','no')
     EEG = ft2eeglab(data);
 end
 
-if cfgcheck(cfg,'amplitude','yes')
+if cfgcheck(cfg.envelope,'do_envelope','yes')
     disp(' ')
     disp('Getting amplitude envelope...')
-    Signal = EEG.data;
+    fname = EEG.filename;
     
-    Signal = transpose(Signal); %now channels are columns, time is rows. Needed for the DFA function
+    if exist([fname '_envelope_' cfg.envelope.method '.mat'],'file')
+        EEG = parload([fname '_envelope_' cfg.envelope.method '.mat'],'EEG');
+    else
+        switch cfg.envelope.method
+            case 'fieldtrip'
+                data = eeglab2fieldtrip(EEG,'preprocessing','none');
+                tmpcfg = []; tmpcfg.hilbert = 'abs';
+                data = ft_preprocessing(tmpcfg,data);
+                EEG = ft2eeglab(data);
+            case 'nbt'
+                Signal = EEG.data;
+                
+                Signal = transpose(Signal); %now channels are columns, time is rows. Needed for the DFA function
+                
+                SignalInfo = nbt_Info; %this initializes an Info Object
+                SignalInfo.converted_sample_frequency = EEG.srate;
+                
+                bpfreqs = cfg.envelope.bandpass;
+                AmplitudeEnvelope = nbt_GetAmplitudeEnvelope(Signal, SignalInfo, bpfreqs(1), bpfreqs(2), 2*(1/bpfreqs(1)));
+                
+                EEG.data = AmplitudeEnvelope';
+            case 'irasa'
+                [~,EEG] = IRASA_window(EEG.data,EEG.srate,'winsize',cfg.envelope.winsize,'overlap',cfg.envelope.overlap,'hset',cfg.envelope.hset);
+                EEG(1).srate = 1/(cfg.envelope.winsize*(1-cfg.envelope.overlap));
+        end
+    end
     
-    SignalInfo = nbt_Info; %this initializes an Info Object
-    SignalInfo.converted_sample_frequency = EEG.srate;
-    
-    bpfreqs = EasyParse(varargin,'AmpEn');
-    AmplitudeEnvelope = nbt_GetAmplitudeEnvelope(Signal, SignalInfo, bpfreqs(1), bpfreqs(2), 2*(1/bpfreqs(1)));
-    
-    EEG.data = AmplitudeEnvelope';
+    if cfgcheck(cfg.envelope,'save_envelope','yes')
+        save([fname '_envelope_' cfg.envelope.method '.mat'],'EEG','-v7.3')
+    end
 end
 
-if cfgcheck(cfg,'irasa','yes')
+if cfgcheck(cfg.irasa,'do_irasa','yes')
     disp(' ')
     disp('Performing IRASA...')
     fname = EEG.filename;
     if exist([EEG.filename '_IRASA_specs.mat'],'file')
         EEG = parload([EEG.filename '_IRASA_specs.mat'],'EEG');
     else
-        EEG = IRASA_window(EEG.data,EEG.srate);
+        EEG = IRASA_window(EEG.data,EEG.srate,'winsize',cfg.irasa.winsize,'overlap',cfg.irasa.overlap,'hset',cfg.irasa.hset);
     end
     
-    if cfgcheck(cfg,'irasa_save_specs','yes')
-       save([fname '_IRASA_specs.mat'],'EEG');
+    if cfgcheck(cfg.irasa,'save_specs','yes')
+        save([fname '_IRASA_specs.mat'],'EEG','-v7.3');
     end
 end
 end

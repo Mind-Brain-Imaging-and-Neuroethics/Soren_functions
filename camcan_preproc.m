@@ -25,6 +25,14 @@ if ~exist('cont_data','var')
     cfg.bsfilter = 'yes'; cfg.bsfreq = [49 51; 99 101; 149 151; 199 201];
     cont_data = ft_preprocessing(cfg,cont_data);
     
+    %% Consider only magnetometers for now
+    
+    cfg = []; cfg.channel = {'EOG','ECG'};
+    refdata = ft_selectdata(cfg,cont_data);
+    
+    cfg = []; cfg.channel = {'megmag'};
+    cont_data = ft_selectdata(cfg,cont_data);
+    
     %% Use autoreject to find threshold to exclude from ICA
     cfg = []; cfg.event = 1:2*cont_data.fsample:floor(length(cont_data.time{1}));
     cfg.event(end) = []; cfg.epoch = [0 (2*cont_data.fsample)-1];
@@ -45,39 +53,77 @@ if ~exist('cont_data','var')
     bads = jsonread(fullfile(basedir,['sub-' subid],[subid '_badsegs.json']));
 
     %% Remove bad segments and re-concatenate, filter at 1 Hz for ICA
-    
+     
     cfg = []; cfg.trials = ~bads; 
     data = ft_selectdata(cfg,data);
     
     cont_data_clean = ft_concat(data);
     cont_data_clean = rmfield(cont_data_clean,'trialinfo');
     cont_data_clean = rmfield(cont_data_clean,'sampleinfo');
-%     cont_data_clean = data;
-%     cont_data_clean.trial = []; 
-%     cont_data_clean.trial{1} = cat(2,data.trial{:});
-%     cont_data_clean.time = []; 
-%     cont_data_clean.time{1} = linspace(0,length(cont_data_clean.trial{1})/data.fsample,length(cont_data_clean.trial{1}));
-%     data = [];
     
+        
     cfg = []; cfg.hpfilter = 'yes'; cfg.hpfreq = 1; 
     cont_data_clean = ft_preprocessing(cfg,cont_data_clean);
     
-    %% ICA using OSL-AFRICA
+    cont_data_clean = ft_concat(cont_data_clean);
     
-    D = spm_eeg_ft2spm(cont_data_clean,fullfile(basedir,['sub-' subid],'tmp'));
-    D = osl_africa(D,'used_maxfilter',true); 
-    system(['rm ' fullfile(basedir,['sub-' subid],'tmp*')])
-%     cont_data_clean = spm2fieldtrip(D);
-%     cont_data_clean.hdr = hdr; cont_data_clean.fsample = hdr.Fs;
-    cont_data_clean = [];
+    %%% Rescale planar gradiometers
 
+%     mag_cutoff = 62;
+%     plan_cutoff = 62;
+%     
+%     chan_inds = ft_channelselection({'MEG'},cont_data_clean.grad);
+%     chan_inds = Subset_index(cont_data_clean.label,chan_inds);
+%     norm_vec = ones(numel(chan_inds),1);
+%     icadata = cont_data_clean.trial{1}(chan_inds,:);
+%     
+%     if any(strcmp(cont_data_clean.grad.chantype,'megmag')) && any(strcmp(cont_data_clean.grad.chantype,'megplanar'))
+%         mag_min_eig = svd(cov(icadata(strcmp(cont_data_clean.grad.chantype(chan_inds),'megmag'),:)'));
+%         mag_min_eig = mean(mag_min_eig(mag_cutoff-2:mag_cutoff));
+%         
+%         plan_min_eig = svd(cov(icadata(strcmp(cont_data_clean.grad.chantype(chan_inds),'megplanar'),:)'));
+%         plan_min_eig = mean(plan_min_eig(plan_cutoff-2:plan_cutoff));
+%         
+%         norm_vec(strcmp(cont_data_clean.grad.chantype(chan_inds),'megmag'))    = mag_min_eig;
+%         norm_vec(strcmp(cont_data_clean.grad.chantype(chan_inds),'megplanar')) = plan_min_eig;
+%     else
+%         norm_vec = norm_vec*min(svd(cov(icadata(:,:)')));
+%     end
+%     norm_vec = sqrt(norm_vec); 
+%     
+%     icadata = icadata ./ repmat(norm_vec,1,size(icadata,2));
+% 
+%     cont_data_clean.trial{1} = icadata;
+%     icadata = [];
+%     
+%     cfg = []; cfg.channel = chan_inds;
+%     cont_data_clean_meg 
+    
+%     %% ICA using OSL-AFRICA
+%     
+%     D = spm_eeg_ft2spm(cont_data_clean,fullfile(basedir,['sub-' subid],'tmp'));
+%     D = osl_africa(D,'used_maxfilter',true); 
+%     system(['rm ' fullfile(basedir,['sub-' subid],'tmp*')])
+% %     cont_data_clean = spm2fieldtrip(D);
+% %     cont_data_clean.hdr = hdr; cont_data_clean.fsample = hdr.Fs;
+%     cont_data_clean = [];
+
+    %% ICA using HCP scripts
+
+    options.bandpass = [1 200];
+    options.bandstop = [49 51; 99 101; 149 151; 199 201];
+    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',2,'numIC',62});
+    comp_class = hcp_ICA_RMEG_classification(refdata,options,iteration,cont_data_clean);
+    cont_data_clean = [];
+    
     %% Apply ICA matrix back to original data
     
-    cfg = []; cfg.unmixing = D.ica.sm'; cfg.topolabel = data.label;
+    cfg = []; cfg.unmixing = comp_class.unmixing; cfg.topolabel = cont_data.label;
     comp = ft_componentanalysis(cfg,cont_data);
     
-    cfg = []; cfg.component = D.ica.bad_components; 
+    cfg = []; cfg.component = except(1:62,comp_class.class.brain_ic); 
     cont_data = ft_rejectcomponent(cfg,comp,cont_data);
+    comp_class = []; comp = [];
     
 end
 
