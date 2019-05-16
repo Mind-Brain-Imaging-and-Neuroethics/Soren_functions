@@ -111,7 +111,7 @@ if ~cfgcheck(cfg,'files')
     end
 end
 
-cfg = setdefault(cfg,outfile,fullfile(pwd,'outputs.mat'));
+cfg = setdefault(cfg,'outfile',fullfile(pwd,'outputs.mat'));
 
 cfg = setdefault(cfg,'filter','no');
 
@@ -139,8 +139,6 @@ end
 cfg = setdefault(cfg,'continue','no');
 
 cfg = setdefault(cfg,'concatenate','yes');
-
-cfg = setdefault(cfg,'ftvar','data');
 
 if ~cfgcheck(cfg,'parallel')
     cfg.parallel.do_parallel = 'no';

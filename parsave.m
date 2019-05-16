@@ -4,6 +4,8 @@ for c = 1:2:length(varargin)
     varname = varargin{c};
     input = varargin{c+1};
     eval([varname '=input;']);
-end
 
-save(filepath,varname,'-v7.3')
+end
+clear input varargin varname c
+
+save(filepath,'-v7.3')

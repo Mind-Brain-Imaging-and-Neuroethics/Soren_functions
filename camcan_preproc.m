@@ -2,6 +2,7 @@ function [data,cont_data] = camcan_preproc(subid,filename,cont_data)
 
 % Assuming ComputeCanada
 basedir = extractBefore(filename,['sub-' subid]);
+basedir = char(basedir);
 %basedir = '/scratch/sorenwt/camcan/cc700/mri/pipeline/release004/BIDSsep/megmax_task';
 
 % Option to input the continuous data in case something goes wrong and you
@@ -43,6 +44,7 @@ if ~exist('cont_data','var')
     
     pyscript = fopen([subid '_pyscript.py'],'w');
     fprintf(pyscript,'import sys \n')
+    fprintf(pyscript,'sys.path.insert(0, ''/home/soren/Documents/MATLAB/Functions'') \n')
     fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
     fprintf(pyscript,'from mne_preproc import autoreject_log \n')
     fprintf(pyscript,['autoreject_log(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat'])...
@@ -147,6 +149,7 @@ data = [];
 
 pyscript = fopen([subid '_pyscript.py'],'w');
 fprintf(pyscript,'import sys \n')
+    fprintf(pyscript,'sys.path.insert(0, ''/home/soren/Documents/MATLAB/Functions'') \n')
 fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
 fprintf(pyscript,'from mne_preproc import autoreject_epochs \n')
 fprintf(pyscript,['autoreject_epochs(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
