@@ -13,14 +13,33 @@ sourcefield = fieldnames(sources);
 sourcefield = sourcefield{1};
 
 sortchans = sort(channum);
+rmindex = [];
 for c = 1:length(files)
+    fprintf([num2str(c) ' '])
     if contains(files(c).name,experiment)
-    chan = str2num(char(extractAfter(files(c).name,'.')));
-    if ismember(chan,channum)
-        fid = fopen(fullfile(sessiondir,'noreref',files(c).name));
-        cont_data.trial{1}(find(chan == sortchans),:) = fread(fid,sources.(sourcefield).data_format);
+        filechans(c) = str2num(char(extractAfter(files(c).name,'.')));
+        if ~ismember(filechans(c),filechans(1:c-1)) % avoid duplicates
+            if ismember(filechans(c),channum) % make sure you have corresponding electrode information
+                fid = fopen(fullfile(sessiondir,'noreref',files(c).name));
+                cont_data.trial{1}(find(filechans(c) == sortchans),:) = fread(fid,sources.(sourcefield).data_format);
+            else
+                filechans(c) = NaN;
+            end
+        else
+            filechans(c) = NaN;
+        end
     end
-    end
+end
+
+filechans(find(isnan(filechans))) = [];
+
+if size(cont_data.trial{1},1) ~= length(elec.label) %delete electrodes with no corresponding data
+    rmindex = find(~ismember(sortchans,filechans));
+    elec.label(rmindex) = [];
+    elec.elecpos(rmindex,:) = [];
+    elec.chanpos(rmindex,:) = [];
+    elec.tra(rmindex,:) = [];
+    elec.tra(:,rmindex) = [];
 end
 
 srate = sources.(sourcefield).sample_rate;

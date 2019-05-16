@@ -119,7 +119,7 @@ if ~exist('cont_data','var')
 
     options.bandpass = [1 200];
     options.bandstop = [49 51; 99 101; 149 151; 199 201];
-    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',20,'numIC',62});
+    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',2,'numIC',62});
     comp_class = hcp_ICA_RMEG_classification(refdata,options,iteration,cont_data_clean);
     cont_data_clean = [];
     

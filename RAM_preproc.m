@@ -43,6 +43,12 @@ ft_defaults
 cfg = []; cfg.channel = cont_data.label; cfg.channel(bIdx) = [];
 cont_data = ft_selectdata(cfg,cont_data);
 
+
+%% Resample to 500 Hz
+
+cfg = []; cfg.resamplefs = 500; 
+cont_data = ft_resampledata(cfg,cont_data);
+
 %% Epoch data
 if continuous
     % Epoch into arbitrary 2s segments
@@ -58,11 +64,6 @@ else
 end
 
 data.trialinfo = ones(length(data.sampleinfo),1);
-
-%% Resample to 500 Hz
-
-cfg = []; cfg.resamplefs = 500; 
-cont_data = ft_resampledata(cfg,cont_data);
 
 %% Convert to MNE, get rejection threshold with autoreject
 % Reference: Jas et al. (2016). Autoreject: Automated artifact rejection

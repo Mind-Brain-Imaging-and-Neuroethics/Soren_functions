@@ -14,11 +14,11 @@ function [stats] = ft_measurestatistics(cfg,data)
 %      channel: the channels you want to test - must be an input that works
 %         with ft_channelselection. (default = 'all');
 %      multcompare: your method of multiple comparison correction.
-%         'cluster', 'fdr', or 'none' (default = 'cluster')
+%         'cluster', 'fdr', 'mean', or 'none' (default = 'cluster')
 %      effectsize: do effect size statistics - inputs can be any of the
 %         inputs to the 'mes.m' function from the Measures of Effect Size
-%         Toolbox (Hentschke and Stüttgen, 2011) (default set based on
-%         test string)
+%         Toolbox (Hentschke and Stï¿½ttgen, 2011) (default set based on
+%         cfg.test)
 %      cluster: if you chose 'cluster' as the multiple comparison
 %         correction method, you can add optional inputs for the
 %         permutation test
@@ -105,36 +105,52 @@ end
 %% Calculate stats
 for i = 1:length(data{1}.meas)
     %dimns = tokenize(data{1}.dimord,'_');
-    for c = 1:length(data{1}.chan)
+    if ~cfgcheck(cfg,'multcompare','mean')
+        for c = 1:length(data{1}.chan)
+            switch cfg.test
+                case 'ttest'
+                    [~,stats{i}.p(c)] =  ttest(data{1}.data(:,c,i)-data{2}.data(:,c,i));
+                case 'ttest2'
+                    [~,stats{i}.p(c)] = ttest2(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                case 'ranksum'
+                    stats{i}.p(c) = ranksum(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                case 'signrank'
+                    stats{i}.p(c) = signrank(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                case 'empirical'
+                    % finish later
+            end
+            stats{i}.effsize{c} = mes(data{1}(:,c,i),data{2}(:,c,i),cfg.effectsize);
+        end
+        
+        switch cfg.multcompare
+            case 'cluster'
+                if isfield(data{1},'elec')
+                    datasetinfo.elec = data{1}.elec;
+                elseif isfield(data{1},'grad')
+                    datasetinfo.grad = data{1}.grad;
+                end
+                datasetinfo.label = data{1}.chan;
+                for c = 1:length(data)
+                    input{c} = data{c}.data(:,:,i)';
+                end
+                stats{i}.cluster = EasyClusterCorrect(input,datasetinfo,cfg.cluster.statfun,cfg.cluster);
+            case 'fdr'
+                stats{i}.fdr = mafdr(stats{i}.p(c),'BHFDR',true);
+        end
+    elseif cfgcheck(cfg,'multcompare','mean')
         switch cfg.test
             case 'ttest'
-                [~,stats{i}.p(c)] =  ttest(data{1}.data(:,c,i)-data{2}.data(:,c,i));
+                [~,stats{i}.p] =  ttest(mean(data{1}.data(:,:,i),2)-mean(data{2}.data(:,:,i),2));
             case 'ttest2'
-                [~,stats{i}.p(c)] = ttest2(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                [~,stats{i}.p] = ttest2(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2));
             case 'ranksum'
-                stats{i}.p(c) = ranksum(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                stats{i}.p = ranksum(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2));
             case 'signrank'
-                stats{i}.p(c) = signrank(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                stats{i}.p = signrank(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2));
             case 'empirical'
                 % finish later
         end
-        stats{i}.effsize{c} = mes(data{1}(:,c,i),data{2}(:,c,i),cfg.effectsize);
-    end
-    
-    switch cfg.multcompare
-        case 'cluster'
-            if isfield(data{1},'elec')
-                datasetinfo.elec = data{1}.elec;
-            elseif isfield(data{1},'grad')
-                datasetinfo.grad = data{1}.grad;
-            end
-            datasetinfo.label = data{1}.chan;
-            for c = 1:length(data)
-                input{c} = data{c}.data(:,:,i)';
-            end
-            stats{i}.cluster = EasyClusterCorrect(input,datasetinfo,cfg.cluster.statfun,cfg.cluster);
-        case 'fdr'
-            stats{i}.fdr = mafdr(stats{i}.p(c),'BHFDR',true);
+        stats{i}.effsize = mes(mean(data{1}(:,:,i),2),mean(data{2}(:,:,i),2),cfg.effectsize);
     end
 end
 
