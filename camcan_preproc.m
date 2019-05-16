@@ -26,6 +26,11 @@ if ~exist('cont_data','var')
     cfg.bsfilter = 'yes'; cfg.bsfreq = [49 51; 99 101; 149 151; 199 201];
     cont_data = ft_preprocessing(cfg,cont_data);
     
+    %% Resample to 500 Hz
+    
+    cfg = []; cfg.resamplefs = 500; 
+    cont_data = ft_resampledata(cfg,cont_data);
+    
     %% Consider only magnetometers for now
     
     cfg = []; cfg.channel = {'EOG','ECG'};
@@ -47,7 +52,7 @@ if ~exist('cont_data','var')
     fprintf(pyscript,'sys.path.insert(0, ''/home/soren/Documents/MATLAB/Functions'') \n')
     fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
     fprintf(pyscript,'from mne_preproc import autoreject_log \n')
-    fprintf(pyscript,['autoreject_log(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat'])...
+    fprintf(pyscript,['autoreject_log(''' fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat'])...
         ''',''' fullfile(basedir,['sub-' subid],[subid '_badsegs.json']) ''')'])
     system(['python ' subid '_pyscript.py'])
     system(['rm ' subid '_pyscript.py'])
@@ -114,7 +119,7 @@ if ~exist('cont_data','var')
 
     options.bandpass = [1 200];
     options.bandstop = [49 51; 99 101; 149 151; 199 201];
-    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',2,'numIC',62});
+    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',20,'numIC',62});
     comp_class = hcp_ICA_RMEG_classification(refdata,options,iteration,cont_data_clean);
     cont_data_clean = [];
     
@@ -149,10 +154,10 @@ data = [];
 
 pyscript = fopen([subid '_pyscript.py'],'w');
 fprintf(pyscript,'import sys \n')
-    fprintf(pyscript,'sys.path.insert(0, ''/home/soren/Documents/MATLAB/Functions'') \n')
+fprintf(pyscript,'sys.path.insert(0, ''/home/soren/Documents/MATLAB/Functions'') \n')
 fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
 fprintf(pyscript,'from mne_preproc import autoreject_epochs \n')
-fprintf(pyscript,['autoreject_epochs(''' rawfile, ''',''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
+fprintf(pyscript,['autoreject_epochs(''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
     ''',''' fullfile(basedir,['sub-' subid],[subid '_mne.fif']) ''')'])
 system(['python ' subid '_pyscript.py'])
 system(['rm ' subid '_pyscript.py'])

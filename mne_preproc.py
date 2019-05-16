@@ -1,11 +1,11 @@
-def autoreject_log(raw_file,ft_file,out_file):
+def autoreject_log(ft_file,out_file):
     import mne
     import autoreject
     import json
     
     # Load the file
-    info = mne.io.read_info(raw_file)
-    epochs = mne.read_epochs_fieldtrip(ft_file,info)
+    #info = mne.io.read_info(raw_file)
+    epochs = mne.read_epochs_fieldtrip(ft_file,info=None)
     
     # Resample the data - we're only going to use the thresholds
     epochs.resample(400,npad='auto')
@@ -24,12 +24,12 @@ def autoreject_log(raw_file,ft_file,out_file):
     
     return
 
-def autoreject_epochs(raw_file,ft_file,out_file):
+def autoreject_epochs(ft_file,out_file):
     import mne
     import autoreject
 
     # Load the file
-    info = mne.io.read_info(raw_file)
+    #info = mne.io.read_info(raw_file)
     epochs = mne.read_epochs_fieldtrip(ft_file,info)
     
     # Resample the data

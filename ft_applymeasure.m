@@ -32,8 +32,8 @@ function [outputs] = ft_applymeasure(cfg)
 %         for DFA)
 %         do_envelope: default = 'no'
 %         method: 'fieldtrip','nbt' or 'irasa' (default = 'fieldtrip')
-%         bandpass: required input for nbt or irasa methods - otherwise,
-%            use the 'filter' option instead
+%         bandpass: required input for nbt method - otherwise, use the 
+%            'filter' option instead
 %         save_envelope: save the enveloped data to make future
 %            computations faster - mostly used for irasa (default = 'no')
 %         load_envelope: load precomputed envelope from a previous run - 

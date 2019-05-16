@@ -7,7 +7,7 @@ indices{2} = find(design == tmp(2));
 p = ones(size(dat,1),1);
 for c = 1:size(dat,1)
     tic
-    [r,p(c)] = corr(dat(c,indices{1})',dat(c,indices{2})','Type','Spearman');
+    [r,p(c)] = nancorr(dat(c,indices{1})',dat(c,indices{2})','Type','Spearman');
     if r > 0
         p(c) = 1-p(c);
     else

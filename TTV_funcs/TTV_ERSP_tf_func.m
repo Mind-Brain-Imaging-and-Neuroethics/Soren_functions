@@ -36,10 +36,9 @@ parfor i = 1:length(files)
                 if ~isempty(freqs{q})
                     cfg = [];
                     if isnan(freqs{q}(1))
-                        cfg.lpfilter = 'yes'; cfg.lpfreq = freqs{q}(2);
+                        cfg.hpfilter = 'yes'; cfg.hpfreq = freqs{q}(2);
                     else
-                        cfg.bpfilter = 'yes'; cfg.bpfreq = freqs{q};  %cfg.bpfilttype = 'fir';
-                        cfg.bpinstabilityfix = 'split';
+                        cfg.bpfilter = 'yes'; cfg.bpfreq = freqs{q}; cfg.bpinstabilityfix = 'split';
                     end
                     timefreq_data{q} = ft_preprocessing(cfg,data);
                 else
@@ -149,9 +148,9 @@ parfor i = 1:length(files)
             freqdata = [];
             
     end
-        
+    
     Calc_sub(settings,timefreq_data,files(i).name)
-
+    
     %    parsave([settings.outputdir '/' files(i).name '_timefreq_filtered.mat'],'timefreq_data',timefreq_data);
 end
 
@@ -174,6 +173,10 @@ numbands = settings.nfreqs;
 
 aucindex = settings.aucindex;
 
+if isempty(gcp('nocreate'))
+    parpool(numbands)
+end
+
 datacalc = cell(1,settings.nfreqs);
 for c = 1:settings.nfreqs
     datacalc{c} = struct;
@@ -190,8 +193,6 @@ else
     poststim_pseudo = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
     poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
 end
-
-nbchan = length(timefreq_data{1}.label);
 
 for q = 1:numbands
     
@@ -276,6 +277,14 @@ for q = 1:numbands
         datacalc{q}.naddersp.pseudo(c,:,2) = (mean(abs(datacat(c,poststim_pseudo,find(splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_pseudo,find(splitindex))),3),2));
         
+        tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+            -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+        tmppseudo{1} = squeeze(trapz(tmp,2));
+        
+        tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+            -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+        tmppseudo{2} = squeeze(trapz(tmp,2));
+        
         switch settings.units
             case 'prcchange'
                 datacalc{q}.naddersp.pseudo(c,:,1) = 100*datacalc{q}.naddersp.pseudo(c,:,1)./mean(mean(abs(datacat(c,prestim_pseudo,:)),3),2);
@@ -297,6 +306,17 @@ for q = 1:numbands
             -mean(mean(abs(datacat(c,prestim_real,find(~splitindex))),3),2));
         datacalc{q}.naddersp.real(c,:,2) = (mean(abs(datacat(c,poststim_real,find(splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_real,find(splitindex))),3),2));
+        
+        tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+            -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+        tmpreal{1}(:) = squeeze(trapz(tmp,2));
+        
+        tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+            -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+        tmpreal{2}(:) = squeeze(trapz(tmp,2));
+        
+        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
+        datacalc{q}.t(c) = stats.t;
         
         switch settings.units
             case 'prcchange'
@@ -385,16 +405,6 @@ for q = 1:numbands
         %                     datacalc{q}.nadderp.real(c,:,2) = 10*log10(datacalc{q}.nadderp.real(c,:,2))
         %             end
     end
-    
-    if strcmpi(settings.datatype,'ECoG') % for now just take the mean of all electrodes
-        fields = fieldnames_recurse(datacalc{q});
-        fields = cell_unpack(fields);
-        tmp = struct;
-        for c = 1:length(fields)
-            tmp = assignfield_nest(tmp,fields{c},nanmean(getfield_nest(datacalc{q},fields{c}),1));
-        end
-        datacalc{q} = tmp;
-    end
 end
 
 
@@ -450,14 +460,50 @@ for q = 1:numbands
     datacalc{q}.itcindex = squeeze(trapz(datacalc{q}.itc.real(:,aucindex,:),2));% - squeeze(trapz(datacalc{q}.itc.pseudo(:,aucindex,:),2));
     datacalc{q}.ttverspindex = squeeze(trapz(datacalc{q}.ttversp.real(:,aucindex,:),2));% - squeeze(trapz(datacalc{q}.ttversp.pseudo(:,aucindex,:),2));
     
+    %datacalc{q}.ttvsig =
+    
     % abs((prestim high real - pseudo)) - abs((prestim low real - pseudo))
     %datacalc{q}.nattvindex = abs((squeeze(trapz(datacalc{q}.naddttv.real(:,aucindex,2,:),2)) - squeeze(trapz(datacalc{q}.naddttv.pseudo(:,aucindex,2,:),2)))) - ...
     %    abs((squeeze(trapz(datacalc{q}.naddttv.real(:,aucindex,1,:),2)) - squeeze(trapz(datacalc{q}.naddttv.pseudo(:,aucindex,1,:),2))));
     datacalc{q}.naerspindex = abs((squeeze(trapz(datacalc{q}.naddersp.real(:,aucindex,2,:),2)) - squeeze(trapz(datacalc{q}.naddersp.pseudo(:,aucindex,2,:),2)))) - ...
         abs((squeeze(trapz(datacalc{q}.naddersp.real(:,aucindex,1,:),2)) - squeeze(trapz(datacalc{q}.naddersp.pseudo(:,aucindex,1,:),2))));
-       
+    
     datacalc{q}.naerpindex = abs((squeeze(trapz(datacalc{q}.nadderp.real(:,aucindex,2,:),2)) - squeeze(trapz(datacalc{q}.nadderp.pseudo(:,aucindex,2,:),2)))) - ...
         abs((squeeze(trapz(datacalc{q}.nadderp.real(:,aucindex,1,:),2)) - squeeze(trapz(datacalc{q}.nadderp.pseudo(:,aucindex,1,:),2))));
+end
+
+if strcmpi(settings.datatype,'ECoG')
+    for q = 1:numbands
+        if strcmpi(settings.ecog.method,'mean') % take the mean of all electrodes
+            fields = fieldnames_recurse(datacalc{q});
+            fields = cell_unpack(fields);
+            tmp = struct;
+            for c = 1:length(fields)
+                tmp = assignfield_nest(tmp,fields{c},nanmean(getfield_nest(datacalc{q},fields{c}),1));
+            end
+            datacalc{q} = tmp;
+        elseif strcmpi(settings.ecog.method,'roi') % organize data into ROIs
+            labels = ft_getlabels(datacalc{q},settings.ecog.atlas);
+            alllabels = settings.ecog.atlas.tissuelabel; % designed for AAL atlas
+            tmpdata = struct;
+            fields = fieldnames_recurse(datacalc{q});
+            fields = cell_unpack(fields);
+            for c = 1:length(fields)
+                for cc = 1:length(alllabels)
+                    tmp = getfield_nest(datacalc{q},fields{c});
+                    if ~isempty(find(strcmpi(labels,alllabels{cc})))
+                        tmp = nanmean(tmp(find(strcmpi(labels,alllabels{cc})),:,:,:),1); % for each field, take the mean across all electrodes with the same label
+                    else
+                        tmp = NaN(size(tmp)); % fill with NaNs for regions not represented
+                        tmp = mean(tmp,1);
+                    end
+                    tmp2(cc,:,:,:) = tmp;
+                end
+                tmpdata = assignfield_nest(tmpdata,fields{c},tmp2);
+            end
+            datacalc{q} = tmpdata;
+        end
+    end
 end
 
 settings.pseudo.prestim = prestim_pseudo;
@@ -466,10 +512,11 @@ settings.pseudo.poststim = poststim_pseudo;
 settings.real.poststim = poststim_real;
 
 % Convert to single precision to save space
-    for cc = 1:length(datacalc)
-fields = fieldnames_recurse(datacalc{cc});
+fields = fieldnames_recurse(datacalc);
 fields = cell_unpack(fields);
+
 for c = 1:length(fields)
+    for cc = 1:6
         tmp = getfield_nest(datacalc{cc},fields{c});
         datacalc{cc} = assignfield_nest(datacalc{cc},fields{c},single(tmp));
     end
