@@ -1,6 +1,6 @@
 function [data] = mbian_preproc(cfg,data)
 % mbian_preproc implements a standard preprocessing pipeline for the Mind,
-% Brain Imaging and Neuroethics group at the Royal.
+% Brain Imaging and Neuroethics group at the Royal
 %
 % Input arguments:
 %      cfg: a config structure with the following fields

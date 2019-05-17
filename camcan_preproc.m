@@ -31,12 +31,9 @@ if ~exist('cont_data','var')
     cfg = []; cfg.resamplefs = 500; 
     cont_data = ft_resampledata(cfg,cont_data);
     
-    %% Consider only magnetometers for now
+    %% Consider only magnetometers (and EOG/ECG) for now
     
-    cfg = []; cfg.channel = {'EOG','ECG'};
-    refdata = ft_selectdata(cfg,cont_data);
-    
-    cfg = []; cfg.channel = {'megmag'};
+    cfg = []; cfg.channel = {'megmag','EOG','ECG'};
     cont_data = ft_selectdata(cfg,cont_data);
     
     %% Use autoreject to find threshold to exclude from ICA
@@ -74,6 +71,12 @@ if ~exist('cont_data','var')
     
     cont_data_clean = ft_concat(cont_data_clean);
     
+    cfg = []; cfg.channel = {'EOG','ECG'};
+    refdata = ft_selectdata(cfg,cont_data_clean);
+    
+    cfg = []; cfg.channel = {'megmag'};
+    cont_data_clean = ft_selectdata(cfg,cont_data_clean);
+
     %%% Rescale planar gradiometers
 
 %     mag_cutoff = 62;

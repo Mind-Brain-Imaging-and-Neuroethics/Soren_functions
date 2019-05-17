@@ -63,7 +63,7 @@ function [outputs] = ft_applymeasure(cfg)
 %      concatenate: concatenate resting-states organized into trials
 %         (default = 'yes')
 %      parallel: a structure with the following options:
-%         use_parallel: use parallel processing (default = 'no');
+%         use_parallel: use MATLAB parallel processing (default = 'no');
 %         pool: size of parallel pool (default = system default pool size)
 %
 %      Surrogating and subsampling:
@@ -97,6 +97,8 @@ function [outputs] = ft_applymeasure(cfg)
 %      meas: the measures you input in cfg.measure
 %      elec or grad: the electrode or gradiometer position information -
 %         used later in ft_measurestatistics
+%      chanlocs: if eeglab data were input, this is the chanlocs structure
+%         of the data - to be used later in ft_measurestatplot
 
 
 
