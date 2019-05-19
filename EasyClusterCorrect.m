@@ -2,19 +2,21 @@ function [stats] = EasyClusterCorrect(data,datasetinfo,statfun,opts)
 % EasyClusterCorrect implements fieldtrip's cluster correction algorithm
 % across channels only, for an arbitrary measurement
 %
-% Input arguments: 
+% Input arguments:
 %      data: a 1x2 (currently only supports a pairwise contrast) cell array
 %         containing the data for testing. Each cell should be a matrix of
 %         the form channels x observations
 %      datasetinfo: a structure containing the relevant information for
-%         clustering. For the following data types, this should be: 
+%         clustering. For the following data types, this should be:
 %         eeg: requires fields 'elec' (a fieldtrip electrode structure) and
 %            'label'
 %         meg: requires fields 'grad' (a fieldtrip gradiometer structure)
 %            and 'label'
-%         source: currently only region-based correction supported. 
+%         source: currently only region-based correction supported.
 %            Requires fields 'atlas' (a fieldtrip atlas structure) and
-%            'atlasname' (currently only 'aal','mmp', and 'yeo' suppported)
+%            'atlasname' (currently only 'aal','mmp', and 'yeo' suppported
+%            - for 'yeo' the atlas must be modified to include 'pos' and
+%            'tri' fields from an HCP subject's source model)
 %      statfun: the fieldtrip statfun used for the statistics (e.g.
 %         ft_statfun_signrank)
 %      opts: optional argument which changes some parameters of the
@@ -23,7 +25,7 @@ function [stats] = EasyClusterCorrect(data,datasetinfo,statfun,opts)
 %         minnbchan: the minimum number of neighbours to add a channel to a
 %            cluster (default = 1)
 %
-% Outputs: 
+% Outputs:
 %      stats: a fieldtrip stats structure returned from
 %         ft_timelockstatistics
 
@@ -100,13 +102,47 @@ else
                 neighbs(c).neighblabel(1) = [];
                 neighbs(c).neighblabel = unique(neighbs(c).neighblabel);
             end
-        case 'mmp'
+        case 'mmp','yeo'
+            
+            if strcmpi(datasetinfo.atlasname,'yeo')
+                datasetinfo.atlas.parcellationlabel = cellstr(num2str([1:8004]'));
+                datasetinfo.atlas.parcellation = datasetinfo.atlas.parcels;
+            end
+            
             pos = datasetinfo.atlas.pos;
+            tri = datasetinfo.atlas.tri;
             
-            % do later
-        case 'yeo'
-            % do later
+            vox_neighbs = cell(1,length(pos));
             
+            for c = 1:length(pos)
+                inds = find(tri == c);
+                for cc = 1:length(inds)
+                    [i1,i2] = ind2sub(size(tri),inds(cc));
+                    vox_neighbs{c} = [vox_neighbs{c} atlas.tri(i1,except(1:3,i2))];
+                end
+                vox_neighbs{c} = unique(vox_neighbs{c});
+            end
+            
+            reg_neighbs = cell(1,length(datasetinfo.atlas.parcellationlabel));
+            for c = 1:length(datasetinfo.atlas.parcellationlabel)
+                reg_neighbs{c} = cat(2,vox_neighbs{find(datasetinfo.atlas.parcellation == c)});
+                for cc = 1:length(reg_neighbs{c})
+                    reg_neighbs{c}(cc) = atlas.parcellation(reg_neighbs{c}(cc));
+                end
+                reg_neighbs{c} = unique(reg_neighbs{c});
+                reg_neighbs{c}(find(reg_neighbs{c} == c)) = [];
+            end
+            
+            neighbs = struct;
+            for c = 1:length(reg_neighbs)
+                neighbs(c).label = datasetinfo.atlas.parcellationlabel{c};
+                neighbs(c).neighblabel = {datasetinfo.atlas.parcellationlabel{reg_neighbs{c}}};
+            end
+            
+            vox_neighbs = [];
+            reg_neighbs = [];
+            pos = [];
+            tri = [];
     end
 end
 
