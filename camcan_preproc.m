@@ -127,6 +127,9 @@ if ~exist('cont_data','var')
     cont_data_clean = [];
     
     %% Apply ICA matrix back to original data
+
+    cfg = []; cfg.channel = {'megmag'};
+    cont_data = ft_selectdata(cfg,cont_data);
     
     cfg = []; cfg.unmixing = comp_class.unmixing; cfg.topolabel = cont_data.label;
     comp = ft_componentanalysis(cfg,cont_data);
@@ -146,6 +149,7 @@ latencies = tpoints(find(strcmpi(types,'Trigger')));
 allvalues = extractfield(event,'value');
 values = allvalues(find(strcmpi(types,'Trigger')));
 latencies(find(values < 0)) = []; 
+latencies = round(latencies/2);
 
 cfg = []; cfg.event = latencies; cfg.epoch = [-1.5*cont_data.fsample 1*cont_data.fsample]; %Epochs large in order to have trial padding
 data = ft_epoch(cfg,cont_data);

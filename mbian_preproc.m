@@ -85,11 +85,16 @@ ft_defaults
 %% EEG pipeline
 if cfgcheck(cfg,'datatype','eeg')
     eeglab rebuild
+
+    eegdir = extractBefore(which('eeglab'),'eeglab.m');
+
+    EEG = data;
+    data = [];
     
     % Read in channel locations
     if isstr(cfg.chanlocs)
         if cfgcheck(cfg,'chanlocs','lookup')
-            EEG = pop_chanedit(EEG,'lookup',fullfile('plugins','dipfit2.3','standard_BESA','standard-10-5-cap385.elp'),'eval','chans = pop_chancenter( chans, [],[]);');
+            EEG = pop_chanedit(EEG,'lookup',fullfile(char(eegdir),'plugins','dipfit2.3','standard_BESA','standard-10-5-cap385.elp'),'eval','chans = pop_chancenter( chans, [],[]);');
         else
             EEG = pop_chanedit(EEG,'lookup',cfg.chanlocs,'eval','chans = pop_chancenter( chans, [],[]);');
         end
@@ -136,7 +141,7 @@ if cfgcheck(cfg,'datatype','eeg')
         
         EEG = clean_rawdata(EEG, 5, [-1], 0.8, -1, 5, 0.5);
         
-        EEG = pop_interp(EEG, originalEEG.chanlocs, 'spherical');
+        EEG = pop_interp(EEG, orig_chanlocs, 'spherical');
         
         EEG  = eeg_checkset(EEG);
         
@@ -165,6 +170,9 @@ if cfgcheck(cfg,'datatype','eeg')
         EEG  = pop_subcomp(EEG,artcomps,0);
         EEG  = eeg_checkset(EEG);
     end
+
+    data = EEG;
+    EEG = [];
     
 elseif cfgcheck(cfg,'datatype','meg')
     %% MEG pipeline
