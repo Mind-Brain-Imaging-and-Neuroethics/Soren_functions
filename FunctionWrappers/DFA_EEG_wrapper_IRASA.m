@@ -14,8 +14,9 @@ disp(' ')
 disp('Computing DFA exponent...')
 
 for c = 1:length(dfaout)
+    fprintf([num2str(c) ' '])
     findex = intersect(find(spec(c).freq > frange(1)),find(spec(c).freq < frange(2)));
     ts = sqrt(trapz(spec(c).freq(findex),spec(c).(oscifrac)(findex,:),1));
-    [~,~,tmp] = FMF(ts,nextpow2(spec(1).srate),nextpow2(0.5*length(ts))/2,50,2,1);
-    dfaout = tmp.MF;
+    [~,~,tmp] = FMF(ts,nextpow2(spec(1).srate),nextpow2(0.5*length(ts))/2,50,2,1,'Plot','off');
+    dfaout(c) = tmp.MF;
 end

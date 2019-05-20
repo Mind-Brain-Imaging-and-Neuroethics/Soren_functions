@@ -30,10 +30,10 @@ def autoreject_epochs(ft_file,out_file):
 
     # Load the file
     #info = mne.io.read_info(raw_file)
-    epochs = mne.read_epochs_fieldtrip(ft_file,info)
+    epochs = mne.read_epochs_fieldtrip(ft_file,info=None)
     
     # Resample the data
-    epochs.resample(500,npad='auto')
+    #epochs.resample(500,npad='auto')
 
     # Apply autoreject    
     ar = autoreject.AutoReject()

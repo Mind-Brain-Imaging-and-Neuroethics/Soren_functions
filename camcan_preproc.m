@@ -1,4 +1,4 @@
-function [data,cont_data] = camcan_preproc(subid,filename,cont_data)
+function [data,cont_data,comp_class,iteration] = camcan_preproc(subid,filename,cont_data)
 
 % Assuming ComputeCanada
 basedir = extractBefore(filename,['sub-' subid]);
@@ -37,11 +37,16 @@ if ~exist('cont_data','var')
     cont_data = ft_selectdata(cfg,cont_data);
     
     %% Use autoreject to find threshold to exclude from ICA
+    
+    % Filter at 1 Hz first for ICA later
+    cfg = []; cfg.hpfilter = 'yes'; cfg.hpfreq = 1;
+    data = ft_preprocessing(cfg,cont_data);
+
     cfg = []; cfg.event = 1:2*cont_data.fsample:floor(length(cont_data.time{1}));
     cfg.event(end) = []; cfg.epoch = [0 (2*cont_data.fsample)-1];
-    data = ft_epoch(cfg,cont_data);
+    data = ft_epoch(cfg,data);
     data.trialinfo = ones(length(data.sampleinfo),1);
-    
+
     save(fullfile(basedir,['sub-' subid],[subid '_cont_epochs.mat']),'data')
     
     pyscript = fopen([subid '_pyscript.py'],'w');
@@ -56,7 +61,7 @@ if ~exist('cont_data','var')
     
     bads = jsonread(fullfile(basedir,['sub-' subid],[subid '_badsegs.json']));
 
-    %% Remove bad segments and re-concatenate, filter at 1 Hz for ICA
+    %% Remove bad segments and re-concatenate
      
     cfg = []; cfg.trials = ~bads; 
     data = ft_selectdata(cfg,data);
@@ -64,12 +69,11 @@ if ~exist('cont_data','var')
     cont_data_clean = ft_concat(data);
     cont_data_clean = rmfield(cont_data_clean,'trialinfo');
     cont_data_clean = rmfield(cont_data_clean,'sampleinfo');
+            
+    %cfg = []; cfg.hpfilter = 'yes'; cfg.hpfreq = 1; 
+    %cont_data_clean = ft_preprocessing(cfg,cont_data_clean);
     
-        
-    cfg = []; cfg.hpfilter = 'yes'; cfg.hpfreq = 1; 
-    cont_data_clean = ft_preprocessing(cfg,cont_data_clean);
-    
-    cont_data_clean = ft_concat(cont_data_clean);
+    %cont_data_clean = ft_concat(cont_data_clean);
     
     cfg = []; cfg.channel = {'EOG','ECG'};
     refdata = ft_selectdata(cfg,cont_data_clean);
@@ -136,7 +140,7 @@ if ~exist('cont_data','var')
     
     cfg = []; cfg.component = except(1:62,comp_class.class.brain_ic); 
     cont_data = ft_rejectcomponent(cfg,comp,cont_data);
-    comp_class = []; comp = [];
+%    comp_class = []; comp = [];
     
 end
 
@@ -154,6 +158,7 @@ latencies = round(latencies/2);
 cfg = []; cfg.event = latencies; cfg.epoch = [-1.5*cont_data.fsample 1*cont_data.fsample]; %Epochs large in order to have trial padding
 data = ft_epoch(cfg,cont_data);
 data.trialinfo = values(find(values > 0));
+data.grad = data.hdr.grad;
 
 %% Use autoreject to remove or interpolate bad epochs
 save(fullfile(basedir,['sub-' subid],[subid '_ftdata.mat']),'data');

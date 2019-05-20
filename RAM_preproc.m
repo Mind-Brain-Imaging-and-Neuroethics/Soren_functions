@@ -12,6 +12,13 @@ end
 cfg.bsfilter = 'yes'; cfg.bsfreq = [57 63; 118 122; 178 182];
 cont_data = ft_preprocessing(cfg,cont_data);
 
+%% Resample to 500 Hz
+
+resamp_fact = 500/cont_data.fsample;
+
+cfg = []; cfg.resamplefs = 500;
+cont_data = ft_resampledata(cfg,cont_data);
+
 %% Find and remove bad channels
 % Reference: Tuyisenge et al. (2018). Automatic bad channel detection in intracranial
 % electroencephalographic recordings using ensemble machine learning. Clinical Neurophysiology.
@@ -43,12 +50,6 @@ ft_defaults
 cfg = []; cfg.channel = cont_data.label; cfg.channel(bIdx) = [];
 cont_data = ft_selectdata(cfg,cont_data);
 
-
-%% Resample to 500 Hz
-
-cfg = []; cfg.resamplefs = 500; 
-cont_data = ft_resampledata(cfg,cont_data);
-
 %% Epoch data
 if continuous
     % Epoch into arbitrary 2s segments
@@ -58,7 +59,7 @@ if continuous
     cont_data = [];
 else
     % Epoch according to provided latencies
-    cfg = []; cfg.event = latencies; cfg.epoch = [-1.5*cont_data.fsample 1.5*cont_data.fsample];
+    cfg = []; cfg.event = round(latencies*resamp_fact); cfg.epoch = [-1.5*cont_data.fsample 1.5*cont_data.fsample];
     data = ft_epoch(cfg,cont_data);
     cont_data = [];
 end
