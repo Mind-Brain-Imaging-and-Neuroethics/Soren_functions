@@ -42,12 +42,16 @@ end
 
 
 fields = fieldnames(datasetinfo);
+    badlabels = [];
+
 for c = 1:2
     tlock{c} = struct;
     tlock{c}.avg = [mean(data{c},2) mean(data{c},2) mean(data{c},2)];
     tlock{c}.trial = cat(3,data{c}',data{c}',data{c}');
     tlock{c}.time = [-1 0 1];
     tlock{c}.dimord = 'rpt_chan_time';
+    
+
     if isfield(datasetinfo,'elec') || isfield(datasetinfo,'grad')
         for q = 1:length(fields)
             tlock{c}.(fields{q}) = datasetinfo.(fields{q});
@@ -60,6 +64,11 @@ for c = 1:2
                 tlock{c}.label = datasetinfo.atlas.parcellationlabel;
             case 'yeo'
                 %do later
+        end
+    end
+    for cc = 1:length(tlock{c}.label)
+        if isempty(find(~isnan(tlock{c}.trial(cc,:,1))))
+            badlabels = [badlabels tlock{c}.label{cc}];
         end
     end
     %tlock{c}.label = datasetinfo.label;
@@ -145,6 +154,19 @@ else
             tri = [];
     end
 end
+
+for c = 1:2
+    cfg = []; cfg.channel = except(1:length(tlock{c}.label),Subset_index(tlock{c}.label,badlabels));
+    tlock{c} = ft_selectdata(cfg,tlock{c});
+end
+
+rmneighbs = zeros(1,length(neighbs));
+for c = 1:length(neighbs)
+   if ~isempty(find(strcmpi(neighbs(c).label,badlabels)))
+      rmneighbs(c) = 1;
+   end
+end
+neighbs(find(rmneighbs)) = [];
 
 cfg = []; cfg.method = 'montecarlo'; cfg.statistic = statfun;
 cfg.correctm = 'cluster'; cfg.clusteralpha = 0.025; cfg.clusterstatistic = 'maxsum';
