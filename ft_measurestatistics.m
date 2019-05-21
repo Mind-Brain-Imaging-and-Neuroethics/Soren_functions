@@ -7,10 +7,12 @@ function [stats] = ft_measurestatistics(cfg,data)
 % cfg: a config structure with the following options:
 %      test: the test you want to use, passed in as a string. Inputs
 %         include 'ttest' (for paired samples), 'ttest2' (for unpaired),
-%         'signrank','ranksum', and 'empirical'. Use empirical for comparing
-%         one outputs structure with a fourth dimension (either surrogates
-%         or subsamples) with another outputs structure with only three
-%         dimensions. (default = 'ranksum')
+%         'signrank', 'ranksum', 'anova', 'rmanova', 'kruskalwallis', 
+%         'friedman', and 'empirical'. Use empirical for comparing one 
+%         outputs structure with a fourth dimension (either surrogates or  
+%         subsamples) with another outputs structure with only three 
+%         dimensions. (default = 'ranksum' or 'kruskal-wallis' depending on
+%         the length of data)
 %      channel: the channels you want to test - must be an input that works
 %         with ft_channelselection. (default = 'all');
 %      multcompare: your method of multiple comparison correction.
@@ -41,7 +43,11 @@ function [stats] = ft_measurestatistics(cfg,data)
 %% Set defaults
 
 if ~cfgcheck(cfg,'test')
+    if length(data) == 2
     cfg.test = 'ranksum';
+    else
+       cfg.test = 'kruskalwallis'; 
+    end
 end
 
 if ~cfgcheck(cfg,'channel')
@@ -61,6 +67,8 @@ if ~cfgcheck(cfg,'effectsize')
             cfg.effectsize = 'auroc';
         case 'signrank'
             cfg.effectsize = 'rbcorr';
+        %case 'anova','kruskalwallis','friedman'
+        %    cfg.effectsize = 'psi';
     end
 end
 
@@ -74,6 +82,15 @@ if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'statfun')
             cfg.cluster.statfun = 'ft_statfun_ranksum';
         case 'signrank'
             cfg.cluster.statfun = 'ft_statfun_signrank';
+        case 'anova'
+            cfg.cluster.statfun = 'ft_statfun_indepsamplesF';
+        case 'rmanova'
+            cfg.cluster.statfun = 'ft_statfun_depsamplesF';
+            warning('Repeated-measures anova not currently supported')
+        case 'kruskalwallis'
+            cfg.cluster.statfun = 'ft_statfun_kruskal';
+        case 'friedman'
+            cfg.cluster.statfun = 'ft_statfun_friedman';
     end
 end
 
@@ -117,6 +134,14 @@ for i = 1:length(data{1}.meas)
                     stats{i}.p(c) = ranksum(data{1}.data(:,c,i),data{2}.data(:,c,i));
                 case 'signrank'
                     stats{i}.p(c) = signrank(data{1}.data(:,c,i),data{2}.data(:,c,i));
+                case 'anova'
+                    
+                case 'rmanova'
+                    
+                case 'kruskalwallis'
+                    
+                case 'friedman'
+                    
                 case 'empirical'
                     % finish later
             end

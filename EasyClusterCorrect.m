@@ -173,13 +173,23 @@ end
 neighbs(find(rmneighbs)) = [];
 
 cfg = []; cfg.method = 'montecarlo'; cfg.statistic = statfun;
-cfg.correctm = 'cluster'; cfg.clusteralpha = 0.025; cfg.clusterstatistic = 'maxsum';
-cfg.neighbours = neighbs; cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025;
+cfg.correctm = 'cluster'; cfg.clusterstatistic = 'maxsum';
+cfg.neighbours = neighbs; 
+
+if length(data) == 2
+cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025; 
+else
+   cfg.tail = 1; cfg.clustertail = 1; cfg.alpha = 0.05; cfg.clusteralpha = 0.05; 
+end
 cfg.numrandomization = opts.nrand; cfg.spmversion = 'spm12'; cfg.minnbchan = opts.minnbchan;
 
-design = zeros(1,size(data{1},2) + size(data{2},2));
-design(1,1:size(data{1},2)) = 1;
-design(1,(size(data{1},2)+1):(size(data{1},2) + size(data{2},2)))= 2;
+design = zeros(1,size(cat(2,data{:})));
+currindx = 1;
+for c = 1:length(data)
+design(1,currindx:size(data{c},2)) = 1;
+currindx = currindx+size(data{c},2);
+end
+%design(1,(size(data{1},2)+1):(size(data{1},2) + size(data{2},2)))= 2;
 
 cfg.design = design; cfg.ivar = 1;
 
