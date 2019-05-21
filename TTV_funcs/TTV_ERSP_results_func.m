@@ -127,6 +127,10 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     opts = struct;
     opts.nrand = 10000;
     
+if strcmpi(settings.datatype,'ECoG')
+opts.minnbchan = 0;
+end
+
     parfor q = 1:numbands
         opts = struct;
         opts.nrand = 10000;

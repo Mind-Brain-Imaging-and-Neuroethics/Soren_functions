@@ -12,9 +12,9 @@ end
 
 files = dir(['*.mat']);
 freqs = settings.tfparams.fbands;
-if isempty(gcp('nocreate'))
-    parpool(length(files))
-end
+%if isempty(gcp('nocreate'))
+%    parpool(length(files))
+%end
 
 foi = cell(1,length(files));
 
@@ -173,9 +173,9 @@ numbands = settings.nfreqs;
 
 aucindex = settings.aucindex;
 
-if isempty(gcp('nocreate'))
-    parpool(numbands)
-end
+%if isempty(gcp('nocreate'))
+%    parpool(numbands)
+%end
 
 datacalc = cell(1,settings.nfreqs);
 for c = 1:settings.nfreqs
@@ -195,7 +195,7 @@ else
 end
 
 for q = 1:numbands
-    
+    nbchan = length(timefreq_data{q}.label);
     timefreq_data{q}.matrix = cat(3,timefreq_data{q}.trial{:});
     
     SD_all = zeros(length(timefreq_data{q}.label),size(timefreq_data{q}.matrix,2));
@@ -315,8 +315,8 @@ for q = 1:numbands
             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
         tmpreal{2}(:) = squeeze(trapz(tmp,2));
         
-        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
-        datacalc{q}.t(c) = stats.t;
+%        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
+%        datacalc{q}.t(c) = stats.t;
         
         switch settings.units
             case 'prcchange'
@@ -483,12 +483,13 @@ if strcmpi(settings.datatype,'ECoG')
             end
             datacalc{q} = tmp;
         elseif strcmpi(settings.ecog.method,'roi') % organize data into ROIs
-            labels = ft_getlabels(datacalc{q},settings.ecog.atlas);
-            alllabels = settings.ecog.atlas.tissuelabel; % designed for AAL atlas
+            labels = ft_getlabels(timefreq_data{q},settings.datasetinfo.atlas);
+            alllabels = settings.datasetinfo.atlas.tissuelabel; % designed for AAL atlas
             tmpdata = struct;
             fields = fieldnames_recurse(datacalc{q});
             fields = cell_unpack(fields);
             for c = 1:length(fields)
+                tmp2 = [];
                 for cc = 1:length(alllabels)
                     tmp = getfield_nest(datacalc{q},fields{c});
                     if ~isempty(find(strcmpi(labels,alllabels{cc})))
@@ -497,7 +498,8 @@ if strcmpi(settings.datatype,'ECoG')
                         tmp = NaN(size(tmp)); % fill with NaNs for regions not represented
                         tmp = mean(tmp,1);
                     end
-                    tmp2(cc,:,:,:) = tmp;
+		    tmp2 = cat(1,tmp2,tmp);
+                    %tmp2(cc,:,:,:) = tmp;
                 end
                 tmpdata = assignfield_nest(tmpdata,fields{c},tmp2);
             end
