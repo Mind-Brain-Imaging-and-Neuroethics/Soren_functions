@@ -382,8 +382,11 @@ else
     end
     
     if ~cfgcheck(cfg.parallel,'pool','default')
-        delete(gcp('nocreate'))
-        parpool(cfg.parallel.pool)
+        currpool = gcp('nocreate');
+        if currpool.NumWorkers ~= cfg.parallel.pool
+            delete(gcp('nocreate'))
+            parpool(cfg.parallel.pool)
+        end
     end
     
     clear data

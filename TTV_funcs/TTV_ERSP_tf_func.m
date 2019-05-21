@@ -514,11 +514,11 @@ settings.pseudo.poststim = poststim_pseudo;
 settings.real.poststim = poststim_real;
 
 % Convert to single precision to save space
-fields = fieldnames_recurse(datacalc);
+fields = fieldnames_recurse(datacalc{1});
 fields = cell_unpack(fields);
 
 for c = 1:length(fields)
-    for cc = 1:6
+    for cc = 1:length(datacalc)
         tmp = getfield_nest(datacalc{cc},fields{c});
         datacalc{cc} = assignfield_nest(datacalc{cc},fields{c},single(tmp));
     end

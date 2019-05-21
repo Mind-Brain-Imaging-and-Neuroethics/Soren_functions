@@ -6,7 +6,7 @@ function ft_measurestatplot(cfg,data,stats)
 %
 % cfg: a structure with the following fields:
 %      datatype: 'eeg', 'meg', or 'source' (default = 'eeg')
-%      conds: names for the conditions to be plotted. Should be a cell
+%      cond: names for the conditions to be plotted. Should be a cell
 %         array of the same length as data (default = {'Condition
 %         1','Condition 2', etc}
 %      channel: a channel input that works with ft_channelselection
@@ -28,7 +28,7 @@ if ~cfgcheck(cfg,'datatype')
     cfg.datatype = 'eeg';
 end
 
-if ~cfgcheck(cfg,'conds')
+if ~cfgcheck(cfg,'cond')
     cfg.cond = repmat({'Condition'},1,length(data));
     for c = 1:length(cfg.cond)
         cfg.cond{c} = [cfg.cond{c} '_' num2str(c)];
@@ -44,7 +44,7 @@ if ~cfgcheck(cfg,'meas')
 end
 
 if ~cfgcheck(cfg,'plotmode')
-   cfg.plotmode = 'violin'; 
+   cfg.plotmode = 'topo'; 
 end
 
 %% Plotting topos

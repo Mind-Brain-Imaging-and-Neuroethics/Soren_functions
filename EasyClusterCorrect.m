@@ -78,7 +78,11 @@ for c = 1:2
 end
 
 if isfield(datasetinfo,'grad') || isfield(datasetinfo,'elec')
-    cfg = []; cfg.method = 'distance';
+    if length(datasetinfo.label) >= 32
+        cfg = []; cfg.method = 'distance';
+    else
+       cfg = []; cfg.method = 'triangulation';
+    end
     neighbs = ft_prepare_neighbours(cfg,datasetinfo);
 else
     switch datasetinfo.atlasname

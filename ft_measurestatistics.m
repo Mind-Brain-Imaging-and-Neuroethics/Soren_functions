@@ -50,6 +50,7 @@ end
 
 if ~cfgcheck(cfg,'multcompare')
     cfg.multcompare = 'cluster';
+    cfg.cluster = struct;
 end
 
 if ~cfgcheck(cfg,'effectsize')
@@ -99,7 +100,7 @@ for c = 1:length(data)
     
     %dimns = tokenize(data{1}.dimord,'_');
     %chans = find(strcmpi(dimns,'chan'));
-    data{c} = data{c}.data(:,chans,:,:);
+    data{c}.data = data{c}.data(:,chans,:,:);
 end
 
 %% Calculate stats
@@ -119,7 +120,7 @@ for i = 1:length(data{1}.meas)
                 case 'empirical'
                     % finish later
             end
-            stats{i}.effsize{c} = mes(data{1}(:,c,i),data{2}(:,c,i),cfg.effectsize);
+            stats{i}.effsize{c} = mes(data{1}.data(:,c,i),data{2}.data(:,c,i),cfg.effectsize);
         end
         
         switch cfg.multcompare
@@ -150,7 +151,7 @@ for i = 1:length(data{1}.meas)
             case 'empirical'
                 % finish later
         end
-        stats{i}.effsize = mes(mean(data{1}(:,:,i),2),mean(data{2}(:,:,i),2),cfg.effectsize);
+        stats{i}.effsize = mes(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2),cfg.effectsize);
     end
 end
 
