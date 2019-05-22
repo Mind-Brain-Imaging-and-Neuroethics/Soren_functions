@@ -163,7 +163,7 @@ end
         
         %amp_na_indexcorr_stats{q} = EasyClusterCorrect_spearman({allmeas{q}.nattvindex.amp,allmeas{q}.naerspindex.amp},settings.datasetinfo);
         %amp_na_ttv_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.nattvindex.amp,zeros(size(allmeas{q}.nattvindex.amp))},settings.datasetinfo);
-        amp_na_ersp_stats{q} = EasyClusterCorrect({allmeas{q}.naerspindex.amp,zeros(size(allmeas{q}.naerspindex.amp))},settings.datasetinfo,'ft_statfun_signrank',opts);
+        amp_na_ersp_stats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,zeros(size(allmeas{q}.naerspindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
         
         %cos_na_indexcorr_stats{q} = EasyClusterCorrect_spearman({allmeas{q}.nattvindex.cos,allmeas{q}.naerspindex.cos},settings.datasetinfo);
         %cos_na_ttv_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.nattvindex.cos,zeros(size(allmeas{q}.nattvindex.cos))},settings.datasetinfo);
@@ -196,8 +196,8 @@ end
     
     
     
-    alloutputs.fdrfields = {'dist.stats','amp_na.ersp.stats','ttversp.stats','ttversp.corrstats',...
-        'erp.stats','erp.corrstats','ttv.indexstats'};
+    alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
+        'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
 elseif strcmpi(settings.datatype,'ECoG') && strcmpi(settings.ecog.method,'mean')
     alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
         'erp.corr.p','dist.sigerspvitc'};
