@@ -29,7 +29,7 @@ function [stats] = EasyClusterCorrect(data,datasetinfo,statfun,opts)
 %      stats: a fieldtrip stats structure returned from
 %         ft_timelockstatistics
 
-if nargin < 3
+if nargin < 4
     opts = struct;
 end
 
@@ -67,8 +67,8 @@ for c = 1:2
         end
     end
     for cc = 1:length(tlock{c}.label)
-        if isempty(find(~isnan(tlock{c}.trial(cc,:,1))))
-            badlabels = [badlabels tlock{c}.label{cc}];
+        if isempty(find(~isnan(tlock{c}.trial(:,cc,1))))
+            badlabels = [badlabels {tlock{c}.label{cc}}];
         end
     end
     %tlock{c}.label = datasetinfo.label;
@@ -159,7 +159,8 @@ else
     end
 end
 
-for c = 1:2
+badlabels = unique(badlabels);
+for c = 1:length(data)
     cfg = []; cfg.channel = except(1:length(tlock{c}.label),Subset_index(tlock{c}.label,badlabels));
     tlock{c} = ft_selectdata(cfg,tlock{c});
 end
@@ -183,7 +184,7 @@ else
 end
 cfg.numrandomization = opts.nrand; cfg.spmversion = 'spm12'; cfg.minnbchan = opts.minnbchan;
 
-design = zeros(1,size(cat(2,data{:})));
+design = zeros(1,size(cat(2,data{:}),2));
 currindx = 1;
 for c = 1:length(data)
 design(1,currindx:size(data{c},2)) = 1;
