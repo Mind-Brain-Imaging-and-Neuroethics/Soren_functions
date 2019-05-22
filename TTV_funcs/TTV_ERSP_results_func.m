@@ -174,7 +174,7 @@ end
         %cos_na_ersp_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.naerspindex.cos,zeros(size(allmeas{q}.naerspindex.cos))},settings.datasetinfo);
         
         ttversp_stats{q} = EasyClusterCorrect({allmeas{q}.ttverspindex zeros(size(allmeas{q}.ttverspindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
-        ttversp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex.amp,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_spearman',opts);
+        ttversp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_spearman',opts);
         
         erp_stats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,zeros(size(allmeas{q}.naerpindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
         erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_spearman',opts);
