@@ -6,7 +6,7 @@ numbands = length(settings.tfparams.fbandnames);
 fbands = settings.tfparams.fbandnames;
 
 % Construct allmeas
-if ~exist(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'file') && strcmpi(settings.load_allmeas,'yes')
+if ~exist(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'file') || strcmpi(settings.load_allmeas,'no')
 files = dir('*calc.mat');
 for c = 1:length(files)
     fprintf([num2str(c) ' '])
@@ -33,7 +33,7 @@ for c = 1:length(files)
     end
 end
 save(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'allmeas','-v7.3')
-else
+elseif strcmpi(settings.load_allmeas,'yes')
 load(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']))
 end
 
