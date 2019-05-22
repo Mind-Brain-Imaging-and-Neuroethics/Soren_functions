@@ -150,8 +150,8 @@ opts.minnbchan = 0;
 end
 
     parfor q = 1:numbands
-        opts = struct;
-        opts.nrand = 10000;
+        %opts = struct;
+        %opts.nrand = 10000;
         
         ttv_indexstats{q} = EasyClusterCorrect({allmeas{q}.ttvindex zeros(size(allmeas{q}.ttvindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
         %ersp_corrstats{q} = EasyClusterCorrect_spearman({allmeas{q}.ttvindex,allmeas{q}.erspindex},settings.datasetinfo);
