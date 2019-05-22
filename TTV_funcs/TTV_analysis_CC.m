@@ -1,4 +1,4 @@
-function TTV_analysis(settings)
+function TTV_analysis_CC(settings)
 %settings: 
 %  datasetname: string, name for the dataset
 %  inputdir: string, directory where the relevant files are found - NO
@@ -48,11 +48,11 @@ function TTV_analysis(settings)
 
 
 alltime_pre = cputime;
-addpath('/group/northoff/share/fieldtrip-master')
+addpath('/project/def-gnorthof/sorenwt/fieldtrip-master')
 ft_defaults
-addpath('/group/northoff/share/eeglab14_1_2b')
-addpath(genpath('/home/soren/Documents/MATLAB'))
-rmpath(genpath('/home/soren/Documents/MATLAB/osl-core-master'))
+addpath('/project/def-gnorthof/sorenwt/eeglab14_1_2b')
+addpath(genpath('/project/def-gnorthof/sorenwt/MATLAB'))
+rmpath(genpath('/project/def-gnorthof/sorenwt/MATLAB/osl-core-master'))
 
 
 settings = SetDefaults(settings);
@@ -168,9 +168,5 @@ end
 % end
 
 settingsout.nfreqs = length(settingsout.tfparams.fbandnames);
-if isfield(settingsout.datasetinfo,'label')
 settingsout.nbchan = length(settingsout.datasetinfo.label);
-else
-settingsout.nbchan = length(settingsout.datasetinfo.atlas.tissuelabel);
-end
 end

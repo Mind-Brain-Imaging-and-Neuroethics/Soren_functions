@@ -3,6 +3,11 @@ function [data,cont_data,comp_class,iteration] = camcan_preproc(subid,filename,c
 % Assuming ComputeCanada
 basedir = extractBefore(filename,['sub-' subid]);
 basedir = char(basedir);
+if contains(basedir,'task')
+do_epoch = 1;
+elseif contains(basedir,'rest')
+do_epoch = 0;
+end
 %basedir = '/scratch/sorenwt/camcan/cc700/mri/pipeline/release004/BIDSsep/megmax_task';
 
 % Option to input the continuous data in case something goes wrong and you
@@ -126,7 +131,7 @@ if ~exist('cont_data','var')
 
     options.bandpass = [1 200];
     options.bandstop = [49 51; 99 101; 149 151; 199 201];
-    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',2,'numIC',62});
+    [iteration,~] = hcp_ICA_unmix(cont_data_clean,{'channel','MEG','ica_iterations',20,'numIC',62});
     comp_class = hcp_ICA_RMEG_classification(refdata,options,iteration,cont_data_clean);
     cont_data_clean = [];
     
@@ -145,7 +150,7 @@ if ~exist('cont_data','var')
 end
 
 %% Epoch data around stimuli
-
+if do_epoch
 event = ft_read_event(rawfile);
 types = extractfield(event,'type');
 tpoints = extractfield(event,'sample');
@@ -159,7 +164,13 @@ cfg = []; cfg.event = latencies; cfg.epoch = [-1.5*cont_data.fsample 1*cont_data
 data = ft_epoch(cfg,cont_data);
 data.trialinfo = values(find(values > 0));
 data.grad = data.hdr.grad;
-
+else
+    cfg = []; cfg.event = 1:2*cont_data.fsample:floor(length(cont_data.time{1}));
+    cfg.event(end) = []; cfg.epoch = [0 (2*cont_data.fsample)-1];
+    data = ft_epoch(cfg,cont_data);
+data.trialinfo = ones(length(data.sampleinfo),1);
+data.grad = cont_data.hdr.grad;
+end
 %% Use autoreject to remove or interpolate bad epochs
 save(fullfile(basedir,['sub-' subid],[subid '_ftdata.mat']),'data');
 data = [];
