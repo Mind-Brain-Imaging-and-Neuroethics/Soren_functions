@@ -37,9 +37,7 @@ aucindex = settings.aucindex;
 
 alloutputs = struct;
 
-nbchan = length(settings.datasetinfo.label);
-
-
+nbchan = settings.nbchan;
 
 %% Comparison of TTV and ERSP time course in each frequency band
 
@@ -72,11 +70,21 @@ for q = 1:numbands
     alloutputs.ersp.corr.r(:,q) = r(find(eye(nbchan)));
     alloutputs.ersp.corr.p(:,q) = p(find(eye(nbchan)));
     for c = 1:nbchan
+try
         alloutputs.ersp.pt.effsize.stats{c,q} = mes(abs((squeeze(trapz(allmeas{q}.naddersp.real(c,aucindex,2,:),2)) - squeeze(trapz(allmeas{q}.naddersp.pseudo(c,aucindex,2,:),2))))...
             ,abs((squeeze(trapz(allmeas{q}.naddersp.real(c,aucindex,1,:),2)) - squeeze(trapz(allmeas{q}.naddersp.pseudo(c,aucindex,1,:),2)))),'auroc');
         alloutputs.ersp.pt.effsize.vals(c,q) = alloutputs.ersp.pt.effsize.stats{c,q}.auroc;
+catch
+alloutputs.ersp.pt.effsize.stats{c,q} = NaN;
+alloutputs.ersp.pt.effsize.vals(c,q) = NaN;
+end
+try
         alloutputs.ersp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttverspindex(c,:),squeeze(trapz(allmeas{q}.ttversp.pseudo(c,aucindex,:),2)),'auroc');
         alloutputs.ersp.ttv.effsize.vals(c,q) = alloutputs.ersp.ttv.effsize.stats{c,q}.auroc;
+catch
+alloutputs.ersp.ttv.effsize.stats{c,q} = NaN;
+alloutputs.ersp.ttv.effsize.vals(c,q) = NaN;
+end
     end
 end
 
@@ -89,12 +97,22 @@ for q = 1:numbands
     alloutputs.erp.corr.r(:,q) = r(find(eye(nbchan)));
     alloutputs.erp.corr.p(:,q) = p(find(eye(nbchan)));
     for c = 1:nbchan
+try
         alloutputs.erp.pt.effsize.stats{c,q} = mes(abs((squeeze(trapz(allmeas{q}.nadderp.real(c,aucindex,2,:),2)) - squeeze(trapz(allmeas{q}.nadderp.pseudo(c,aucindex,2,:),2))))...
             ,abs((squeeze(trapz(allmeas{q}.nadderp.real(c,aucindex,1,:),2)) - squeeze(trapz(allmeas{q}.nadderp.pseudo(c,aucindex,1,:),2)))),'auroc');
         alloutputs.erp.pt.effsize.vals(c,q) = alloutputs.erp.pt.effsize.stats{c,q}.auroc;
-        alloutputs.erp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttvindex(c,:),squeeze(trapz(allmeas{q}.ttv.pseudo(c,aucindex,:),2)),'auroc');
+catch
+alloutputs.erp.pt.effsize.stats{c,q} = NaN;
+alloutputs.erp.pt.effsize.vals(c,q) = NaN;
+end        
+try
+alloutputs.erp.ttv.effsize.stats{c,q} = mes(allmeas{q}.ttvindex(c,:),squeeze(trapz(allmeas{q}.ttv.pseudo(c,aucindex,:),2)),'auroc');
         alloutputs.erp.ttv.effsize.vals(c,q) = alloutputs.erp.ttv.effsize.stats{c,q}.auroc;
-    end
+catch
+alloutputs.erp.ttv.effsize.stats{c,q} = NaN;
+alloutputs.erp.ttv.effsize.vals(c,q) = NaN;
+end   
+ end
 end
 
 %% Cluster stats

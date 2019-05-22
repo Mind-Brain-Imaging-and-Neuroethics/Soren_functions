@@ -164,5 +164,9 @@ end
 % end
 
 settingsout.nfreqs = length(settingsout.tfparams.fbandnames);
+if isfield(settingsout.datasetinfo,'label')
 settingsout.nbchan = length(settingsout.datasetinfo.label);
+else
+settingsout.nbchan = length(settingsout.datasetinfo.atlas.tissuelabel);
+end
 end

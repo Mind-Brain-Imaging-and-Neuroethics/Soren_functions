@@ -6,5 +6,9 @@ if dim == 1
 end
 
 for c = 1:size(datain1,1)
-   dataout(c) = signrank(datain1(c,:),datain2(c,:));
+if ~isempty(find(~isnan(datain1(c,:)))) && ~isempty(find(~isnan(datain2(c,:)))) 
+  dataout(c) = signrank(datain1(c,:),datain2(c,:));
+else
+dataout(c) = NaN;
+end
 end
