@@ -5,7 +5,7 @@ for c = 1:length(data.label)
     cfg.maxqueryrange = 3;
     try
         tmp = ft_volumelookup(cfg,atlas);
-        labels{c} = tmp.name(find(tmp.count == 1));
+        labels(c) = tmp.name(find(tmp.count == 1));
         if isempty(labels{c})
             labels{c} = 'no_label_found';
         end

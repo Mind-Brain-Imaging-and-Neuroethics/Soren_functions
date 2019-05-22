@@ -18,7 +18,7 @@ for c = 1:length(fields)
         pos(c,3) = test_str2num(contacts.(subid).contacts.(fields{c}).atlases.tal.z);
     end
 end
-if isfield(contacts.(subid).contacts.(fields{c}).atlases,'tal')
+if ~isfield(contacts.(subid).contacts.(fields{c}).atlases,'mni') && isfield(contacts.(subid).contacts.(fields{c}).atlases,'tal')
     pos = tal2icbm_spm(pos);
 end
 
