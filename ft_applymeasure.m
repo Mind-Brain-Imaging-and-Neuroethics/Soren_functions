@@ -65,6 +65,10 @@ function [outputs] = ft_applymeasure(cfg)
 %      parallel: a structure with the following options:
 %         use_parallel: use MATLAB parallel processing (default = 'no');
 %         pool: size of parallel pool (default = system default pool size)
+%      single: convert fieldtrip data to single precision to save memory
+%         (default = 'no')
+%      subsrange: calculate on only a given range of files - for use with
+%         clusters like ComputeCanada (default = 1:length(files))
 %
 %      Surrogating and subsampling:
 %
@@ -142,6 +146,8 @@ cfg = setdefault(cfg,'continue','no');
 
 cfg = setdefault(cfg,'concatenate','yes');
 
+cfg = setdefault(cfg,'single','no');
+
 if ~cfgcheck(cfg,'parallel')
     cfg.parallel.do_parallel = 'no';
 end
@@ -204,9 +210,12 @@ else
     
 end
 
+cfg = setdefault(cfg,'subsrange',outputs.startsub:length(files));
+
+
 if cfgcheck(cfg.parallel,'use_parallel','no')
     
-    for i = outputs.startsub:length(files)
+    for i = cfg.subsrange
         
         %% Load the data
         filename = files(i).name;
@@ -234,6 +243,10 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
                 data = allvars.(ftvar);
             end
             
+            if cfgcheck(cfg,'single','yes')
+                data = ft_struct2single(data);
+            end
+                
             if cfgcheck(cfg,'concatenate','yes')
                 data = ft_concat(data);
             end
@@ -395,7 +408,7 @@ else
     outdata = cell(1,length(files));
     
     
-    parfor i = outputs.startsub:length(files)
+    parfor i = cfg.subsrange
         
         %% Load the data
         filename = files(i).name;
