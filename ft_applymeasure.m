@@ -212,6 +212,9 @@ end
 
 cfg = setdefault(cfg,'subsrange',outputs.startsub:length(files));
 
+% Trim the sub range to be no larger than the number of files to avoid error 
+cfg.subsrange = cfg.subsrange(find(cfg.subsrange <= length(files)));
+
 
 if cfgcheck(cfg.parallel,'use_parallel','no')
     
