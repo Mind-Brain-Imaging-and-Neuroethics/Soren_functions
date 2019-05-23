@@ -53,7 +53,7 @@ ft_defaults
 addpath('/group/northoff/share/eeglab14_1_2b')
 addpath(genpath('/home/soren/Documents/MATLAB'))
 rmpath(genpath('/home/soren/Documents/MATLAB/osl-core-master'))
-
+rmpath(genpath('/home/soren/Documents/MATLAB/ImaGIN2'))
 
 settings = SetDefaults(settings);
 

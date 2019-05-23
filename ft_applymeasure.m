@@ -397,9 +397,9 @@ else
         outputs.grad = tmpdata.grad;
     end
     
-    if ~cfgcheck(cfg.parallel,'pool','default')
-        currpool = gcp('nocreate');
-        if currpool.NumWorkers ~= cfg.parallel.pool
+    currpool = gcp('nocreate');
+    if ~isempty(currpool) && ~cfgcheck(cfg.parallel,'pool','default') 
+        if currpool.NumWorkers ~= cfg.parallel.pool)
             delete(gcp('nocreate'))
             parpool(cfg.parallel.pool)
         end
