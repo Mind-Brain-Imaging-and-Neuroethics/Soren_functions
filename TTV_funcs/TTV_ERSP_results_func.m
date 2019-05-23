@@ -123,7 +123,7 @@ end
 % Do all the cluster stats at the end to minimize time transferring files
 % to workers
 
-if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
+if ~strcmpi(settings.datatype,'ECoG')
     
     ersp_corrstats = cell(1,numbands);
     itc_corrstats = cell(1,numbands);
@@ -202,7 +202,7 @@ end
     
     alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
         'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
-elseif strcmpi(settings.datatype,'ECoG') && strcmpi(settings.ecog.method,'mean')
+elseif strcmpi(settings.datatype,'ECoG')
     alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
         'erp.corr.p','dist.sigerspvitc'};
 end
