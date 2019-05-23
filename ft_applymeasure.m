@@ -399,7 +399,7 @@ else
     
     currpool = gcp('nocreate');
     if ~isempty(currpool) && ~cfgcheck(cfg.parallel,'pool','default') 
-        if currpool.NumWorkers ~= cfg.parallel.pool)
+        if currpool.NumWorkers ~= cfg.parallel.pool
             delete(gcp('nocreate'))
             parpool(cfg.parallel.pool)
         end
