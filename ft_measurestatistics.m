@@ -24,7 +24,7 @@ function [stats] = ft_measurestatistics(cfg,data)
 %      cluster: if you chose 'cluster' as the multiple comparison
 %         correction method, you can add optional inputs for the
 %         permutation test
-%              nrand: number of permutations (default = 10000)
+%              nrand: number of permutleations (default = 10000)
 %              minnbchan: minimum number of channels in a cluster (default
 %              = 1)
 %              statfun: the fieldtrip function to use for the permutation

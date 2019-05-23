@@ -44,7 +44,7 @@ end
 fields = fieldnames(datasetinfo);
     badlabels = [];
 
-for c = 1:2
+for c = 1:length(data)
     tlock{c} = struct;
     tlock{c}.avg = [mean(data{c},2) mean(data{c},2) mean(data{c},2)];
     tlock{c}.trial = cat(3,data{c}',data{c}',data{c}');
@@ -194,6 +194,14 @@ end
 
 cfg.design = design; cfg.ivar = 1;
 
+for c = 1:length(tlock)
+    newdata{c} = tlock{c}.trial(:,:,1)';
+end
+
+if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'UniformOutput',false)))
+   cfg.nanrand = 'yes'; 
+end
+
 %if isfield(datasetinfo,'grad')
 %    cfg.channel = {'MEG'};
 %else
@@ -204,6 +212,4 @@ cfg.channel = {'all'};
 cfg.latency = [0 0.5];
 cfg.parameter = 'trial';
 
-
-
-stats = ft_timelockstatistics(cfg,tlock{1},tlock{2});
+stats = ft_timelockstatistics(cfg,tlock{:});
