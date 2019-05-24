@@ -493,7 +493,7 @@ if strcmpi(settings.datatype,'ECoG')
                 for cc = 1:length(alllabels)
                     tmp = getfield_nest(datacalc{q},fields{c});
                     if ~isempty(find(strcmpi(labels,alllabels{cc})))
-                        tmp = nanmean(tmp(find(strcmpi(labels,alllabels{cc})),:,:,:),1); % for each field, take the mean across all electrodes with the same label
+                        tmp = nanmedian(tmp(find(strcmpi(labels,alllabels{cc})),:,:,:),1); % for each field, take the mean across all electrodes with the same label
                     else
                         tmp = NaN(size(tmp)); % fill with NaNs for regions not represented
                         tmp = mean(tmp,1);

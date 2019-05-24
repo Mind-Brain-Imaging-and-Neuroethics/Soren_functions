@@ -11,7 +11,7 @@ if iscell(design)
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        p(c) = signrank(dat(c,indices{c,1}),dat(c,indices{c,2}));
+        p(c) = signrank(find(~isnan(dat(c,indices{c,1}))),find(~isnan(dat(c,indices{c,2}))));
         if median(dat(c,indices{c,1})) > median(dat(c,indices{c,2}))
             p(c) = 1-p(c);
         else

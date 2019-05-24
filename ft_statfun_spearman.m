@@ -11,7 +11,7 @@ if iscell(design)
     
     p = ones(size(dat,1),1);
     for c = 1:size(dat,1)
-        [r,p(c)] = nancorr(dat(c,indices{c,1}),dat(c,indices{c,2}),'Type','Spearman');
+        [r,p(c)] = nancorr(find(~isnan(dat(c,indices{c,1})))',find(~isnan(dat(c,indices{c,2})))','Type','Spearman');
         if r > 0
             p(c) = 1-p(c);
         else

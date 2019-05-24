@@ -142,9 +142,9 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     erp_stats = cell(1,numbands);
     erp_corrstats = cell(1,numbands);
     
-    %if isempty(gcp('nocreate'))
-    %    parpool(numbands)
-    %end
+    if isempty(gcp('nocreate'))
+        parpool(numbands)
+    end
     
     opts = struct;
     opts.nrand = 10000;
@@ -153,12 +153,15 @@ if strcmpi(settings.datatype,'ECoG')
 opts.minnbchan = 0;
 end
 
-    for q = 1:numbands
+    parfor q = 1:numbands
         disp(['Processing ' settings.tfparams.fbandnames{q} ' band'])
         %opts = struct;
         %opts.nrand = 10000;
         
-        ttv_indexstats{q} = EasyClusterCorrect({allmeas{q}.ttvindex zeros(size(allmeas{q}.ttvindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
+        zeromat = zeros(size(allmeas{q}.ttvindex));
+        zeromat(find(isnan(allmeas{q}.ttvindex))) = NaN;
+        
+        ttv_indexstats{q} = EasyClusterCorrect({allmeas{q}.ttvindex zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
         %ersp_corrstats{q} = EasyClusterCorrect_spearman({allmeas{q}.ttvindex,allmeas{q}.erspindex},settings.datasetinfo);
         %itc_corrstats{q} = EasyClusterCorrect_spearman({allmeas{q}.ttvindex,allmeas{q}.itcindex},settings.datasetinfo);
         
@@ -168,16 +171,16 @@ end
         
         %amp_na_indexcorr_stats{q} = EasyClusterCorrect_spearman({allmeas{q}.nattvindex.amp,allmeas{q}.naerspindex.amp},settings.datasetinfo);
         %amp_na_ttv_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.nattvindex.amp,zeros(size(allmeas{q}.nattvindex.amp))},settings.datasetinfo);
-        amp_na_ersp_stats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,zeros(size(allmeas{q}.naerspindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
+        amp_na_ersp_stats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
         
         %cos_na_indexcorr_stats{q} = EasyClusterCorrect_spearman({allmeas{q}.nattvindex.cos,allmeas{q}.naerspindex.cos},settings.datasetinfo);
         %cos_na_ttv_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.nattvindex.cos,zeros(size(allmeas{q}.nattvindex.cos))},settings.datasetinfo);
         %cos_na_ersp_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.naerspindex.cos,zeros(size(allmeas{q}.naerspindex.cos))},settings.datasetinfo);
         
-        ttversp_stats{q} = EasyClusterCorrect({allmeas{q}.ttverspindex zeros(size(allmeas{q}.ttverspindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
+        ttversp_stats{q} = EasyClusterCorrect({allmeas{q}.ttverspindex zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
         ttversp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_spearman',opts);
         
-        erp_stats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,zeros(size(allmeas{q}.naerpindex))},settings.datasetinfo,'ft_statfun_signrank',opts);
+        erp_stats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
         erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_spearman',opts);
         
     end
