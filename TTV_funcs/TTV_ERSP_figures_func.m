@@ -33,8 +33,12 @@ end
 %% Figure 1a. Median split - schematic
 if strcmpi(settings.datatype,'MEG')
     plotsensor = find(strcmpi('MEG2011',settings.datasetinfo.label));
-else
+elseif strcmpi(settings.datatype,'EEG')
     plotsensor = find(strcmpi('Oz',settings.datasetinfo.label)); %just for Ivar data - where NA is strongest for schematic
+elseif strcmpi(settings.datatype,'ECoG') && strcmpi(settings.ecog.method,'roi')
+    plotsensor = 7;
+elseif strcmpi(settings.datatype,'ECoG')
+    plotsensor = 1;
 end
 
 trange = (prestim_pseudo(1)-settings.srate/5):(poststim_real(end));
@@ -47,40 +51,42 @@ t = linspace(-(poststim_real(1)-trange(1))*(1/settings.srate),length(poststim_re
 plotband = find(strcmpi(fbands,'Alpha'));
 
 subplot(2,1,1)
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4),1),...
+plot(t,nanmedian(nanmedian(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4),1),...
     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
 hold on
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4),1),...
+plot(t,nanmedian(nanmedian(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4),1),...
     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4))),'b--','LineWidth',2);
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4))),'r--','LineWidth',2);
+plot(t,abs(hilbert(nanmedian(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4))),'b--','LineWidth',2);
+plot(t,abs(hilbert(nanmedian(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4))),'r--','LineWidth',2);
 FixAxes(gca,14)
 ylim = get(gca,'YLim');
 line([0 0],ylim,'Color','k','LineWidth',2,'HandleVisibility','off')
-line([-1 -1],ylim,'Color','k','LineWidth',2,'LineStyle','--','HandleVisibility','off')
-patch([-1.2 -1 -1 -1.2],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
-patch([-0.2 0 0 -0.2],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
+linepos = t(find(trange == poststim_pseudo(1)));
+prestimlen = length(prestim_pseudo)/settings.srate;
+line([linepos linepos],ylim,'Color','k','LineWidth',2,'LineStyle','--','HandleVisibility','off')
+patch([linepos-prestimlen linepos linepos linepos-prestimlen],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
+patch([-prestimlen 0 0 -prestimlen],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
 set(gca,'YLim',ylim)
 xlabel('Time (s)')
 ylabel('Voltage (uV)')
 legend({'Pseudotrial prestim low','Pseudotrial prestim high'},'EdgeColor','none')
 
-warning('Hard-coded')
+%warning('Hard-coded')
 
 subplot(2,1,2)
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4),1),...
+plot(t,nanmedian(nanmedian(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4),1),...
     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
 hold on
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4),1),...
+plot(t,nanmedian(nanmedian(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4),1),...
     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4))),'b','LineWidth',2);
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4))),'r','LineWidth',2);
+plot(t,abs(hilbert(nanmedian(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4))),'b','LineWidth',2);
+plot(t,abs(hilbert(nanmedian(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4))),'r','LineWidth',2);
 FixAxes(gca)
 ylim = get(gca,'YLim');
 line([0 0],ylim,'Color','k','LineWidth',2,'HandleVisibility','off')
-line([-1 -1],ylim,'Color','k','LineWidth',2,'LineStyle','--','HandleVisibility','off')
-patch([-1.2 -1 -1 -1.2],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
-patch([-0.2 0 0 -0.2],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
+line([linepos linepos],ylim,'Color','k','LineWidth',2,'LineStyle','--','HandleVisibility','off')
+patch([linepos-prestimlen linepos linepos linepos-prestimlen],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
+patch([-prestimlen 0 0 -prestimlen],[ylim(1) ylim(1) ylim(2) ylim(2)],[0.3 0.3 0.3],'FaceAlpha',0.2,'EdgeColor','none','HandleVisibility','off');
 set(gca,'YLim',ylim)
 %warning('Hard-coded')
 xlabel('Time (s)')
@@ -95,13 +101,13 @@ close
 figure
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1)),'b',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1)),'r',0,1,'sem');
-stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
-%FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
-%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
-%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
+stdshade(t,squeeze(nanmedian(allmeas{plotband}.naddersp.real(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmedian(allmeas{plotband}.naddersp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
+stdshade(t,squeeze(nanmedian(allmeas{plotband}.naddersp.real(:,:,2,:),1)),'r',0,1,'sem');
+stdshade(t,squeeze(nanmedian(allmeas{plotband}.naddersp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
+%FillBetween(t,nanmedian(nanmedian(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
+%    nanmedian(nanmedian(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmedian(nanmedian(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
+%    nanmedian(nanmedian(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
 legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabelunits(settings)
@@ -114,13 +120,13 @@ close
 
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1))-...
-    squeeze(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,1,:),1)),'b',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1))-...
-    squeeze(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,2,:),1)),'r',0,1,'sem')
-FillBetween(t,nanmean(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),4),1)-...
-    nanmean(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),4),1)-...
-    nanmean(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,2,:),4),1));
+stdshade(t,squeeze(nanmedian(allmeas{plotband}.naddersp.real(:,:,1,:),1))-...
+    squeeze(nanmedian(allmeas{plotband}.naddersp.pseudo(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmedian(allmeas{plotband}.naddersp.real(:,:,2,:),1))-...
+    squeeze(nanmedian(allmeas{plotband}.naddersp.pseudo(:,:,2,:),1)),'r',0,1,'sem')
+FillBetween(t,nanmedian(nanmedian(allmeas{plotband}.naddersp.real(:,:,1,:),4),1)-...
+    nanmedian(nanmedian(allmeas{plotband}.naddersp.pseudo(:,:,1,:),4),1),nanmedian(nanmedian(allmeas{plotband}.naddersp.real(:,:,2,:),4),1)-...
+    nanmedian(nanmedian(allmeas{plotband}.naddersp.pseudo(:,:,2,:),4),1));
 legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabelunits(settings)
@@ -134,11 +140,11 @@ for c = 1:settings.nfreqs
     subplot(1,settings.nfreqs,c)
     t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.real(:,:,1,:),1)-...
-        nanmean(allmeas{c}.naddersp.pseudo(:,:,1,:),1)),'b',0.15,1,'sem');
+    stdshade(t,squeeze(nanmedian(allmeas{c}.naddersp.real(:,:,1,:),1)-...
+        nanmedian(allmeas{c}.naddersp.pseudo(:,:,1,:),1)),'b',0.15,1,'sem');
     
-    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.real(:,:,2,:),1)-...
-        nanmean(allmeas{c}.naddersp.pseudo(:,:,2,:),1)),'r',0.15,1,'sem');
+    stdshade(t,squeeze(nanmedian(allmeas{c}.naddersp.real(:,:,2,:),1)-...
+        nanmedian(allmeas{c}.naddersp.pseudo(:,:,2,:),1)),'r',0.15,1,'sem');
     title(fbands{c})
     %legend({'Corrected prestim low','Corrected prestim high'})
     xlabel('Time (s)')
@@ -179,12 +185,12 @@ close
 
 figure
 t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-prestimdata = nanmean(nanmean(prestimdata,3),1);
+prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmedian(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+    nanmedian(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+prestimdata = nanmedian(nanmedian(prestimdata,3),1);
 poststimdata = (allmeas{plotband}.ttversp.real);%./...
-%    nanmean(allmeas{4}.raw.ttversp(:,prestim_real,:),2); %REMOVE THIS IF YOU RECALCULATE
-poststimdata = nanmean(nanmean(poststimdata,3),1);
+%    nanmedian(allmeas{4}.raw.ttversp(:,prestim_real,:),2); %REMOVE THIS IF YOU RECALCULATE
+poststimdata = nanmedian(nanmedian(poststimdata,3),1);
 plotdata = [prestimdata poststimdata];
 FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
     zeros(1,length(poststimdata)));
@@ -200,16 +206,16 @@ FixAxes(gca)
 set(gca,'FontSize',20)
 
 %aucdata = 100*(allmeas{4}.ttversp.real)./...
-%    nanmean(allmeas{4}.raw.ttversp(:,prestim_real,:),2); %REMOVE THIS IF YOU RECALCULATE
+%    nanmedian(allmeas{4}.raw.ttversp(:,prestim_real,:),2); %REMOVE THIS IF YOU RECALCULATE
 topoplot_data = allmeas{plotband}.ttverspindex;
 p = alloutputs.ersp.ttv.sig(plotband,:);
 plotstats = alloutputs.ersp.ttv.stats{plotband};
 %plotstats = EasyClusterCorrect_signrank({topoplot_data,zeros(size(topoplot_data))},settings.datasetinfo);
 axes('position',[0.15 0.15 0.25 0.25])
 if strcmpi(settings.datatype,'EEG')
-cluster_topoplot(nanmean(topoplot_data,2),settings.layout,p,plotstats.mask)
+cluster_topoplot(nanmedian(topoplot_data,2),settings.layout,p,plotstats.mask)
 else
-   ft_cluster_topoplot(settings.layout,nanmean(topoplot_data,2),settings.datasetinfo.label,p,plotstats.mask); 
+   ft_cluster_topoplot(settings.layout,nanmedian(topoplot_data,2),settings.datasetinfo.label,p,plotstats.mask); 
 end
 colorbar('FontSize',12)
 if ~isempty(find(plotstats.mask))
@@ -225,7 +231,7 @@ close
 
 %% Figure 2b: Correlation of TTVERSP with ERSP NA index
 
-nicecorrplot(nanmean(allmeas{plotband}.naerspindex,1),nanmean(allmeas{plotband}.ttverspindex,1),{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'})
+nicecorrplot(nanmedian(allmeas{plotband}.naerspindex,1),nanmedian(allmeas{plotband}.ttverspindex,1),{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'})
 FixAxes(gca,20)
 axes('position',[0.15 0.15 0.25 0.25])
 if strcmpi(settings.datatype,'EEG')
@@ -256,13 +262,13 @@ p.pack('h',{50 50});
 p(1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1)),'b',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1)),'r',0,1,'sem');
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
-%FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
-%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
-%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
+stdshade(t,squeeze(nanmedian(allmeas{1}.nadderp.real(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmedian(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
+stdshade(t,squeeze(nanmedian(allmeas{1}.nadderp.real(:,:,2,:),1)),'r',0,1,'sem');
+stdshade(t,squeeze(nanmedian(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
+%FillBetween(t,nanmedian(nanmedian(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
+%    nanmedian(nanmedian(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmedian(nanmedian(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
+%    nanmedian(nanmedian(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
 legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabel('Voltage (uV)')
@@ -274,13 +280,13 @@ p(2).pack({[0.75 0.02 0.25 0.3]});
 p(2,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
-    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1))-...
-    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0,1,'sem')
-FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
-    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
-    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
+stdshade(t,squeeze(nanmedian(allmeas{1}.nadderp.real(:,:,1,:),1))-...
+    squeeze(nanmedian(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmedian(allmeas{1}.nadderp.real(:,:,2,:),1))-...
+    squeeze(nanmedian(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0,1,'sem')
+FillBetween(t,nanmedian(nanmedian(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
+    nanmedian(nanmedian(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmedian(nanmedian(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
+    nanmedian(nanmedian(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
 legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabel('Voltage (uV)')
@@ -289,9 +295,9 @@ FixAxes(gca,20)
 %axes('position',[0.75 0.135 0.15 0.2])
 p(2,2).select();
 if strcmpi(settings.datatype,'EEG')
-cluster_topoplot(nanmean(allmeas{1}.naerpindex,2),settings.layout,alloutputs.erp.pt.sig(1,:)',alloutputs.erp.pt.stats{1}.mask)
+cluster_topoplot(nanmedian(allmeas{1}.naerpindex,2),settings.layout,alloutputs.erp.pt.sig(1,:)',alloutputs.erp.pt.stats{1}.mask)
 elseif strcmpi(settings.datatype,'MEG')
-    ft_cluster_topoplot(settings.layout,nanmean(allmeas{1}.naerpindex,2),settings.datasetinfo.label,...
+    ft_cluster_topoplot(settings.layout,nanmedian(allmeas{1}.naerpindex,2),settings.datasetinfo.label,...
         alloutputs.erp.pt.sig(1,:)',alloutputs.erp.pt.stats{1}.mask);
 end
 if ~isempty(find(alloutputs.erp.pt.stats{1}.mask))
@@ -324,10 +330,10 @@ close
 
 figure
 t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-prestimdata = 100*(allmeas{1}.raw.sd(:,prestim_real,:)-nanmean(allmeas{1}.raw.sd(:,prestim_real,:),2))./...
-    nanmean(allmeas{1}.raw.sd(:,prestim_real,:),2);
-prestimdata = nanmean(nanmean(prestimdata,3),1);
-poststimdata = nanmean(nanmean(allmeas{1}.ttv.real,3),1)
+prestimdata = 100*(allmeas{1}.raw.sd(:,prestim_real,:)-nanmedian(allmeas{1}.raw.sd(:,prestim_real,:),2))./...
+    nanmedian(allmeas{1}.raw.sd(:,prestim_real,:),2);
+prestimdata = nanmedian(nanmedian(prestimdata,3),1);
+poststimdata = nanmedian(nanmedian(allmeas{1}.ttv.real,3),1)
 plotdata = [prestimdata poststimdata];
 FillBetween(t((length(prestimdata)+1):end),poststimdata,zeros(1,length(poststimdata)));
 hold on
@@ -348,11 +354,11 @@ p = alloutputs.erp.ttv.sig(1,:);
 %plotstats = EasyClusterCorrect_signrank({topoplot_data,zeros(size(topoplot_data))},settings.datasetinfo);
 axes('position',[0.15 0.15 0.25 0.25])
 if strcmpi(settings.datatype,'EEG')
-cluster_topoplot(nanmean(topoplot_data,2),settings.layout,p,plotstats.mask,2);
+cluster_topoplot(nanmedian(topoplot_data,2),settings.layout,p,plotstats.mask,2);
 elseif strcmpi(settings.datatype,'MEG')
-   ft_cluster_topoplot(settings.layout,nanmean(topoplot_data,2),settings.datasetinfo.label,p,plotstats.mask)
+   ft_cluster_topoplot(settings.layout,nanmedian(topoplot_data,2),settings.datasetinfo.label,p,plotstats.mask)
 end
-%topoplot(nanmean(topoplot_data,2),settings.layout,'emarker2',{find(plotstats.mask),'o','w',3,1})
+%topoplot(nanmedian(topoplot_data,2),settings.layout,'emarker2',{find(plotstats.mask),'o','w',3,1})
 colorbar('FontSize',12)
 if ~isempty(find(plotstats.mask))
     if isfield(plotstats,'posclusters') && ~isempty(plotstats.posclusters)
@@ -369,7 +375,7 @@ close
 %% Figure 4b. Correlation of NAindex with TTVindex
 
 figure
-nicecorrplot(nanmean(allmeas{1}.naerpindex,1)',nanmean(allmeas{1}.ttvindex,1)',{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'})
+nicecorrplot(nanmedian(allmeas{1}.naerpindex,1)',nanmedian(allmeas{1}.ttvindex,1)',{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'})
 axes('position',[0.18 0.15 0.25 0.25])
 if strcmpi(settings.datatype,'EEG')
 cluster_topoplot(alloutputs.erp.corr.r(:,1),settings.layout,alloutputs.erp.corr.p(:,1),alloutputs.erp.corr.stats{1}.mask)
@@ -401,9 +407,9 @@ for c = 1:settings.nfreqs
     ax(c) = subplot(3,settings.nfreqs,c);
     %t = linspace((1/settings.srate)*(min(allrange)-onset),(1/settings.srate)*(max(allrange)-onset),length(allrange));
     t = linspace(0,(1/settings.srate)*length(poststim_pseudo),length(poststim_pseudo));
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.sd(:,poststim_real,:),1)),'b',0.15,1);
+    stdshade(t,squeeze(nanmedian(allmeas{c}.raw.sd(:,poststim_real,:),1)),'b',0.15,1);
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.sd(:,poststim_pseudo,:),1)),'b--',0.15,1);
+    stdshade(t,squeeze(nanmedian(allmeas{c}.raw.sd(:,poststim_pseudo,:),1)),'b--',0.15,1);
     if c == 1
         ylabel('Across-trial SD')
     end
@@ -412,9 +418,9 @@ for c = 1:settings.nfreqs
     ax(c).YLabel.FontSize = 18;
     
     ax(c+settings.nfreqs) = subplot(3,settings.nfreqs,c+settings.nfreqs);
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.ersp(:,poststim_real,:),1)),'r',0.15,1)
+    stdshade(t,squeeze(nanmedian(allmeas{c}.raw.ersp(:,poststim_real,:),1)),'r',0.15,1)
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.ersp(:,poststim_pseudo,:),1)),'r--',0.15,1)
+    stdshade(t,squeeze(nanmedian(allmeas{c}.raw.ersp(:,poststim_pseudo,:),1)),'r--',0.15,1)
     if c == 1
         ylabel('Hilbert amplitude')
     end
@@ -423,9 +429,9 @@ for c = 1:settings.nfreqs
     
     
     ax(c+2*settings.nfreqs) = subplot(3,settings.nfreqs,c+2*settings.nfreqs);
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.itc(:,poststim_real,:),1)),'g',0.15,1)
+    stdshade(t,squeeze(nanmedian(allmeas{c}.raw.itc(:,poststim_real,:),1)),'g',0.15,1)
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.itc(:,poststim_pseudo,:),1)),'g--',0.15,1)
+    stdshade(t,squeeze(nanmedian(allmeas{c}.raw.itc(:,poststim_pseudo,:),1)),'g--',0.15,1)
     xlabel('Time (s)')
     
     if c == 1
@@ -458,7 +464,7 @@ figure
 colors = jet;
 newcolors = colors(round(linspace(1,64,settings.nfreqs)),:);
 set(groot,'defaultAxesColorOrder',newcolors)
-violinplot([squeeze(nanmean(alloutputs.ersp.distrealreal(:,:,:),1)) squeeze(nanmean(alloutputs.itc.distrealreal(:,:,:),1))],[])
+violinplot([squeeze(nanmedian(alloutputs.ersp.distrealreal(:,:,:),1)) squeeze(nanmedian(alloutputs.itc.distrealreal(:,:,:),1))],[])
 set(groot,'defaultAxesColorOrder',colors);
 set(gca,'XTickLabel',{'ERSP','ITC'},'XTick',[settings.nfreqs/2+0.5 3*settings.nfreqs/2+0.5])
 FixAxes(gca,20)
@@ -473,10 +479,10 @@ figure
 for c = 1:settings.nfreqs
     subplot(2,4,c)
     if strcmpi(settings.datatype,'MEG')
-        ft_cluster_topoplot(settings.layout,(nanmean(alloutputs.itc.distrealreal(:,:,c),2)-nanmean(alloutputs.ersp.distrealreal(:,:,c),2)),...
+        ft_cluster_topoplot(settings.layout,(nanmedian(alloutputs.itc.distrealreal(:,:,c),2)-nanmedian(alloutputs.ersp.distrealreal(:,:,c),2)),...
             settings.datasetinfo.label,alloutputs.dist.sigerspvitc(c,:),alloutputs.dist.stats{c}.mask);
     else
-        cluster_topoplot((nanmean(alloutputs.itc.distrealreal(:,:,c),2)-nanmean(alloutputs.ersp.distrealreal(:,:,c),2)),...
+        cluster_topoplot((nanmedian(alloutputs.itc.distrealreal(:,:,c),2)-nanmedian(alloutputs.ersp.distrealreal(:,:,c),2)),...
             settings.layout,alloutputs.ttv.sigerspvitc(c,:),alloutputs.ttv.diststats{c}.mask);
     end
     colormap(lkcmap2)
@@ -495,10 +501,10 @@ close
 %
 % figure
 % subplot(1,2,1)
-% nicecorrplot(nanmean(allmeas{1}.ttvindex(:,:),1),nanmean(allmeas{1}.erspindex(:,:),1),{'TTV Index','ERSP Index'});
+% nicecorrplot(nanmedian(allmeas{1}.ttvindex(:,:),1),nanmedian(allmeas{1}.erspindex(:,:),1),{'TTV Index','ERSP Index'});
 % FixAxes(gca)
 % subplot(1,2,2)
-% nicecorrplot(nanmean(allmeas{1}.ttvindex(:,:),1),nanmean(allmeas{1}.itcindex(:,:),1),{'TTV Index','ITC Index'});
+% nicecorrplot(nanmedian(allmeas{1}.ttvindex(:,:),1),nanmedian(allmeas{1}.itcindex(:,:),1),{'TTV Index','ITC Index'});
 % FixAxes(gca)
 % savefig('Fig5c.fig')
 
@@ -529,7 +535,7 @@ close
 %% Figure 6b: Electrode-based correlation with ERSPindex
 figure
 bandindex = find(strcmpi(fbands,'Alpha'));
-nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(bandindex,:,:)),1),nanmean(allmeas{bandindex}.erspindex,1),{'Resting-state relative alpha power','Alpha ERSP'})
+nicecorrplot(nanmedian(squeeze(restmeas.rel_bp.vals(bandindex,:,:)),1),nanmedian(allmeas{bandindex}.erspindex,1),{'Resting-state relative alpha power','Alpha ERSP'})
 FixAxes(gca)
 savefig('Fig6b.fig')
 close
@@ -559,7 +565,7 @@ close
 
 figure
 bandindex = find(strcmpi(fbands,'Alpha'));
-nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(bandindex,:,:)),1),nanmean(allmeas{bandindex}.naerspindex.amp,1),{'Resting-state relative alpha power','Alpha nonadditivity'})
+nicecorrplot(nanmedian(squeeze(restmeas.rel_bp.vals(bandindex,:,:)),1),nanmedian(allmeas{bandindex}.naerspindex.amp,1),{'Resting-state relative alpha power','Alpha nonadditivity'})
 FixAxes(gca)
 savefig('Fig6d.fig')
 close
@@ -573,9 +579,9 @@ opts.indvar = ['Rest' newline 'alpha'];
 opts.depvar = ['Poststim' newline 'alpha'];
 opts.mediator = ['Prestim' newline 'alpha'];
 opts.sobelp = restmeas.rel_bp.mediation{4}.sobel.p;
-mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
-    double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
-    double(nanmean(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
+mediationAnalysis0(double(nanmedian(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
+    double(squeeze(nanmedian(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
+    double(nanmedian(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
 savefig('Fig6e.fig')
 close
 end
@@ -687,7 +693,7 @@ p(2).pack({[0.02 0.02 0.3 0.3]})
 Fig2b = open('Fig2b.fig')
 figaxes = findobj('Parent',Fig2b,'Type','axes');
 p(2,1).select()
-nicecorrplot(nanmean(allmeas{plotband}.naerspindex,1),nanmean(allmeas{plotband}.ttverspindex,1),{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'},'Plot','r')
+nicecorrplot(nanmedian(allmeas{plotband}.naerspindex,1),nanmedian(allmeas{plotband}.ttverspindex,1),{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'},'Plot','r')
 FixAxes(p(2,1).axis,18)
 p(2,2).select(figaxes(1))
 set(p(2,2).axis,'FontSize',14)
@@ -747,7 +753,7 @@ figaxes = findobj('Parent',Fig4b,'Type','axes')
 p(2).pack()
 p(2).pack({[0.05 0.05 0.3 0.3]})
 p(2,1).select();
-nicecorrplot(nanmean(allmeas{1}.naerpindex,1)',nanmean(allmeas{1}.ttvindex,1)',{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'},'Plot','r')
+nicecorrplot(nanmedian(allmeas{1}.naerpindex,1)',nanmedian(allmeas{1}.ttvindex,1)',{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'},'Plot','r')
 FixAxes(p(2,1).axis,18)
 p(2,2).select(figaxes(1));
 set(p(2,2).axis,'FontSize',14)

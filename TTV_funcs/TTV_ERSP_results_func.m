@@ -7,7 +7,7 @@ fbands = settings.tfparams.fbandnames;
 
 % Construct allmeas
 if ~exist(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'file') || strcmpi(settings.load_allmeas,'no')
-files = dir('*calc.mat');
+files = dir([settings.datasetname '*calc.mat']);
 for c = 1:length(files)
     fprintf([num2str(c) ' '])
     load(files(c).name)
@@ -206,7 +206,7 @@ end
     
     alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
         'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
-elseif strcmpi(settings.datatype,'ECoG') && strcmpi(settings.ecog.method,'mean')
+elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean') || strcmpi(settings.ecog.method,'median'))
     alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
         'erp.corr.p','dist.sigerspvitc'};
 end

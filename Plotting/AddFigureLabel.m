@@ -1,4 +1,4 @@
-function AddFigureLabel(ax,string,offsetx,offsety)
+function AddFigureLabel(ax,string,topo,offsetx,offsety)
 
 outpos = ax.OuterPosition;
 inpos = ax.Position;
@@ -20,7 +20,12 @@ tbsize = get(a,'Position');
 tbsize = tbsize(3:4);
 delete(a)
 
+
+if ~exist('topo','var') || strcmpi(topo,'no')
 offset = [outpos(1) inpos(2)+inpos(4)-tbsize(2)+1/2*(outpos(2)+outpos(4)-inpos(2)-inpos(4))];
+else
+    offset = [outpos(1)-tbsize(1)*2 inpos(2)+inpos(4)+-tbsize(2)/2+1/2*(outpos(2)+outpos(4)-inpos(2)-inpos(4))];
+end
 
 offset(find(offset < 0)) = 0;
 

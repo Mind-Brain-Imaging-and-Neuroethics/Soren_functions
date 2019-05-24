@@ -482,6 +482,16 @@ if strcmpi(settings.datatype,'ECoG')
                 tmp = assignfield_nest(tmp,fields{c},nanmean(getfield_nest(datacalc{q},fields{c}),1));
             end
             datacalc{q} = tmp;
+            
+        elseif strcmpi(settings.ecog.method,'median')
+            fields = fieldnames_recurse(datacalc{q});
+            fields = cell_unpack(fields);
+            tmp = struct;
+            for c = 1:length(fields)
+                tmp = assignfield_nest(tmp,fields{c},nanmedian(getfield_nest(datacalc{q},fields{c}),1));
+            end
+            datacalc{q} = tmp;
+            
         elseif strcmpi(settings.ecog.method,'roi') % organize data into ROIs
             labels = ft_getlabels(timefreq_data{q},settings.datasetinfo.atlas);
             alllabels = settings.datasetinfo.atlas.tissuelabel; % designed for AAL atlas
