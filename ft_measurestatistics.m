@@ -227,6 +227,7 @@ for i = 1:length(data{1}.meas)
                 % not implemented yet
         end
     end
+    stats{i}.cfg = cfg;
 end
 
 

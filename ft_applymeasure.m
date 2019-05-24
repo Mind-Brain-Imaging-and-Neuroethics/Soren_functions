@@ -103,6 +103,8 @@ function [outputs] = ft_applymeasure(cfg)
 %         used later in ft_measurestatistics
 %      chanlocs: if eeglab data were input, this is the chanlocs structure
 %         of the data - to be used later in ft_measurestatplot
+%      cfg: the cfg structure used by the function, including the various
+%         defaults that were set
 
 
 
@@ -353,6 +355,8 @@ if cfgcheck(cfg.parallel,'use_parallel','no')
             % finish later
         end
         
+        outputs.cfg = cfg;
+        
         %% Save after every subject so you can continue later
         if ~cfgcheck(cfg,'outfile','none')
             try
@@ -523,6 +527,7 @@ else
     
     outputs.data = cat(1,outdata{:});
     outputs.sub = sub;
+    outputs.cfg = cfg;
     
     if ~cfgcheck(cfg,'outfile','none')
         try
