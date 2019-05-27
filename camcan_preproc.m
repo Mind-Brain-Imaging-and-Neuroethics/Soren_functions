@@ -160,7 +160,7 @@ values = allvalues(find(strcmpi(types,'Trigger')));
 latencies(find(values < 0)) = []; 
 latencies = round(latencies/2);
 
-cfg = []; cfg.event = latencies; cfg.epoch = [-1.5*cont_data.fsample 1*cont_data.fsample]; %Epochs large in order to have trial padding
+cfg = []; cfg.event = latencies; cfg.epoch = [-2*cont_data.fsample 1.5*cont_data.fsample]; %Epochs large in order to have trial padding
 data = ft_epoch(cfg,cont_data);
 data.trialinfo = values(find(values > 0));
 data.grad = data.hdr.grad;
