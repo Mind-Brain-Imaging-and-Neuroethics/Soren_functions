@@ -36,7 +36,7 @@ parfor i = 1:length(files)
                 if ~isempty(freqs{q})
                     cfg = [];
                     if isnan(freqs{q}(1))
-                        cfg.lpfilter = 'yes'; cfg.lpfreq = freqs{q}(2);
+                        cfg.lpfilter = 'yes'; cfg.lpfreq = freqs{q}(2); cfg.lpinstabilityfix = 'split';
                     else
                         cfg.bpfilter = 'yes'; cfg.bpfreq = freqs{q}; cfg.bpinstabilityfix = 'split';
                     end
