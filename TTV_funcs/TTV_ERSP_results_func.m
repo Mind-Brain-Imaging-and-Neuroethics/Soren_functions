@@ -31,6 +31,7 @@ for c = 1:length(files)
     else
         allmeas = datacalc;
     end
+    allmeas{1}.filesorder{c} = files(c).name;
 end
 save(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'allmeas','-v7.3')
 elseif strcmpi(settings.load_allmeas,'yes')
@@ -211,6 +212,7 @@ elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean'
         'erp.corr.p','dist.sigerspvitc'};
 end
 
+alloutputs.filesorder = allmeas{1}.filesorder;
 
 save([settings.outputdir '/' settings.datasetname '_results.mat'],'alloutputs','-v7.3')
 
