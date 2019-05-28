@@ -1,20 +1,46 @@
-function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atlas,noise_avg)
+function [roidata,voxeldata,sources] = SourceEst_HCP(data,subid,atlas)
+
+headmodel = parload(['/data/hcp/meg/' subid '/anatomy/' subid '_MEG_anatomy_headmodel.mat'],'headmodel');
+sourcemodel = parload(['/data/hcp/meg/' subid '/anatomy/' subid '_MEG_anatomy_sourcemodel_2d.mat'],'sourcemodel2d');
+
+% %defining trials for noise data
+cfg = [];
+cfg.dataset = ['/data/hcp/meg/' subid '/unprocessed/1-Rnoise/4D/c,rfDC'];
+cfg.trialdef.trialDuration = 2;
+trl = trialfun_Restin(cfg);
+
+%reading noise data, band stop filtering for line noise
+cfg = []; cfg.dataset = ['/data/hcp/meg/' subid '/unprocessed/1-Rnoise/4D/c,rfDC'];
+cfg.bsfilter = 'yes'; cfg.bsfreq = [59 119 179 239 299;61 121 181 241 301];
+cfg.trl = trl;
+
+%resampling noise data
+noisedata = ft_preprocessing(cfg);
+cfg = []; cfg.resamplefs = 508.6275; cfg.detrend = 'no';
+noisedata = ft_resampledata(cfg,noisedata);
+
+%calculating noise covariance
+cfg = [];
+cfg.covariance = 'yes';
+cfg.covariancewindow = [-Inf Inf];
+cfg.channel = data.label;
+noise_avg = ft_timelockanalysis(cfg,noisedata);
 
 %[~,ftpath] = ft_version;
-ftpath = '/group/northoff/share/fieldtrip-master';
+%ftpath = '/group/northoff/share/fieldtrip-master';
 
 % % Convert the data to Fieldtrip format
 % data = eeglab2fieldtrip(EEG,'preprocessing','none');
 
 % Load headmodel, sourcemodel, atlas
-
-if isstr(headmodel)
-    load(headmodel) %variable is "vol"
-end
-
-if isstr(sourcemodel)
-    sourcemodel = ft_read_headshape(sourcemodel);
-end
+% 
+% if isstr(headmodel)
+%     load(headmodel) %variable is "vol"
+% end
+% 
+% if isstr(sourcemodel)
+%     sourcemodel = ft_read_headshape(sourcemodel);
+% end
 
 if isstr(atlas)
     atlas = ft_read_atlas(atlas);
