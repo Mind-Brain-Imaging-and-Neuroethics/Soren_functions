@@ -17,12 +17,11 @@ if ~exist('cont_data','var')
     %% First do movement compensation in MNE somehow
     
     %% Load in the file
-    rawfile = filename;
-    hdr = ft_read_header(rawfile);
+    hdr = ft_read_header(filename);
     
     
-    cfg = []; cfg.dataset = rawfile;
-    cfg.hdr = rawfile;
+    cfg = []; cfg.dataset = filename;
+    cfg.hdr = filename;
     cont_data = ft_preprocessing(cfg);
     
     %% Filter
@@ -151,7 +150,7 @@ end
 
 %% Epoch data around stimuli
 if do_epoch
-event = ft_read_event(rawfile);
+event = ft_read_event(filename);
 types = extractfield(event,'type');
 tpoints = extractfield(event,'sample');
 latencies = tpoints(find(strcmpi(types,'Trigger')));
