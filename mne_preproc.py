@@ -8,7 +8,7 @@ def autoreject_log(ft_file,out_file):
     epochs = mne.read_epochs_fieldtrip(ft_file,info=None)
     
     # Resample the data - we're only going to use the thresholds
-    epochs.resample(400,npad='auto')
+    #epochs.resample(400,npad='auto')
     
     # Apply autoreject to find bad channels
     ar = autoreject.AutoReject()
