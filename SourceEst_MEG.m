@@ -44,6 +44,7 @@ end
 % Create forward model
 cfg = []; cfg.grad = data.grad; cfg.channel = {'MEG'};
 sourcemodel = ft_convert_units(sourcemodel,'mm');
+headmodel = ft_convert_units(headmodel,'mm');
 cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
 cfg.headmodel = headmodel;
 leadfield = ft_prepare_leadfield(cfg);
@@ -51,7 +52,6 @@ leadfield = ft_prepare_leadfield(cfg);
 % % Select only the MEG channels
 cfg = []; cfg.channel = {'MEG'};
 data = ft_selectdata(cfg,data);
-clear data
 
 % If continuous, epoch into arbitrary 2-second segments
 if length(data.trial) == 1

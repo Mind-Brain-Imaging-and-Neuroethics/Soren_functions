@@ -42,9 +42,9 @@ noise_avg = ft_timelockanalysis(cfg,noisedata);
 %     sourcemodel = ft_read_headshape(sourcemodel);
 % end
 
-if isstr(atlas)
-    atlas = ft_read_atlas(atlas);
-end
+% if isstr(atlas)
+%     atlas = ft_read_atlas(atlas);
+% end
 
 % % Interpolate template surface on atlas
 % cfg = [];
