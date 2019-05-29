@@ -4,7 +4,7 @@ function [roidata,voxeldata,sources] = SourceEst_MEG(data,headmodel,sourcemodel,
 %      information
 %    atlaslabel: the field of the atlas containing the labels for each
 %      region
-%    do_interp: interpolate the sourcemodel onto the atlas ('yes' or 'no')
+%    interp: interpolate the sourcemodel onto the atlas ('yes' or 'no')
 
 
 %[~,ftpath] = ft_version;
@@ -34,7 +34,7 @@ if isstr(atlas)
 end
 
 % % Interpolate template surface on atlas
-if strcmpi(opts.do_interp,'yes')
+if strcmpi(opts.interp,'yes')
     cfg = [];
     cfg.interpmethod = 'nearest';
     cfg.parameter = opts.atlasparam;
