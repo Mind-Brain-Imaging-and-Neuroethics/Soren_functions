@@ -1,6 +1,6 @@
 function TTV_ERSP_behaviour_func(settings)
 
-load([settings.outputdir '/' settings.datasetname '_calc.mat'])
+load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
 load([settings.outputdir '/' settings.datasetname '_results.mat'])
 if isfield(settings,'rest')
     load([settings.outputdir '/' settings.datasetname '_restmeas.mat'])
@@ -31,27 +31,39 @@ for i = 1:length(settings.behav)
     switch settings.behav{i}.indvar
         case 'erspindex'
             if strcmpi(settings.behav{i}.design,'within')
-                files = dir('*freq_filtered*');
-                for q = 1:length(files)
-                    timefreq_data = parload(files(q).name,'timefreq_data');
+                files = dir(fullfile(settings.inputdir,settings.files));
+                
+                indvar = cell(1,length(files));
+                parfor q = 1:length(files)
+                    if strcmpi(settings.datatype,'EEG')
+                        EEG = pop_loadset(files(q).name,files(q).folder);
+                        data = eeglab2fieldtrip(EEG,'preprocessing','none');
+                        EEG = [];
+                    else
+                        data = parload(fullfile(files(q).folder,files(q).name),'data');
+                    end
+                    
+                    timefreq_data = [];
+                    timefreq_data = NA_get_tfdata(settings,data);
                     for qq = 1:length(foi)
                         for c = 1:length(timefreq_data{foi(qq)}.trial)
                             ersp_real = abs(timefreq_data{foi(qq)}.trial{c}(:,poststim_real)) - ...
                                 mean(abs(timefreq_data{foi(qq)}.trial{c}(:,prestim_real)),2);
-                            ersp_pseudo = abs(timefreq_data{foi(qq)}.trial{c}(:,poststim_pseudo)) - ...
-                                mean(abs(timefreq_data{foi(qq)}.trial{c}(:,prestim_pseudo)),2);
+                            %ersp_pseudo = abs(timefreq_data{foi(qq)}.trial{c}(:,poststim_pseudo)) - ...
+                             %   mean(abs(timefreq_data{foi(qq)}.trial{c}(:,prestim_pseudo)),2);
                             switch settings.units
                                 case 'prcchange'
-                                    ersp_pseudo = 100*ersp_pseudo./mean(abs(timefreq_data{foi(qq)}.trial{c}(:,prestim_pseudo)),2);
+                                  %  ersp_pseudo = 100*ersp_pseudo./mean(abs(timefreq_data{foi(qq)}.trial{c}(:,prestim_pseudo)),2);
                                     ersp_real = 100*ersp_real./mean(abs(timefreq_data{foi(qq)}.trial{c}(:,prestim_real)),2);
                                 case 'zscore'
-                                    ersp_pseudo = zscore(ersp_pseudo,0,2);
+                                   % ersp_pseudo = zscore(ersp_pseudo,0,2);
                                     ersp_real = zscore(ersp_real,0,2);
                                 case 'log'
-                                    ersp_pseudo = 10*log10(ersp_pseudo);
+                                    %ersp_pseudo = 10*log10(ersp_pseudo);
                                     ersp_real = 10*log10(ersp_real);
                             end
-                            indvar{q}(c,:,qq) = trapz(ersp_real - ersp_pseudo,2);
+                            indvar{q}(c,:,qq) = trapz(ersp_real,2);
+                            %indvar{q}(c,:,qq) = trapz(ersp_real-ersp_pseudo,2);
                         end
                     end
                 end
@@ -84,7 +96,7 @@ for i = 1:length(settings.behav)
                 end
             end
     end
-    save([settings.outputdir '/indvar.mat'],'indvar')
+    save([settings.outputdir '/indvar' num2str(i) '.mat'],'indvar')
     %% Do the analysis
     if strcmpi(settings.behav{i}.design,'within')
         if islogical(behav_data{1}) || (length(unique(behav_data{1})) == 2)
@@ -92,8 +104,8 @@ for i = 1:length(settings.behav)
         else
             settings.behav{i}.datatype = 'continuous';
         end
-       % delete(gcp('nocreate'))
-       % parpool
+        % delete(gcp('nocreate'))
+        % parpool
         for q = 1:length(foi)
             allindvar = [];
             nbtrials = cell2mat(cellfun(@(datain)size(datain,1),indvar,'UniformOutput',false));

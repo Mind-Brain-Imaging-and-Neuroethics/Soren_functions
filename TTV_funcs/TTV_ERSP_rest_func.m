@@ -1,14 +1,14 @@
 function TTV_ERSP_rest_func(settings)
 
 cd(settings.rest.restdir)
-load([settings.outputdir '/' settings.datasetname '_calc.mat'])
+load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
 load([settings.outputdir '/' settings.datasetname '_results.mat'])
 
-for c = 1:length(settings.tfparams.fbands)
-    if isempty(settings.tfparams.fbands{c})
-        settings.tfparams.fbands{c} = settings.rest.bandpass;
-    end
-end
+%for c = 1:length(settings.tfparams.fbands)
+%    if isempty(settings.tfparams.fbands{c})
+%        settings.tfparams.fbands{c} = settings.rest.bandpass;
+%    end
+%end
 
 %eeglab
 if isfield(settings.rest,'preprocparams')
@@ -42,8 +42,14 @@ parfor i = 1:length(files)
     end
     
     for c = 1:length(settings.tfparams.fbandnames)
-        for cc = 1:length(data.label)
-            bp{i}(c,cc) = bandpower(data.trial{1}(cc,:),data.fsample,settings.tfparams.fbands{c});
+        fband = settings.tfparams.fbands{c};
+if isempty(fband)
+fband = settings.rest.bandpass;
+elseif ~isempty(find(isnan(fband)))
+fband(find(isnan(fband))) = settings.rest.bandpass(1);
+end
+	for cc = 1:length(data.label)
+            bp{i}(c,cc) = bandpower(data.trial{1}(cc,:),data.fsample,fband);
             rel_bp{i}(c,cc) = bp{i}(c,cc)/bandpower(data.trial{1}(cc,:),data.fsample,settings.rest.bandpass);
         end
     end
@@ -135,18 +141,22 @@ parfor q = 1:settings.nfreqs
     
     %bp_prestim_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.bp.vals(q,:,:)),restmeas.prestimamp.raw{q}},settings.datasetinfo);
     rel_bp_prestim_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),restmeas.prestimamp.rel{q}},settings.datasetinfo,opts2);
-%     if isfield(bp_prestim_stats{q},'posclusters') && ~isempty(find(extractfield(bp_prestim_stats{q}.posclusters,'prob') < 0.05))
+%     %if isfield(bp_prestim_stats{q},'posclusters') && ~isempty(find(extractfield(bp_prestim_stats{q}.posclusters,'prob') < 0.05))
 %         %         for c = 1:nbchan
 %         %             bp_mediation_raw{q}(c) = mediationAnalysis0(squeeze(allmeas{q}.erspindex(c,:)),squeeze(restmeas.bp.vals(q,c,:)),squeeze(restmeas.prestimamp{q}(c,:)),opts);
 %         %         end
 %         %         bp_mediation_cluster{q} = EasyClusterCorrect_mediation({squeeze(restmeas.bp.vals(q,:,:)) allmeas{q}.erspindex},...
 %         %             restmeas.prestimamp{q},settings.datasetinfo);
-%         bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(bp_prestim_stats{q}.mask),:),1))',...
-%             double(squeeze(mean(restmeas.bp.vals(q,find(bp_prestim_stats{q}.mask),:),2))),...
-%             double(mean(restmeas.prestimamp.raw{q}(find(bp_prestim_stats{q}.mask),:),1))',opts);
-%     end
-    if (isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))) || ...
-            (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
+%      %   bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(bp_prestim_stats{q}.mask),:),1))',...
+%      %       double(squeeze(mean(restmeas.bp.vals(q,find(bp_prestim_stats{q}.mask),:),2))),...
+%      %       double(mean(restmeas.prestimamp.raw{q}(find(bp_prestim_stats{q}.mask),:),1))',opts);
+%     %end
+    if isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(rel_bp_prestim_stats{q}.posclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))
+         rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
+            double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
+            double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
+	end
+	if (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(rel_bp_prestim_stats{q}.negclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
         %         for c = 1:nbchan
         %             bp_mediation_raw{q}(c) = mediationAnalysis0(squeeze(allmeas{q}.erspindex(c,:)),squeeze(restmeas.bp.vals(q,c,:)),squeeze(restmeas.prestimamp{q}(c,:)),opts);
         %         end

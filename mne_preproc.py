@@ -24,9 +24,10 @@ def autoreject_log(ft_file,out_file):
     
     return
 
-def autoreject_epochs(ft_file,out_file):
+def autoreject_epochs(ft_file,out_file,log_file):
     import mne
     import autoreject
+    import json
 
     # Load the file
     #info = mne.io.read_info(raw_file)
@@ -37,7 +38,14 @@ def autoreject_epochs(ft_file,out_file):
 
     # Apply autoreject    
     ar = autoreject.AutoReject()
-    epochs = ar.fit_transform(epochs)
+    epochs,reject_log = ar.fit_transform(epochs,return_log=True)
+
+    reject_log = reject_log.bad_epochs
+    reject_log = reject_log.tolist()
+
+    # Write to disk
+    with open(log_file,'w') as f:
+        json.dump(reject_log,f)
     
     #Save data to file
     epochs.save(out_file)

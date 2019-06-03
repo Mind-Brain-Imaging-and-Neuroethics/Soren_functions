@@ -1,7 +1,8 @@
 function [settings] = TTV_ERSP_tf_func(settings)
 
+files = dir(settings.files);
+
 if strcmpi(settings.datatype,'EEG')
-    files = dir('*.set');
     addpath('/group/northoff/share/fieldtrip-master/external/eeglab')
     for c = 1:length(files)
         EEG = pop_loadset('filename',files(c).name,'filepath',settings.inputdir);
@@ -10,7 +11,6 @@ if strcmpi(settings.datatype,'EEG')
     end
 end
 
-files = dir(['*.mat']);
 freqs = settings.tfparams.fbands;
 %if isempty(gcp('nocreate'))
 %    parpool(length(files))
@@ -24,8 +24,10 @@ parfor i = 1:length(files)
     timefreq_data = cell(1,length(freqs));
     switch settings.tfparams.method
         case 'hilbert'
-            cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
-            data = ft_resampledata(cfg,data);
+            if data.fsample ~= settings.srate
+                cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
+                data = ft_resampledata(cfg,data);
+            end
             
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
                 cfg = []; cfg.trials = settings.tfparams.trials;

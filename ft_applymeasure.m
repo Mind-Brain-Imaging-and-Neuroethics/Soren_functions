@@ -49,7 +49,7 @@ function [outputs] = ft_applymeasure(cfg)
 %            [1.1:0.05:1.95 2.05:0.05:2.9], as in Muthukumaraswamy and
 %            Liley, 2017)
 %         save_specs: save spectra output from IRASA to make future
-%            computations faster (default = 'no')
+%            computations faster (default = 'yes')
 %         load_specs: load precomputed spectra from a previous run - set
 %            'no' if you've changed some settings (default = 'yes')
 %
@@ -63,7 +63,7 @@ function [outputs] = ft_applymeasure(cfg)
 %      concatenate: concatenate resting-states organized into trials
 %         (default = 'yes')
 %      parallel: a structure with the following options:
-%         use_parallel: use MATLAB parallel processing (default = 'no');
+%         do_parallel: use MATLAB parallel processing (default = 'no');
 %         pool: size of parallel pool (default = system default pool size)
 %      single: convert fieldtrip data to single precision to save memory
 %         (default = 'no')
@@ -141,7 +141,7 @@ elseif cfgcheck(cfg.irasa,'do_irasa','yes')
     cfg.irasa = setdefault(cfg.irasa,'winsize',10);
     cfg.irasa = setdefault(cfg.irasa,'overlap',0);
     cfg.irasa = setdefault(cfg.irasa,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
-    cfg.irasa = setdefault(cfg.irasa,'save_specs','no');
+    cfg.irasa = setdefault(cfg.irasa,'save_specs','yes');
 end
 
 cfg = setdefault(cfg,'continue','no');
@@ -218,7 +218,7 @@ cfg = setdefault(cfg,'subsrange',outputs.startsub:length(files));
 cfg.subsrange = cfg.subsrange(find(cfg.subsrange <= length(files)));
 
 
-if cfgcheck(cfg.parallel,'use_parallel','no')
+if cfgcheck(cfg.parallel,'do_parallel','no')
     
     for i = cfg.subsrange
         

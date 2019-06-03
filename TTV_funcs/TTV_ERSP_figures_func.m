@@ -3,7 +3,7 @@ function TTV_ERSP_figures_func(settings)
 fbands = settings.tfparams.fbandnames;
 load('lkcmap2.mat')
 
-load([settings.outputdir '/' settings.datasetname '_calc.mat'])
+load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
 load([settings.outputdir '/' settings.datasetname '_results.mat'])
 if isfield(settings,'rest')
     load([settings.outputdir '/' settings.datasetname '_restmeas.mat'])
@@ -171,7 +171,7 @@ for c = 1:settings.nfreqs
     title(fbands{c})
     set(gca,'TitleFontSizeMultiplier',1.3)
 end
-Normalize_Clim(gcf)
+Normalize_Clim(gcf,1)
 
 %Aesthetics
 cbar = colorbar('peer',ax(1),'FontSize',12);
@@ -513,11 +513,11 @@ close
 if isfield(settings,'rest')
 figure
 
-for c = 2:6
-    ax(c) = subplot(2,3,c-1);
+for c = 2:settings.nfreqs
+    ax(c) = subplot(2,settings.nfreqs/2,c-1);
     if strcmpi(settings.datatype,'MEG')
-        ft_topoplot_vec(settings.layout,restmeas.rel_bp.index.r.subject(:,c).*...
-            (restmeas.rel_bp.index.stats{c}.mask),settings.datasetinfo.label);
+        ft_cluster_topoplot(settings.layout,restmeas.rel_bp.index.r.subject(:,c),settings.datasetinfo.label,...
+            restmeas.rel_bp.index.p.subject(:,c),restmeas.rel_bp.index.stats{c}.mask);
     else
         cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
             restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
@@ -529,24 +529,25 @@ cbar = colorbar('peer',gca,'FontSize',12);
 cbar.Label.String = 'Spearman''s rho';
 cbar.Label.FontSize = 14;
 colormap(lkcmap2)
+newlim = Normalize_Clim(gcf,1);
 savefig('Fig6a.fig')
 close
 
 %% Figure 6b: Electrode-based correlation with ERSPindex
 figure
 bandindex = find(strcmpi(fbands,'Alpha'));
-nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(bandindex,:,:)),1),nanmean(allmeas{bandindex}.erspindex,1),{'Resting-state relative alpha power','Alpha ERSP'})
+nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(bandindex,:,:))',1),nanmean(allmeas{bandindex}.erspindex',1),{'Resting-state relative alpha power','Alpha ERSP'})
 FixAxes(gca)
 savefig('Fig6b.fig')
 close
 
 %% Figure 6c: Topoplots of resting state correlations with ERSP NAindex
 figure
-for c = 2:6
-    ax(c) = subplot(2,3,c-1);
+for c = 2:settings.nfreqs
+    ax(c) = subplot(2,settings.nfreqs/2,c-1);
     if strcmpi(settings.datatype,'MEG')
-        ft_topoplot_vec(settings.layout,restmeas.rel_bp.naindex.r.subject(:,c).*...
-            (restmeas.rel_bp.naindex.stats{c}.mask),settings.datasetinfo.label);
+        ft_cluster_topoplot(settings.layout,restmeas.rel_bp.naindex.r.subject(:,c),...
+            settings.datasetinfo.label,restmeas.rel_bp.naindex.p.subject(:,c),restmeas.rel_bp.naindex.stats{c}.mask);
     else
         cluster_topoplot(restmeas.rel_bp.naindex.r.subject(:,c),...
             settings.layout,restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
@@ -558,6 +559,7 @@ cbar = colorbar('peer',gca','FontSize',12);
 cbar.Label.String = 'Spearman''s rho';
 cbar.Label.FontSize = 14;
 colormap(lkcmap2)
+Normalize_Clim(gcf,1)
 savefig('Fig6c.fig')
 close
 
@@ -565,7 +567,7 @@ close
 
 figure
 bandindex = find(strcmpi(fbands,'Alpha'));
-nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(bandindex,:,:)),1),nanmean(allmeas{bandindex}.naerspindex.amp,1),{'Resting-state relative alpha power','Alpha nonadditivity'})
+nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(bandindex,:,:))',1),nanmean(allmeas{bandindex}.naerspindex',1),{'Resting-state relative alpha power','Alpha nonadditivity'})
 FixAxes(gca)
 savefig('Fig6d.fig')
 close
@@ -854,10 +856,10 @@ Fig6a = open('Fig6a.fig');
 figaxes = findobj('Parent',Fig6a,'Type','axes');
 cbar = findobj('Parent',Fig6a,'Type','ColorBar');
 %figaxes = fliplr(flipud(transpose(reshape(figaxes,3,2))));
-plotindex = [5 4 3; 2 1 0];
+plotindex = [(settings.nfreqs-1):-1:settings.nfreqs/2 ; (settings.nfreqs/2-1):-1:0];
 for c = 1:2
-    for cc = 1:3
-        if c == 2 && cc == 3
+    for cc = 1:settings.nfreqs/2
+        if c == 2 && cc == settings.nfreqs/2
             p(1,2,c,cc).pack('h',{30 20 50});
             p(1,2,c,cc,2).select(cbar);
         else
@@ -879,11 +881,11 @@ p(2,2).pack(2,3)
 Fig6c = open('Fig6c.fig');
 figaxes = findobj('Parent',Fig6c,'Type','axes');
 cbar = findobj('Parent',Fig6c,'Type','ColorBar');
-plotindex = [5 4 3; 2 1 0];
+plotindex = [(settings.nfreqs-1):-1:settings.nfreqs/2 ; (settings.nfreqs/2-1):-1:0];
 %figaxes = fliplr(flipud(transpose(reshape(figaxes,3,2))));
 for c = 1:2
-    for cc = 1:3
-        if c == 2 && cc == 3
+    for cc = 1:settings.nfreqs/2
+        if c == 2 && cc == settings.nfreqs/2
             p(2,2,c,cc).pack('h',{30 20 50});
             p(2,2,c,cc,2).select(cbar);
         else

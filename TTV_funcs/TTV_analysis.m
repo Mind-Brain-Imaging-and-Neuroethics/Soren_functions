@@ -22,6 +22,8 @@ function TTV_analysis(settings)
 %        (default = {'all'})
 %  srate: sample rate of the time-frequency data (default = 200)
 %  units: 'prcchange', 'log', 'raw', or 'zscore' (default = 'prcchange')
+%  files: the input to 'dir' to select what files to use (default = '*.mat'
+%        for ECoG/MEG data, '*.set' for EEG data)
 %  tfparams: a structure with fields relating to the frequency decomposition
 %        method: 'hilbert', 'wavelet', or 'fft' - latter two not
 %        implemented yet
@@ -130,6 +132,14 @@ end
 function settingsout = SetDefaults(settingsin)
 
 settingsout = settingsin;
+
+if ~isfield(settingsout,'files')
+   if strmcpi(settingsout.datatype,'EEG')
+       settings.files = '*.set';
+   else
+       settings.files = '*.mat';
+   end
+end
 
 if ~isfield(settingsout,'steps')
    settingsout.steps = {'all'}; 

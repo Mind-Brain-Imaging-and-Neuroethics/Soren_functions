@@ -1,4 +1,4 @@
-function [data,cont_data,comp_class,iteration] = camcan_preproc(subid,filename,cont_data)
+function [data,cont_data,comp_class,iteration] = camcan_preproc(subid,filename,cont_data,event)
 
 % Assuming ComputeCanada
 basedir = extractBefore(filename,['sub-' subid]);
@@ -7,6 +7,8 @@ if contains(basedir,'task')
     do_epoch = 1;
 elseif contains(basedir,'rest')
     do_epoch = 0;
+elseif exist('cont_data','var')
+    do_epoch = 1;
 end
 %basedir = '/scratch/sorenwt/camcan/cc700/mri/pipeline/release004/BIDSsep/megmax_task';
 
@@ -150,7 +152,9 @@ end
 
 %% Epoch data around stimuli
 if do_epoch
+    if ~exist('event','var')
     event = ft_read_event(filename);
+    end
     types = extractfield(event,'type');
     tpoints = extractfield(event,'sample');
     latencies = tpoints(find(strcmpi(types,'Trigger')));
@@ -166,7 +170,7 @@ if do_epoch
     
     cfg = []; cfg.event = latencies; cfg.epoch = [-2*cont_data.fsample 1.5*cont_data.fsample]; %Epochs large in order to have trial padding
     data = ft_epoch(cfg,cont_data);
-    data.trialinfo(:,1) = vert(values(find(values > 0)));
+    data.trialinfo(:,1) = vert(values(find(values >= 0)));
     data.trialinfo(:,2) = vert(rts);
     data.grad = data.hdr.grad;
     
@@ -188,12 +192,14 @@ fprintf(pyscript,'import sys \n')
 fprintf(pyscript,'sys.path.insert(0, ''/home/soren/Documents/MATLAB/Functions'') \n')
 fprintf(pyscript,'sys.path.insert(0, ''/home/sorenwt/projects/def-gnorthof/sorenwt/MATLAB/Functions'') \n')
 fprintf(pyscript,'from mne_preproc import autoreject_epochs \n')
-if do_epoch
-    fprintf(pyscript,['autoreject_log(''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
-        ''',''' fullfile(basedir,['sub-' subid],[subid '_badsegs.json']) ''')'])
-end
+% fprintf(pyscript,'from mne_preproc import autoreject_log \n')
+% if do_epoch
+%     fprintf(pyscript,['autoreject_log(''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
+%         ''',''' fullfile(basedir,['sub-' subid],[subid '_badsegs.json']) ''') \n'])
+% end
 fprintf(pyscript,['autoreject_epochs(''' fullfile(basedir,['sub-' subid],[subid '_ftdata.mat'])...
-    ''',''' fullfile(basedir,['sub-' subid],[subid '_mne.fif']) ''')'])
+    ''',''' fullfile(basedir,['sub-' subid],[subid '_mne.fif']) ''','''...
+    fullfile(basedir,['sub-' subid],[subid '_badsegs.json']) ''')'])
 system(['python ' subid '_pyscript.py'])
 system(['rm ' subid '_pyscript.py'])
 
