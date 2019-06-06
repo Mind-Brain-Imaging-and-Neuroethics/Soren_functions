@@ -312,13 +312,15 @@ for q = 1:numbands
         datacalc{q}.naddersp.real(c,:,2) = (mean(abs(datacat(c,poststim_real,find(splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_real,find(splitindex))),3),2));
         
-        tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
-            -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
-        tmpreal{1}(:) = squeeze(trapz(tmp,2));
+        datacalc{q}.naddersp.diff = datacalc{q}.naddersp.real- datacalc{q}.naddersp.pseudo;
         
-        tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
-            -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
-        tmpreal{2}(:) = squeeze(trapz(tmp,2));
+%         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+%             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+%         tmpreal{1}(:) = squeeze(trapz(tmp,2));
+%         
+%         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+%             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+%         tmpreal{2}(:) = squeeze(trapz(tmp,2));
         
 %        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
 %        datacalc{q}.t(c) = stats.t;
@@ -409,6 +411,8 @@ for q = 1:numbands
         %                     datacalc{q}.nadderp.real(c,:,1) = 10*log10(datacalc{q}.nadderp.real(c,:,1));
         %                     datacalc{q}.nadderp.real(c,:,2) = 10*log10(datacalc{q}.nadderp.real(c,:,2))
         %             end
+        
+        datacalc{q}.nadderp.diff = datacalc{q}.nadderp.real-datacalc{q}.nadderp.pseudo;
     end
 end
 

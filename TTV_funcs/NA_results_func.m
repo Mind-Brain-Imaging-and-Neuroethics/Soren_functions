@@ -83,6 +83,71 @@ for q = 1:numbands
     alloutputs.dist.sigerspvitc(q,:) = signrank_mat(alloutputs.ersp.distrealreal(:,:,q),alloutputs.itc.distrealreal(:,:,q),2);
 end
 
+%% Cluster stats
+% Do all the cluster stats at the end to minimize time transferring files
+% to workers
+
+if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
+    
+    ttv_diststats = cell(1,numbands);
+    
+    ersp_pt_stats = cell(1,numbands);
+    ersp_ttv_stats = cell(1,numbands);
+    ersp_corrstats = cell(1,numbands);
+    
+    erp_pt_stats = cell(1,numbands);
+    erp_corrstats = cell(1,numbands);
+    erp_ttv_stats = cell(1,numbands);
+
+    opts = struct;
+    opts.nrand = 10000;
+    
+    if strcmpi(settings.datatype,'ECoG')
+        opts.minnbchan = 0;
+    end
+    
+    opts.parpool = settings.pool;
+    
+    for q = 1:numbands
+        disp(['Processing ' settings.tfparams.fbandnames{q} ' band'])
+        
+        zeromat = zeros(size(allmeas{q}.ttv.real));
+        zeromat(find(isnan(allmeas{q}.ttv.real))) = NaN;
+        
+        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_signrank',opts);
+        
+        ersp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)),[1 3 2])},...
+            settings.datasetinfo,'ft_statfun_signrank',opts);
+        
+        ersp_ttv_stats{q} = EasyClusterCorrect({allmeas{q}.ttversp.real zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
+        %ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
+        
+        erp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2])},...
+            settings.datasetinfo,'ft_statfun_signrank',opts);
+        erp_ttv_stats{q} = EasyClusterCorrect({allmeas{q}.ttv.real zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
+        %erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
+        
+    end
+    
+
+    alloutputs.dist.stats = ttv_diststats;
+    alloutputs.ersp.pt.stats = ersp_pt_stats;
+    alloutputs.ersp.ttv.stats = ersp_ttv_stats;
+    alloutputs.ersp.corr.stats = ersp_corrstats;
+    alloutputs.erp.pt.stats = erp_pt_stats;
+    alloutputs.erp.corr.stats = erp_corrstats;
+    alloutputs.erp.ttv.stats = erp_ttv_stats;
+    
+    alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
+        'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
+elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean') || strcmpi(settings.ecog.method,'median'))
+    alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
+        'erp.corr.p','dist.sigerspvitc'};
+end
+
+%% Recalculate NA indices based on cluster inclusion
+
+
 
 %% Calculation of nonadditivity significance in ERSP
 
@@ -138,101 +203,7 @@ for q = 1:numbands
     end
 end
 
-%% Cluster stats
-% Do all the cluster stats at the end to minimize time transferring files
-% to workers
 
-if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
-    
-    ersp_corrstats = cell(1,numbands);
-    itc_corrstats = cell(1,numbands);
-    
-    ersp_diststats = cell(1,numbands);
-    itc_diststats = cell(1,numbands);
-    
-    amp_na_indexcorr_stats = cell(1,numbands);
-    amp_na_ttv_stats = cell(1,numbands);
-    amp_na_ersp_stats = cell(1,numbands);
-    
-    ttv_indexstats = cell(1,numbands);
-    ttversp_stats = cell(1,numbands);
-    ttversp_corrstats = cell(1,numbands);
-    
-    erp_stats = cell(1,numbands);
-    erp_corrstats = cell(1,numbands);
-    
-    
-    
-%    if isempty(gcp('nocreate'))
-%        parpool(numbands)
-%    end
-    
-    opts = struct;
-    opts.nrand = 10000;
-    
-    if strcmpi(settings.datatype,'ECoG')
-        opts.minnbchan = 0;
-    end
-    
-    opts.parpool = settings.pool;
-    
-    for q = 1:numbands
-        disp(['Processing ' settings.tfparams.fbandnames{q} ' band'])
-        %opts = struct;
-        %opts.nrand = 10000;
-        
-        zeromat = zeros(size(allmeas{q}.ttvindex));
-        zeromat(find(isnan(allmeas{q}.ttvindex))) = NaN;
-        
-        ttv_indexstats{q} = EasyClusterCorrect({allmeas{q}.ttvindex zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
-        %ersp_corrstats{q} = EasyClusterCorrect_spearman({allmeas{q}.ttvindex,allmeas{q}.erspindex},settings.datasetinfo);
-        %itc_corrstats{q} = EasyClusterCorrect_spearman({allmeas{q}.ttvindex,allmeas{q}.itcindex},settings.datasetinfo);
-        
-        %ersp_diststats{q} = EasyClusterCorrect_signrank({alloutputs.ersp.distrealreal(:,:,q),alloutputs.ersp.distrealpseudo(:,:,q)},settings.datasetinfo);
-        %itc_diststats{q} = EasyClusterCorrect_signrank({alloutputs.itc.distrealreal(:,:,q),alloutputs.itc.distrealpseudo(:,:,q)},settings.datasetinfo);
-        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_signrank',opts);
-        
-        %amp_na_indexcorr_stats{q} = EasyClusterCorrect_spearman({allmeas{q}.nattvindex.amp,allmeas{q}.naerspindex.amp},settings.datasetinfo);
-        %amp_na_ttv_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.nattvindex.amp,zeros(size(allmeas{q}.nattvindex.amp))},settings.datasetinfo);
-        amp_na_ersp_stats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
-        
-        %cos_na_indexcorr_stats{q} = EasyClusterCorrect_spearman({allmeas{q}.nattvindex.cos,allmeas{q}.naerspindex.cos},settings.datasetinfo);
-        %cos_na_ttv_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.nattvindex.cos,zeros(size(allmeas{q}.nattvindex.cos))},settings.datasetinfo);
-        %cos_na_ersp_stats{q} = EasyClusterCorrect_signrank({allmeas{q}.naerspindex.cos,zeros(size(allmeas{q}.naerspindex.cos))},settings.datasetinfo);
-        
-        ttversp_stats{q} = EasyClusterCorrect({allmeas{q}.ttverspindex zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
-        ttversp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
-        
-        erp_stats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
-        erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
-        
-    end
-    
-    %alloutputs.ersp.corrstats = ersp_corrstats;
-    %alloutputs.itc.corrstats = itc_corrstats;
-    %alloutputs.ersp.diststats = ersp_diststats;
-    %alloutputs.itc.diststats = itc_diststats;
-    alloutputs.dist.stats = ttv_diststats;
-    %alloutputs.amp_na.indexcorr.stats = amp_na_indexcorr_stats;
-    %alloutputs.amp_na.ttv.stats = amp_na_ttv_stats;
-    alloutputs.ersp.pt.stats = amp_na_ersp_stats;
-    % alloutputs.cos_na.indexcorr.stats = cos_na_indexcorr_stats;
-    % alloutputs.cos_na.ttv.stats = cos_na_ttv_stats;
-    % alloutputs.cos_na.ersp.stats = cos_na_ersp_stats;
-    alloutputs.ersp.ttv.stats = ttversp_stats;
-    alloutputs.ersp.corr.stats = ttversp_corrstats;
-    alloutputs.erp.pt.stats = erp_stats;
-    alloutputs.erp.corr.stats = erp_corrstats;
-    alloutputs.erp.ttv.stats = ttv_indexstats;
-    
-    
-    
-    alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
-        'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
-elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean') || strcmpi(settings.ecog.method,'median'))
-    alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
-        'erp.corr.p','dist.sigerspvitc'};
-end
 
 alloutputs.filesorder = allmeas{1}.filesorder;
 

@@ -3,9 +3,10 @@ function [stats] = EasyClusterCorrect(data,datasetinfo,statfun,opts)
 % across channels only, for an arbitrary measurement
 %
 % Input arguments:
-%      data: a 1x2 (currently only supports a pairwise contrast) cell array
-%         containing the data for testing. Each cell should be a matrix of
-%         the form channels x observations
+%      data: a 1xn cell array containing the data for testing. Each cell
+%         should be a matrix of the form channels x observations, or a 3-D
+%         matrix of the form channels x observations x time (for
+%         compatibility with the 2-D form)
 %      datasetinfo: a structure containing the relevant information for
 %         clustering. For the following data types, this should be:
 %         eeg: requires fields 'elec' (a fieldtrip electrode structure) and
@@ -29,29 +30,34 @@ function [stats] = EasyClusterCorrect(data,datasetinfo,statfun,opts)
 %      stats: a fieldtrip stats structure returned from
 %         ft_timelockstatistics
 
+
 if nargin < 4
     opts = struct;
 end
 
-if ~isfield(opts,'nrand')
-    opts.nrand = 2000;
-end
-if ~isfield(opts,'minnbchan')
-    opts.minnbchan = 1;
-end
+opts = setdefault(opts,'nrand',2000);
 
+opts = setdefault(opts,'minnbchan',1);
+
+opts = setdefault(opts,'type','Spearman');
 
 fields = fieldnames(datasetinfo);
-    badlabels = [];
+badlabels = [];
 
 for c = 1:length(data)
     tlock{c} = struct;
-    tlock{c}.avg = [mean(data{c},2) mean(data{c},2) mean(data{c},2)];
-    tlock{c}.trial = cat(3,data{c}',data{c}',data{c}');
-    tlock{c}.time = [-1 0 1];
+    if size(data{c},3) == 1
+        tlock{c}.avg = [mean(data{c},2) mean(data{c},2) mean(data{c},2)];
+        tlock{c}.trial = cat(3,data{c}',data{c}',data{c}');
+        tlock{c}.time = [-1 0 1];
+    else
+        tlock{c}.avg = mean(data{c},2);
+        tlock{c}.trial = t3d(data{c});
+        tlock{c}.time = linspace(0,0.5,size(data{c},3));
+    end
     tlock{c}.dimord = 'rpt_chan_time';
     
-
+    
     if isfield(datasetinfo,'elec') || isfield(datasetinfo,'grad')
         for q = 1:length(fields)
             tlock{c}.(fields{q}) = datasetinfo.(fields{q});
@@ -81,7 +87,7 @@ if isfield(datasetinfo,'grad') || isfield(datasetinfo,'elec')
     if length(datasetinfo.label) >= 32
         cfg = []; cfg.method = 'distance';
     else
-       cfg = []; cfg.method = 'triangulation';
+        cfg = []; cfg.method = 'triangulation';
     end
     neighbs = ft_prepare_neighbours(cfg,datasetinfo);
 else
@@ -167,29 +173,36 @@ end
 
 rmneighbs = zeros(1,length(neighbs));
 for c = 1:length(neighbs)
-   if ~isempty(find(strcmpi(neighbs(c).label,badlabels)))
-      rmneighbs(c) = 1;
-   end
+    if ~isempty(find(strcmpi(neighbs(c).label,badlabels)))
+        rmneighbs(c) = 1;
+    end
 end
 neighbs(find(rmneighbs)) = [];
 
 cfg = []; cfg.method = 'montecarlo'; cfg.statistic = statfun;
 cfg.correctm = 'cluster'; cfg.clusterstatistic = 'maxsum';
-cfg.neighbours = neighbs; 
+cfg.neighbours = neighbs;
 
 if length(data) == 2
-cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025; 
+    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025;
 else
-   cfg.tail = 1; cfg.clustertail = 1; cfg.alpha = 0.05; cfg.clusteralpha = 0.05; 
+    cfg.tail = 1; cfg.clustertail = 1; cfg.alpha = 0.05; cfg.clusteralpha = 0.05;
 end
 cfg.numrandomization = opts.nrand; cfg.spmversion = 'spm12'; cfg.minnbchan = opts.minnbchan;
+
+cfg.type = opts.type;
+
+if isfield(opts,'parpool')
+   cfg.parpool = opts.parpool; 
+end
 
 design = zeros(1,size(cat(2,data{:}),2));
 currindx = 1;
 for c = 1:length(data)
-design(1,currindx:size(data{c},2)) = 1;
-currindx = currindx+size(data{c},2);
+    design(1,currindx:size(data{c},2)) = 1;
+    currindx = currindx+size(data{c},2);
 end
+design = design+1;
 %design(1,(size(data{1},2)+1):(size(data{1},2) + size(data{2},2)))= 2;
 
 cfg.design = design; cfg.ivar = 1;
@@ -199,7 +212,7 @@ for c = 1:length(tlock)
 end
 
 if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'UniformOutput',false)))
-   cfg.nanrand = 'yes'; 
+    cfg.nanrand = 'yes';
 end
 
 %if isfield(datasetinfo,'grad')
