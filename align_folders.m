@@ -2,7 +2,7 @@ function align_folders(folders,suffixes)
 
 for i = 1:length(folders)
     cd(folders{i})
-    files = dir(suffixes{i});
+    files = dir(['*' suffixes{i}]);
     names = extractfield(files,'name');
     subs{i} = erase(names,suffixes{i});
 end
@@ -18,7 +18,7 @@ end
 for i = 1:length(folders)
    cd(folders{i})
    mkdir('Unused')
-   files = dir(suffixes{i});
+   files = dir(['*' suffixes{i}]);
    for c = 1:length(files)
       subid = erase(files(c).name,suffixes{i});
       if ~strcmpi(subid,commonsubs)

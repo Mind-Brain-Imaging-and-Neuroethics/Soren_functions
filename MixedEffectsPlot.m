@@ -7,9 +7,9 @@ depvar = model.ResponseName;
 data = model.Variables;
 
 if isa(model,'LinearMixedModel')
-    participants = unique(data.Participant);
-    for c = 1:length(participants)
-        currData = data(find(data.Participant == participants(c)),:);
+    Subjects = unique(data.Subject);
+    for c = 1:length(Subjects)
+        currData = data(find(data.Subject == Subjects(c)),:);
         if ~isempty(currData)
             B = polyfit(currData.(indvar),currData.(depvar),1);
             slopes(c) = B(1);
@@ -25,8 +25,8 @@ if isa(model,'LinearMixedModel')
     
 elseif isa(model,'GeneralizedLinearMixedModel') && strcmpi(model.Link.Name,'logit')
     
-    for c = 1:length(unique(data.Participant))
-        currData = data(find(data.Participant == c),:);
+    for c = 1:length(unique(data.Subject))
+        currData = data(find(data.Subject == c),:);
         [coeffs,dev,stats] = glmfit(currData.(indvar),currData.(depvar),'binomial','link','logit');
         logitFit = glmval(coeffs,currData.(indvar),'logit');
         a = scatter(currData.(indvar),currData.(depvar),6,'filled');
@@ -38,8 +38,8 @@ elseif isa(model,'GeneralizedLinearMixedModel') && strcmpi(model.Link.Name,'logi
     xlabel(indvar,'FontSize',14)
     ylabel(depvar,'FontSize',14)
     
-    % for c = 1:length(unique(data.Participant))
-    %     currData = data(find(data.Participant == c),:);
+    % for c = 1:length(unique(data.Subject))
+    %     currData = data(find(data.Subject == c),:);
     %
     % end
 end

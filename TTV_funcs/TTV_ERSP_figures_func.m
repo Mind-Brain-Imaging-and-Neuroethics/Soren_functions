@@ -51,13 +51,21 @@ t = linspace(-(poststim_real(1)-trange(1))*(1/settings.srate),length(poststim_re
 plotband = find(strcmpi(fbands,'Alpha'));
 
 subplot(2,1,1)
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4),1),...
+% plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4),1),...
+%     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
+% hold on
+% plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4),1),...
+%     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
+tmp = nanmean(abs(hilbert(squeeze(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:)))),2);
+
+plot(t,tmp,'b--','LineWidth',2);
+plot(t,Make_signal_to_ampenv(tmp,settings.srate/mean(settings.tfparams.fbands{plotband}),rand),...
     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
-hold on
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4),1),...
+
+tmp = nanmean(abs(hilbert(squeeze(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:)))),2);
+plot(t,tmp,'r--','LineWidth',2);
+plot(t,tmp,settings.srate/mean(settings.tfparams.fbands{plotband}),rand),...
     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,1,:),4))),'b--','LineWidth',2);
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.pseudo(plotsensor,trange,2,:),4))),'r--','LineWidth',2);
 FixAxes(gca,14)
 ylim = get(gca,'YLim');
 line([0 0],ylim,'Color','k','LineWidth',2,'HandleVisibility','off')
@@ -74,13 +82,22 @@ legend({'Pseudotrial prestim low','Pseudotrial prestim high'},'EdgeColor','none'
 %warning('Hard-coded')
 
 subplot(2,1,2)
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4),1),...
+% plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4),1),...
+%     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
+% hold on
+% plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4),1),...
+%     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
+% plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4))),'b','LineWidth',2);
+% plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4))),'r','LineWidth',2);
+tmp = nanmean(abs(hilbert(squeeze(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:)))),2);
+plot(t,tmp,'b--','LineWidth',2);
+plot(t,Make_signal_to_ampenv(tmp,settings.srate/mean(settings.tfparams.fbands{plotband}),rand),...
     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
-hold on
-plot(t,nanmean(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4),1),...
+
+tmp = nanmean(abs(hilbert(squeeze(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:)))),2);
+plot(t,tmp,'r--','LineWidth',2);
+plot(t,tmp,settings.srate/mean(settings.tfparams.fbands{plotband}),rand),...
     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:),4))),'b','LineWidth',2);
-plot(t,abs(hilbert(nanmean(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:),4))),'r','LineWidth',2);
 FixAxes(gca)
 ylim = get(gca,'YLim');
 line([0 0],ylim,'Color','k','LineWidth',2,'HandleVisibility','off')
@@ -226,6 +243,7 @@ if ~isempty(find(plotstats.mask))
     end
 end
 colormap(lkcmap2)
+Normalize_Clim(gcf,1)
 savefig('Fig2a.fig')
 close
 
@@ -250,6 +268,7 @@ if ~isempty(find(alloutputs.ersp.corr.stats{plotband}.mask))
     end
 end
 colormap(lkcmap2)
+Normalize_Clim(gcf,1)
 savefig('Fig2b.fig')
 close
 
@@ -262,10 +281,10 @@ p.pack('h',{50 50});
 p(1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1)),'b',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1)),'r',0,1,'sem');
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
+stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'sem')
+stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,2,:),1)),'r',0,1,'sem');
+stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'sem')
 %FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
 %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
 %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
@@ -280,13 +299,13 @@ p(2).pack({[0.75 0.02 0.25 0.3]});
 p(2,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
-    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b',0,1,'sem')
-stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1))-...
-    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0,1,'sem')
-FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
-    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
-    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
+stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,1,:),1))-...
+    squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),1)),'b',0,1,'sem')
+stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,2,:),1))-...
+    squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),1)),'r',0,1,'sem')
+FillBetween(t,nanmean(nanmean(allmeas{2}.nadderp.real(:,:,1,:),4),1)-...
+    nanmean(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{2}.nadderp.real(:,:,2,:),4),1)-...
+    nanmean(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),4),1));
 legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabel('Voltage (uV)')
@@ -297,8 +316,8 @@ p(2,2).select();
 if strcmpi(settings.datatype,'EEG')
 cluster_topoplot(nanmean(allmeas{1}.naerpindex,2),settings.layout,alloutputs.erp.pt.sig(1,:)',alloutputs.erp.pt.stats{1}.mask)
 elseif strcmpi(settings.datatype,'MEG')
-    ft_cluster_topoplot(settings.layout,nanmean(allmeas{1}.naerpindex,2),settings.datasetinfo.label,...
-        alloutputs.erp.pt.sig(1,:)',alloutputs.erp.pt.stats{1}.mask);
+    ft_cluster_topoplot(settings.layout,nanmean(allmeas{2}.naerpindex,2),settings.datasetinfo.label,...
+        alloutputs.erp.pt.sig(2,:)',alloutputs.erp.pt.stats{2}.mask);
 end
 if ~isempty(find(alloutputs.erp.pt.stats{1}.mask))
     if isfield(alloutputs.erp.pt.stats{1},'posclusters') && ~isempty(alloutputs.erp.pt.stats{1}.posclusters)
@@ -309,7 +328,9 @@ if ~isempty(find(alloutputs.erp.pt.stats{1}.mask))
 end
 %title('No significant clusters','FontWeight','normal','FontSize',14)
 colormap(lkcmap2)
+Normalize_Clim(gcf,1)
 colorbar('WestOutside')
+
 
 pos = get(gcf,'position');
 set(gcf,'position',[pos(1:2) pos(3)*2.5 pos(4)*1.5],'Color','w');
@@ -369,6 +390,7 @@ if ~isempty(find(plotstats.mask))
     end
 end
 colormap(lkcmap2)
+Normalize_Clim(gcf,1)
 savefig('Fig4a.fig')
 close
 
@@ -385,6 +407,7 @@ elseif strcmpi(settings.datatype,'MEG')
 end
 colorbar('EastOutside','FontSize',12)
 colormap(lkcmap2)
+Normalize_Clim(gcf,1)
 plotstats = alloutputs.erp.corr.stats{1};
 if ~isempty(find(plotstats.mask))
     if isfield(plotstats,'posclusters') && ~isempty(plotstats.posclusters) && ~isempty(find(extractfield(plotstats.posclusters,'prob') < 0.05))
@@ -407,22 +430,22 @@ for c = 1:settings.nfreqs
     ax(c) = subplot(3,settings.nfreqs,c);
     %t = linspace((1/settings.srate)*(min(allrange)-onset),(1/settings.srate)*(max(allrange)-onset),length(allrange));
     t = linspace(0,(1/settings.srate)*length(poststim_pseudo),length(poststim_pseudo));
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.sd(:,poststim_real,:),1)),'b',0.15,1);
+    stdshade(t,squeeze(nanmean(allmeas{c}.raw.ersp(:,poststim_real,:),1)),'r',0.15,1);
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.sd(:,poststim_pseudo,:),1)),'b--',0.15,1);
+    stdshade(t,squeeze(nanmean(allmeas{c}.raw.ersp(:,poststim_pseudo,:),1)),'r--',0.15,1);
     if c == 1
-        ylabel('Across-trial SD')
+        ylabel('ERSP')
     end
     title(fbands{c})
     FixAxes(gca)
     ax(c).YLabel.FontSize = 18;
     
     ax(c+settings.nfreqs) = subplot(3,settings.nfreqs,c+settings.nfreqs);
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.ersp(:,poststim_real,:),1)),'r',0.15,1)
+    stdshade(t,squeeze(nanmean(allmeas{c}.raw.sd(:,poststim_real,:),1)),'b',0.15,1)
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.raw.ersp(:,poststim_pseudo,:),1)),'r--',0.15,1)
+    stdshade(t,squeeze(nanmean(allmeas{c}.raw.sd(:,poststim_pseudo,:),1)),'b--',0.15,1)
     if c == 1
-        ylabel('Hilbert amplitude')
+        ylabel('TTV')
     end
     FixAxes(gca)
     ax(c+settings.nfreqs).YLabel.FontSize = 18;
@@ -493,6 +516,7 @@ cbar = colorbar('peer',gca,'Position',...
     [0.90287 0.37857 0.02429 0.3071429],'FontSize',12);
 cbar.Label.String = 'Euclidean Distance Difference';
 cbar.Label.FontSize = 14;
+Normalize_Clim(gcf,1)
 savefig('Fig5b_2.fig')
 close
 
@@ -529,7 +553,7 @@ cbar = colorbar('peer',gca,'FontSize',12);
 cbar.Label.String = 'Spearman''s rho';
 cbar.Label.FontSize = 14;
 colormap(lkcmap2)
-newlim = Normalize_Clim(gcf,1);
+Normalize_Clim(gcf,1);
 savefig('Fig6a.fig')
 close
 
@@ -591,6 +615,7 @@ end
 
 %% Figure 1
 
+figure
 p = panel('no-manage-font')
 p.pack('v',{50 25 25})
 p(1).pack('h',{1/3 1/3 1/3})
@@ -659,6 +684,7 @@ p(1,1).marginright = 18;
 p(1,2).marginright = 18;
 p(2).de.marginright = 10;
 p(2).marginbottom = 20;
+p(3).margin = [2 2 2 2]
 
 set(gcf,'Color','w')
 pos = get(gcf,'position');
@@ -851,7 +877,7 @@ figure
 p = panel('no-manage-font');
 p.pack('v',{26 26 48})
 p(1).pack('h',{1/3 2/3})
-p(1,2).pack(2,3)
+p(1,2).pack(2,settings.nfreqs/2)
 Fig6a = open('Fig6a.fig');
 figaxes = findobj('Parent',Fig6a,'Type','axes');
 cbar = findobj('Parent',Fig6a,'Type','ColorBar');
@@ -877,7 +903,7 @@ FixAxes(p(1,1).axis)
 close(Fig6b)
 
 p(2).pack('h',{1/3 2/3})
-p(2,2).pack(2,3)
+p(2,2).pack(2,settings.nfreqs/2)
 Fig6c = open('Fig6c.fig');
 figaxes = findobj('Parent',Fig6c,'Type','axes');
 cbar = findobj('Parent',Fig6c,'Type','ColorBar');

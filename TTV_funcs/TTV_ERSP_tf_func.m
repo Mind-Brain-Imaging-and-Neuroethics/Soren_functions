@@ -271,8 +271,8 @@ for q = 1:numbands
     for c = 1:nbchan
         splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
         
-        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3); %NOT ACTUALLY THE RAW ERSP - used for plotting later
-        datacalc{q}.naddersp.raw.pseudo(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
+        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(abs(datacat(c,:,find(~splitindex))),3); %NOT ACTUALLY THE RAW ERSP - used for plotting later
+        datacalc{q}.naddersp.raw.pseudo(c,:,2) = mean(abs(datacat(c,:,find(splitindex))),3);
         
         datacalc{q}.naddersp.pseudo(c,:,1) = (mean(abs(datacat(c,poststim_pseudo,find(~splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),3),2)); %removed find(~splitindex) in the denominator because want to divide by a common baseline
@@ -301,8 +301,8 @@ for q = 1:numbands
         
         splitindex = split_real(c,:) > median(split_real(c,:));
         
-        datacalc{q}.naddersp.raw.real(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3);
-        datacalc{q}.naddersp.raw.real(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
+        datacalc{q}.naddersp.raw.real(c,:,1) = mean(abs(datacat(c,:,find(~splitindex))),3);
+        datacalc{q}.naddersp.raw.real(c,:,2) = mean(abs(datacat(c,:,find(splitindex))),3);
         
         datacalc{q}.naddersp.real(c,:,1) = (mean(abs(datacat(c,poststim_real,find(~splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_real,find(~splitindex))),3),2));
