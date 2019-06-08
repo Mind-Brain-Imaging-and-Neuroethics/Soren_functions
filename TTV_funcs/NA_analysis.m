@@ -36,7 +36,7 @@ function NA_analysis(settings)
 %        'yes')
 %  rest: a structure with fields related to the resting state recordings
 %        restdir: directory where resting state recordings are found
-%        restfiles: the input to 'dir' to select what files to use (default 
+%        restfiles: the input to 'dir' to select what files to use (default
 %        = '*.mat' for ECoG/MEG data, '*.set' for EEG data)
 %        bandpass: a vector of the lowest and highest frequencies in the
 %        data
@@ -61,7 +61,7 @@ rmpath(genpath('/home/soren/Documents/MATLAB/ImaGIN2'))
 
 if strcmpi(settings.datatype,'EEG')
     eeglab rebuild
-    addpath('/group/northoff/share/fieldtrip-master/external/eeglab') 
+    addpath('/group/northoff/share/fieldtrip-master/external/eeglab')
 end
 
 settings = SetDefaults(settings);
@@ -148,6 +148,15 @@ if ~isfield(settings,'files')
     end
 end
 
+
+if isfield(settings,'rest')
+    if strcmpi(settings.datatype,'EEG')
+        settings.rest.restfiles = '*.set';
+    else
+        settings.rest.restfiles = '*.mat';
+    end
+end
+
 settings.tfparams = setdefault(settings.tfparams,'pf_adjust','yes');
 
 settings = setdefault(settings,'steps',{'all'});
@@ -169,9 +178,9 @@ settings = setdefault(settings,'fdr','yes');
 settings = setdefault(settings,'load_allmeas','no');
 
 if isfield(settings,'behav')
-   for i = 1:length(settings.behav)
-      settings.behav{i} = setdefault(settings.behav{i},'loadvar','no'); 
-   end
+    for i = 1:length(settings.behav)
+        settings.behav{i} = setdefault(settings.behav{i},'loadvar','no');
+    end
 end
 
 settings.nfreqs = length(settings.tfparams.fbandnames);

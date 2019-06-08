@@ -1,4 +1,4 @@
-function [settings] = TTV_ERSP_tf_func(settings)
+function [settings] = NA_tf_func(settings)
 
 files = dir(settings.files);
 
@@ -24,7 +24,7 @@ parfor i = 1:length(files)
     end
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
-        [freqs pf(i)] = NA_alpha_pf(settings,settings.files);
+        [freqs pf(i)] = NA_convert_alpha_pf(settings,settings.files);
         allfreqs{i} = horz(freqs);
     end
     
