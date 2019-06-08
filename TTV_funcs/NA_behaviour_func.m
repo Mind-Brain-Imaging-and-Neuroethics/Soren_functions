@@ -49,7 +49,11 @@ for i = 1:length(settings.behav)
                         
                         timefreq_data = [];
                         tmpsettings = settings;
-                        freqs = settings.tfparams.fbands(q,foi);
+                        if strcmpi(settings.tfparams.pf_adjust,'yes')
+                            freqs = settings.tfparams.fbands(q,foi);
+                        else
+                            freqs = settings.tfparams.fbands(foi);
+                        end
                         %tmpsettings.tfparams.fbands = settings.tfparams.fbands(foi);
                         tmpsettings.tfparams.fbandnames = settings.tfparams.fbandnames(foi);
                         timefreq_data = NA_get_tfdata(tmpsettings,data,freqs);
@@ -136,8 +140,8 @@ for i = 1:length(settings.behav)
                 end
                 
                 if isfield(settings.behav{i},'threshold')
-                badindices = [find(depvar_vect < settings.behav{i}.threshold(1)) find(depvar_vect > settings.behav{i}.threshold(2))];
-                    end
+                    badindices = [find(depvar_vect < settings.behav{i}.threshold(1)) find(depvar_vect > settings.behav{i}.threshold(2))];
+                end
                 
                 designMat = [subs' indvar_vect' depvar_vect'];
                 designTbl = array2table(double(designMat),'VariableNames',{'Subject',settings.behav{i}.indvar,'Behav'});
@@ -171,7 +175,7 @@ for i = 1:length(settings.behav)
             [r p] = corr(indvar(:,:,q)',behav_data,'Type','Spearman');
             behav_meas{i}.r(:,q) = r;
             behav_meas{i}.p(:,q) = p;
-            opts.nrand = 10000; 
+            opts.nrand = 10000;
             opts.minnbchan = 1;
             behav_meas{i}.stats = EasyClusterCorrect({indvar(:,:,q) repmat(behav_data,1,settings.nbchan)'},settings.datasetinfo,'ft_statfun_correlationT',opts);
         end

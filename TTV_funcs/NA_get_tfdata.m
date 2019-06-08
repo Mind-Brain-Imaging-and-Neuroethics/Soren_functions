@@ -1,6 +1,4 @@
-function [timefreq_data] = NA_get_tfdata(settings,data)
-
-freqs = settings.tfparams.fbands;
+function [timefreq_data] = NA_get_tfdata(settings,data,freqs)
 
 timefreq_data = cell(1,length(freqs));
 switch settings.tfparams.method

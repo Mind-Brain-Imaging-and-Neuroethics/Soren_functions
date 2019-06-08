@@ -21,9 +21,9 @@ end
 
 %% Calculate bandpower for each frequency band
 if strcmpi(settings.datatype,'EEG')
-    files = dir('*.set');
+    files = dir(settings.restfiles);
 else
-    files = dir('*.mat');
+    files = dir(settings.restfiles);
 end
 
 nbchan = length(settings.datasetinfo.label);
@@ -33,27 +33,42 @@ rel_bp = bp;
 restmeas = struct;
 filesorder = cell(1,length(files));
 
+rest_fbands = cell(length(files),length(settings.tfparams.fbandnames));
+pf =
+
 parfor i = 1:length(files)
     if strcmpi(settings.datatype,'EEG')
         EEG = pop_loadset(files(i).name,pwd);
         data = eeglab2fieldtrip(EEG,'preprocessing','none');
     else
-       data = parload(files(i).name,'data'); 
+        data = parload(files(i).name,'data');
     end
     
-    for c = 1:length(settings.tfparams.fbandnames)
-        fband = settings.tfparams.fbands{c};
-if isempty(fband)
-fband = settings.rest.bandpass;
-elseif ~isempty(find(isnan(fband)))
-fband(find(isnan(fband))) = settings.rest.bandpass(1);
-end
-	for cc = 1:length(data.label)
+    fbands = settings.tfparams.fbandnames;
+    
+    if strcmpi(settings.tfparams.pf_adjust,'yes')
+        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
+        rest_fbands{i} = horz(fbands);
+    end
+    
+    for c = 1:length(fbands)
+        fband = fbands{c};
+        if isempty(fband)
+            fband = settings.rest.bandpass;
+        elseif ~isempty(find(isnan(fband)))
+            fband(find(isnan(fband))) = settings.rest.bandpass(1);
+        end
+        for cc = 1:length(data.label)
             bp{i}(c,cc) = bandpower(data.trial{1}(cc,:),data.fsample,fband);
             rel_bp{i}(c,cc) = bp{i}(c,cc)/bandpower(data.trial{1}(cc,:),data.fsample,settings.rest.bandpass);
         end
     end
     filesorder{i} = files(i).name;
+end
+
+if strcmpi(settings.tfparams.pf_adjust,'yes')
+    restmeas.rest_fbands = cat(1,rest_fbands{:});
+    restmeas.alpha_pf = pf;
 end
 
 restmeas.filesorder = filesorder;
@@ -104,13 +119,13 @@ for q = 1:settings.nfreqs
     restmeas.rel_bp.prestim.r.subject(:,q) = r(find(eye(nbchan)));
     restmeas.rel_bp.prestim.p.subject(:,q) = p(find(eye(nbchan)));
     
-%     [r p] = corr(mean(squeeze(restmeas.bp.vals(q,:,:)),3),mean(restmeas.prestimamp.raw{q},2),'Type','Spearman');
-%     restmeas.bp.prestim.r.electrode(:,q) = r;
-%     restmeas.bp.prestim.p.electrode(:,q) = p;
-%     
-%     [r p] = corr(squeeze(restmeas.rel_bp.vals(q,:,:))',mean(restmeas.prestimamp.rel{q},2)','Type','Spearman');
-%     restmeas.rel_bp.prestim.r.electrode(:,q) = r;
-%     restmeas.rel_bp.prestim.p.electrode(:,q) = p;
+    %     [r p] = corr(mean(squeeze(restmeas.bp.vals(q,:,:)),3),mean(restmeas.prestimamp.raw{q},2),'Type','Spearman');
+    %     restmeas.bp.prestim.r.electrode(:,q) = r;
+    %     restmeas.bp.prestim.p.electrode(:,q) = p;
+    %
+    %     [r p] = corr(squeeze(restmeas.rel_bp.vals(q,:,:))',mean(restmeas.prestimamp.rel{q},2)','Type','Spearman');
+    %     restmeas.rel_bp.prestim.r.electrode(:,q) = r;
+    %     restmeas.rel_bp.prestim.p.electrode(:,q) = p;
 end
 
 
@@ -137,14 +152,14 @@ parfor q = 1:settings.nfreqs
     rel_bp_naindex_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),allmeas{q}.naerspindex},settings.datasetinfo,opts2);
     
     rel_bp_prestim_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),restmeas.prestimamp.rel{q}},settings.datasetinfo,opts2);
-
+    
     if isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(rel_bp_prestim_stats{q}.posclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))
-         rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
+        rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
             double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
             double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
-	end
-	if (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(rel_bp_prestim_stats{q}.negclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
-            rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
+    end
+    if (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(rel_bp_prestim_stats{q}.negclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
+        rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
             double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
             double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
     end

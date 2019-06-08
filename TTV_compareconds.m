@@ -366,7 +366,7 @@ if ~EasyParse(varargin,'MCorrect','off')
     if sum(pdifs > 0.05) > 0 || sum(pdifs > 0.05) == length(pdifs)
         pdifs = mafdr(pdifs,'BHFDR',true);
     else
-        pdifs = mafdr(pdifs,'BHFDR',true)
+        pdifs = mafdr(pdifs,'BHFDR',true);
     end
 end
 

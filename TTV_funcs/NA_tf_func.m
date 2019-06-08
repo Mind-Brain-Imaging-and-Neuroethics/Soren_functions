@@ -2,17 +2,6 @@ function [settings] = TTV_ERSP_tf_func(settings)
 
 files = dir(settings.files);
 
-if strcmpi(settings.datatype,'EEG')
-    addpath('/group/northoff/share/fieldtrip-master/external/eeglab')
-    for c = 1:length(files)
-        EEG = pop_loadset('filename',files(c).name,'filepath',settings.inputdir);
-        data = eeglab2fieldtrip(EEG,'preprocessing','none');
-        save([files(c).name settings.datasetname '_ft.mat'],'data');
-    end
-end
-
-freqs = settings.tfparams.fbands;
-
 pool = gcp('nocreate');
 
 if ~isempty(pool) && pool.NumWorkers ~= settings.pool
@@ -21,8 +10,23 @@ end
 
 foi = cell(1,length(files));
 
+if strcmpi(settings.tfparams.pf_adjust,'yes')
+    allfreqs = cell(1,length(files));
+    pf = zeros(1,length(files));
+end
+
 parfor i = 1:length(files)
-    data = parload(files(i).name,'data');
+    if strcmpi(settings.datatype,'EEG')
+        EEG = pop_loadset('filename',files(c).name,'filepath',settings.inputdir);
+        data = eeglab2fieldtrip(EEG,'preprocessing','none');
+    else
+        data = parload(files(i).name,'data');
+    end
+    
+    if strcmpi(settings.tfparams.pf_adjust,'yes')
+        [freqs pf(i)] = NA_alpha_pf(settings,settings.files);
+        allfreqs{i} = horz(freqs);
+    end
     
     timefreq_data = cell(1,length(freqs));
     switch settings.tfparams.method
@@ -154,16 +158,22 @@ parfor i = 1:length(files)
             
     end
     
+    for q = 1:length(freqs)
+        if ~isempty(freqs{q}) && isnan(freqs{q}(1)) && isfield(settings,'rest')
+            freqs{q}(1) = settings.rest.bandpass(1);
+        end
+    end
+    
     Calc_sub(settings,timefreq_data,files(i).name)
     
     %    parsave([settings.outputdir '/' files(i).name '_timefreq_filtered.mat'],'timefreq_data',timefreq_data);
 end
 
-for q = 1:length(settings.tfparams.fbands)
-    if ~isempty(settings.tfparams.fbands{q}) && isnan(settings.tfparams.fbands{q}(1)) && isfield(settings,'rest')
-        settings.tfparams.fbands{q}(1) = settings.rest.bandpass(1);
-    end
-end
+
+allfreqs = cat(1,allfreqs{:});
+settings.tfparams.fbands = allfreqs;
+settings.alpha_pf = pf;
+
 
 if ~strcmpi(settings.tfparams.method,'hilbert')
     settings.nfreqs = length(foi{1})+1;
@@ -274,11 +284,11 @@ for q = 1:numbands
     for c = 1:nbchan
         splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
         
-        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(abs(datacat(c,:,find(~splitindex))),3); %NOT ACTUALLY THE RAW ERSP - used for plotting later
+        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(abs(datacat(c,:,find(~splitindex))),3); 
         datacalc{q}.naddersp.raw.pseudo(c,:,2) = mean(abs(datacat(c,:,find(splitindex))),3);
         
         datacalc{q}.naddersp.pseudo(c,:,1) = (mean(abs(datacat(c,poststim_pseudo,find(~splitindex))),3)...
-            -mean(mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),3),2)); %removed find(~splitindex) in the denominator because want to divide by a common baseline
+            -mean(mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),3),2)); 
         datacalc{q}.naddersp.pseudo(c,:,2) = (mean(abs(datacat(c,poststim_pseudo,find(splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_pseudo,find(splitindex))),3),2));
         
@@ -314,16 +324,16 @@ for q = 1:numbands
         
         datacalc{q}.naddersp.diff = datacalc{q}.naddersp.real- datacalc{q}.naddersp.pseudo;
         
-%         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
-%             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
-%         tmpreal{1}(:) = squeeze(trapz(tmp,2));
-%         
-%         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
-%             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
-%         tmpreal{2}(:) = squeeze(trapz(tmp,2));
+        %         tmp = abs(datacat(c,poststim_pseudo,find(~splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),2);
+        %         tmpreal{1}(:) = squeeze(trapz(tmp,2));
+        %
+        %         tmp = abs(datacat(c,poststim_pseudo,find(splitindex)))...
+        %             -mean(abs(datacat(c,prestim_pseudo,find(splitindex))),2);
+        %         tmpreal{2}(:) = squeeze(trapz(tmp,2));
         
-%        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
-%        datacalc{q}.t(c) = stats.t;
+        %        [~,~,~,stats] = ttest2(tmpreal{2}-tmppseudo{2},tmpreal{1}-tmppseudo{1});
+        %        datacalc{q}.t(c) = stats.t;
         
         switch settings.units
             case 'prcchange'
@@ -517,7 +527,7 @@ if strcmpi(settings.datatype,'ECoG')
                         tmp = NaN(size(tmp)); % fill with NaNs for regions not represented
                         tmp = mean(tmp,1);
                     end
-		    tmp2 = cat(1,tmp2,tmp);
+                    tmp2 = cat(1,tmp2,tmp);
                     %tmp2(cc,:,:,:) = tmp;
                 end
                 tmpdata = assignfield_nest(tmpdata,fields{c},tmp2);
@@ -543,9 +553,8 @@ for c = 1:length(fields)
     end
 end
 
-%% Saving and cleaning up
+%% Saving the file
 save(fullfile(settings.outputdir,[settings.datasetname '_' filename '_calc.mat']),'datacalc','-v7.3')
 
-delete(gcp('nocreate'))
 end
 
