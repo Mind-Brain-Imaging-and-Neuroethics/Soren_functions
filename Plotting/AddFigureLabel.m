@@ -1,14 +1,7 @@
-function AddFigureLabel(ax,string,topo,offsetx,offsety)
+function AddFigureLabel(ax,string,topo)
 
 outpos = ax.OuterPosition;
 inpos = ax.Position;
-if nargin < 3
-%     if axpos(1) < 0
-%         offset = [-axpos(1) 0.88*axpos(4)];
-%     else
-%         offset = [0 0.88*axpos(4)];
-%     end
-end
 
 a = annotation(gcf,'textbox',[0 0 0.02 0.075],...
     'String',string,...

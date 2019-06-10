@@ -4,7 +4,11 @@ if nargin < 2
     equal = 0;
 end
 
+if isa(fighandle,'matlab.ui.Figure')
 ax = findall(fighandle,'Type','Axes');
+elseif isa(fighandle,'matlab.graphics.axis.Axes')
+    ax = fighandle;
+end
 
 for c = 1:length(ax)
     try
