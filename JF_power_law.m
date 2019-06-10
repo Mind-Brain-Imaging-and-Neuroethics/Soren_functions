@@ -29,20 +29,20 @@ end
 
 [pdata,freq] = pwelch(time_series,[],[],2^nextpow2((3/low_range)*Fs),Fs); %want 3 cycles of lowest frequency in window
 %     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
-pdata = pxx;
-freq = f;
+%pdata = pxx;
+%freq = f;
 
 slope_index = find(freq > low_range & freq < high_range);
-freq = linspace(min(f(slope_index)),max(f(slope_index)),length(f(slope_index)));
+freq = linspace(min(freq(slope_index)),max(freq(slope_index)),length(freq(slope_index)));
 p = polyfit(log(freq)',log(pdata(slope_index)),1);
 ple = -p(1);
 
 
 if length(varargin) > 0 && any(varargin{1} == 'Plot')
-    y = p(2) + p(1)*log(f(slope_index));
-    loglog(f(slope_index),pxx(slope_index));
+    y = p(2) + p(1)*log(freq(slope_index));
+    loglog(freq(slope_index),pdata(slope_index));
     hold on;
-    loglog(f(slope_index),exp(y),'r--');
+    loglog(freq(slope_index),exp(y),'r--');
     xlabel('Log Frequency')
     ylabel('Log Power')
     title(['Estimated PLE is ' num2str(ple)])

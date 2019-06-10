@@ -13,7 +13,12 @@ else
     pf = psum.cog;
 end
 
-fbands(individindx(2)) = [f(psum.iaw(1)) f(psum.iaw(2))];
-fbands(individindx(1)) = [setttings.tfparams.fbands{individindx(1)}(1) f(psum.iaw(1))];
-fbands(individindx(3)) = [f(psum.iaw(2)) settings.tfparams.fbands{individindx(3)}(2)];
-
+if f(psum.iaw(1)) < f(psum.iaw(2))
+fbands{individindx(2)} = [f(psum.iaw(1)) f(psum.iaw(2))];
+end
+if settings.tfparams.fbands{individindx(1)}(1) < f(psum.iaw(1))
+fbands{individindx(1)} = [settings.tfparams.fbands{individindx(1)}(1) f(psum.iaw(1))];
+end
+if f(psum.iaw(2)) < settings.tfparams.fbands{individindx(3)}(2)
+fbands{individindx(3)} = [f(psum.iaw(2)) settings.tfparams.fbands{individindx(3)}(2)];
+end

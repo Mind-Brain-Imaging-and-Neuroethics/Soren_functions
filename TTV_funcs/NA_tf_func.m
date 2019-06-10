@@ -5,6 +5,7 @@ files = dir(settings.files);
 pool = gcp('nocreate');
 
 if ~isempty(pool) && pool.NumWorkers ~= settings.pool
+    delete(pool)
     parpool(settings.pool)
 end
 
@@ -24,7 +25,7 @@ parfor i = 1:length(files)
     end
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
-        [freqs pf(i)] = NA_convert_alpha_pf(settings,settings.files);
+        [freqs pf(i)] = NA_convert_alpha_pf(settings,ft_concat(data));
         allfreqs{i} = horz(freqs);
     end
     

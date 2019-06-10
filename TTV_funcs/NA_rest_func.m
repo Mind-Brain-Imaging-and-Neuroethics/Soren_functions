@@ -145,7 +145,7 @@ opts = struct;
 opts.display = 0;
 opts.verbose = 0;
 opts2 = struct;
-opts2.nrand = 10000;
+opts2.nrand = 1000;
 
 parfor q = 1:settings.nfreqs
     rel_bp_index_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),allmeas{q}.erspindex},settings.datasetinfo,opts2);

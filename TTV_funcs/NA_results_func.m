@@ -62,10 +62,10 @@ alloutputs = struct;
 
 nbchan = settings.nbchan;
 
-if strcmpi(settings.tfparams.pf_adjust,'yes')
-   alloutputs.alpha_pf = settings.alpha_pf;
-   alloutputs.fbands_adjusted = settings.tfparams.fbands;
-end
+%if strcmpi(settings.tfparams.pf_adjust,'yes')
+%   alloutputs.alpha_pf = settings.alpha_pf;
+%   alloutputs.fbands_adjusted = settings.tfparams.fbands;
+%end
 
 %% Comparison of TTV and ERSP time course in each frequency band
 
@@ -103,7 +103,7 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     erp_ttv_stats = cell(1,numbands);
 
     opts = struct;
-    opts.nrand = 10000;
+    opts.nrand = 1000;
     
     if strcmpi(settings.datatype,'ECoG')
         opts.minnbchan = 0;
@@ -111,35 +111,49 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     
     opts.parpool = settings.pool;
     
+    tcourse_design = tril(ones(numbands))-eye(numbands);
+    
+    ersp_pt_tcoursestats = cell(numbands);
+    ersp_ttv_tcoursestats = cell(numbands);
+    
     for q = 1:numbands
         disp(['Processing ' settings.tfparams.fbandnames{q} ' band'])
         
         zeromat = zeros(size(allmeas{q}.ttv.real));
         zeromat(find(isnan(allmeas{q}.ttv.real))) = NaN;
         
-        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_signrank',opts);
+        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         
         ersp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)),[1 3 2])},...
-            settings.datasetinfo,'ft_statfun_signrank',opts);
+            settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         
-        ersp_ttv_stats{q} = EasyClusterCorrect({allmeas{q}.ttversp.real zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
+        ersp_ttv_stats{q} = EasyClusterCorrect({permute(allmeas{q}.ttversp.real,[1 3 2]) permute(zeromat,[1 3 2])},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         %ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
         
-        erp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2])},...
-            settings.datasetinfo,'ft_statfun_signrank',opts);
-        erp_ttv_stats{q} = EasyClusterCorrect({allmeas{q}.ttv.real zeromat},settings.datasetinfo,'ft_statfun_signrank',opts);
+        erp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.nadderp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.nadderp.diff(:,:,2,:)),[1 3 2])},...
+            settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        erp_ttv_stats{q} = EasyClusterCorrect({permute(allmeas{q}.ttv.real,[1 3 2]) permute(zeromat,[1 3 2])},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         %erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
         
+        for c = (q+1):6
+            ersp_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)-allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),...
+                permute(squeeze(allmeas{c}.naddersp.diff(:,:,2,:)-allmeas{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
+            settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+            ttv_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(allmeas{q}.ttversp.real,[1 3 2]),permute(allmeas{c}.ttversp.real,[1 3 2])},...
+                settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        end
     end
     
 
     alloutputs.dist.stats = ttv_diststats;
     alloutputs.ersp.pt.stats = ersp_pt_stats;
+    alloutputs.ersp.pt.tcoursestats = ersp_pt_tcoursestats;
+    alloutputs.ersp.ttv.tcoursestats = ersp_ttv_tcoursestats;
     alloutputs.ersp.ttv.stats = ersp_ttv_stats;
     alloutputs.erp.pt.stats = erp_pt_stats;
     alloutputs.erp.ttv.stats = erp_ttv_stats;
     
-    alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
+    alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats','ersp.pt.tcoursestats','ersp.ttv.tcoursestats',...
         'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
 elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean') || strcmpi(settings.ecog.method,'median'))
     alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...

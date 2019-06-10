@@ -137,7 +137,7 @@ else
                 inds = find(tri == c);
                 for cc = 1:length(inds)
                     [i1,i2] = ind2sub(size(tri),inds(cc));
-                    vox_neighbs{c} = [vox_neighbs{c} atlas.tri(i1,except(1:3,i2))];
+                    vox_neighbs{c} = [vox_neighbs{c} datasetinfo.atlas.tri(i1,except(1:3,i2))];
                 end
                 vox_neighbs{c} = unique(vox_neighbs{c});
             end
@@ -146,7 +146,7 @@ else
             for c = 1:length(datasetinfo.atlas.parcellationlabel)
                 reg_neighbs{c} = cat(2,vox_neighbs{find(datasetinfo.atlas.parcellation == c)});
                 for cc = 1:length(reg_neighbs{c})
-                    reg_neighbs{c}(cc) = atlas.parcellation(reg_neighbs{c}(cc));
+                    reg_neighbs{c}(cc) = datasetinfo.atlas.parcellation(reg_neighbs{c}(cc));
                 end
                 reg_neighbs{c} = unique(reg_neighbs{c});
                 reg_neighbs{c}(find(reg_neighbs{c} == c)) = [];

@@ -29,7 +29,8 @@ function [stats] = ft_measurestatistics(cfg,data)
 %              = 1)
 %              statfun: the fieldtrip function to use for the permutation
 %              test (default = set based on cfg.test)
-%
+%              datasetinfo: the channel information used by EasyClusterCorrect
+%              (default = from data)
 % data: a 1 X N cell array, each cell containing one "outputs" structure
 %      from ft_applymeasure. Each outputs structure must have the same
 %      dimensions
@@ -109,6 +110,8 @@ if isfield(data{1},'elec')
 elseif isfield(data{1},'grad')
     chans = ft_channelselection(cfg.channel,data{1}.grad);
     chans = Subset_index(data{1}.chan,chans);
+else
+    chans = 1:length(data{1}.chan);
 end
 
 for c = 1:length(data)
@@ -169,12 +172,17 @@ for i = 1:length(data{1}.meas)
         
         switch cfg.multcompare
             case 'cluster'
+if ~isfield(cfg.cluster,'datasetinfo')
                 if isfield(data{1},'elec')
                     datasetinfo.elec = data{1}.elec;
                 elseif isfield(data{1},'grad')
                     datasetinfo.grad = data{1}.grad;
                 end
                 datasetinfo.label = data{1}.chan;
+else
+datasetinfo = cfg.cluster.datasetinfo;
+end
+
                 for c = 1:length(data)
                     input{c} = data{c}.data(:,:,i)';
                 end

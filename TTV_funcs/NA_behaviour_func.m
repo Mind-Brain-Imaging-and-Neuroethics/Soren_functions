@@ -1,4 +1,4 @@
-function TTV_ERSP_behaviour_func(settings)
+function NA_behaviour_func(settings)
 
 load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
 load([settings.outputdir '/' settings.datasetname '_results.mat'])
