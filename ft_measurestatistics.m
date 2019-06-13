@@ -60,6 +60,10 @@ if ~cfgcheck(cfg,'multcompare')
     cfg.cluster = struct;
 end
 
+if cfgcheck(cfg,'multcompare','cluster') && ~isfield(cfg,'cluster')
+cfg.cluster = struct;    
+end
+
 if ~cfgcheck(cfg,'effectsize')
     switch cfg.test
         case 'ttest','ttest2'

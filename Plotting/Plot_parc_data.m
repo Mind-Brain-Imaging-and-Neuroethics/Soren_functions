@@ -11,6 +11,12 @@ for c = 1:length(sourcemodel.pos)
         plotdata(c) = datain(atlas.parcellation(c));
     elseif isfield(atlas,'parcels')
         plotdata(c) = datain(atlas.parcels(c));
+    elseif isfield(atlas,'tissue')
+        if atlas.tissue(c) > 0
+        plotdata(c) = datain(atlas.tissue(c));
+        else
+           plotdata(c) = NaN; 
+        end
     end
     if CheckInput(varargin,'mask')
         if isfield(atlas,'parcellation')

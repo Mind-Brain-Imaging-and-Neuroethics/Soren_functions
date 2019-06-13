@@ -1,10 +1,28 @@
-function [roidata,voxeldata,sources,sourcemodel2] = SourceEst(data,headmodel,sourcemodel,atlas)
+function [roidata,voxeldata,sources] = SourceEst_MEG(data,headmodel,sourcemodel,atlas,noisecov,opts)
+% opts should have the following fields
+%    atlasparam: the field of the atlas containing the parcellation
+%      information (default = 'parcellation')
+%    atlaslabel: the field of the atlas containing the labels for each
+%      region (default = 'parcellationlabel')
+%    interp: interpolate the sourcemodel onto the atlas ('yes' or 'no' -
+%      default = 'no')
+%    datatype: 'EEG' or 'MEG' - for channel selection (default = 'MEG')
 
-[~,ftpath] = ft_version;
+
+%[~,ftpath] = ft_version;
 %ftpath = '/group/northoff/share/fieldtrip-master';
 
 % % Convert the data to Fieldtrip format
 % data = eeglab2fieldtrip(EEG,'preprocessing','none');
+
+if nargin < 6
+    opts = struct;
+end
+
+opts = setdefault(opts,'atlasparam','parcellation');
+opts = setdefault(opts,'atlaslabel','parcellationlabel');
+opts = setdefault(opts,'interp','no');
+opts = setdefault(opts,'datatype','MEG');
 
 % Load headmodel, sourcemodel, atlas
 
@@ -20,28 +38,36 @@ if isstr(atlas)
     atlas = ft_read_atlas(atlas);
 end
 
-% Interpolate template surface on atlas
-cfg = [];
-cfg.interpmethod = 'nearest';
-cfg.parameter = 'tissue';
-sourcemodel2 = ft_sourceinterpolate(cfg, atlas, sourcemodel);
+% % Interpolate template surface on atlas
+if strcmpi(opts.interp,'yes')
+    cfg = [];
+    cfg.interpmethod = 'nearest';
+    cfg.parameter = opts.atlasparam;
+    sourcemodel = ft_sourceinterpolate(cfg, atlas, sourcemodel);
+end
 
 % Create forward model
-cfg = []; cfg.elec = data.elec; cfg.channel = {'EEG'};
-sourcemodel2 = ft_convert_units(sourcemodel2,'mm');
-cfg.grid.pos = sourcemodel2.pos; cfg.grid.inside = 1:size(sourcemodel2.pos,1);
-cfg.headmodel = vol;
+cfg = []; cfg.grad = data.grad; cfg.channel = {'MEG'};
+sourcemodel = ft_convert_units(sourcemodel,'mm');
+headmodel = ft_convert_units(headmodel,'mm');
+cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
+cfg.headmodel = headmodel;
 leadfield = ft_prepare_leadfield(cfg);
 
-% Select only the EEG channels
-cfg = []; cfg.channel = {'EEG'};
-eegdata = ft_selectdata(cfg,data);
-clear data
+% % Select only the MEG channels
+cfg = []; cfg.channel = {'MEG'};
+data = ft_selectdata(cfg,data);
 
-% Epoch into arbitrary 2-second segments
-cfg = []; cfg.event = 1:2*eegdata.fsample:length(eegdata.time{1}); cfg.epoch = [0 (2*eegdata.fsample)-1];
-cfg.event(end) = [];
-eegdata = ft_epoch(cfg,eegdata);
+% If continuous, epoch into arbitrary 2-second segments
+if length(data.trial) == 1
+    cfg = []; cfg.event = 1:2*data.fsample:length(data.time{1}); cfg.epoch = [0 (2*data.fsample)-1];
+    cfg.event(end) = [];
+    data = ft_epoch(cfg,data);
+end
+
+cfg = []; cfg.keeptrials = 'yes';
+tlock = ft_timelockanalysis(cfg,data);
+tlock.cov = noisecov;
 
 % Estimate sources
 cfg = [];
@@ -49,12 +75,12 @@ cfg.method = 'eloreta';
 cfg.grid = leadfield;
 cfg.eloreta.keepfilter = 'yes';
 cfg.eloreta.normalize = 'yes';
-cfg.headmodel = vol;
-sources = ft_sourceanalysis(cfg,eegdata);
+cfg.headmodel = headmodel;
+sources = ft_sourceanalysis(cfg,tlock);
 
 % Get voxel time courses
 voxeldata = struct;
-datacat = cat(2,eegdata.trial{:});
+datacat = cat(2,data.trial{:});
 for c = 1:size(sources.pos,1)
     tmp = sources.avg.filter{c}*datacat;
     [u,s,v] = svd(tmp,'econ');
@@ -62,22 +88,18 @@ for c = 1:size(sources.pos,1)
     source_datacat(c,:) = tmp;
 end
 voxeldata.trial{1} = source_datacat;
-voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/eegdata.fsample),1/eegdata.fsample);
+voxeldata.time{1} = linspace(0,length(voxeldata.trial{1}/data.fsample),1/data.fsample);
 voxeldata.label = cellstr(num2str([1:size(sources.pos,1)]'));
-voxeldata.fsample = eegdata.fsample;
+voxeldata.fsample = data.fsample;
 source_datacat = []; %saving memory
 
 % Get ROI time courses
 roidata = voxeldata;
-tissuenums = unique(sourcemodel2.tissue);
-tissuenums = tissuenums(find(tissuenums > 0));
-roidata.label = atlas.tissuelabel(tissuenums);
-roidata.trial = []; 
+roidata.label = atlas.(opts.atlaslabel);
+roidata.trial = [];
 roidata.trial{1} = NaN(length(roidata.label),length(voxeldata.trial{1}));
 for cc = 1:length(roidata.label)
-    if ~isempty(find(sourcemodel2.tissue == tissuenums(cc)))
-    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(sourcemodel2.tissue == tissuenums(cc)),:),1);
-    end
+    roidata.trial{1}(cc,:) = mean(voxeldata.trial{1}(find(atlas.(opts.atlasparam) == cc),:),1);
 end
 %roidata.trial{1}(find(isnan(roidata.trial{1}(:,1))),:) = [];
 
