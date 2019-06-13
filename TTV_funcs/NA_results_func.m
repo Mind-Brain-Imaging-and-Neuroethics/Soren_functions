@@ -160,13 +160,20 @@ elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean'
         'erp.corr.p','dist.sigerspvitc'};
 end
 
+% Save these results since they take so long to calculate
+save([settings.outputdir '/' settings.datasetname '_results.mat'],'alloutputs','-v7.3')
+
 %% Recalculate NA indices based on cluster inclusion and do correlations for cluster stats
 
 for q = 1:numbands
    tmp = allmeas{q}.naddersp.diff.*alloutputs.ersp.pt.stats{q}.mask;
-   allmeas{q}.naerspindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:)));
+   allmeas{q}.naerspindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:),2));
    tmp = allmeas{q}.nadderp.diff.*alloutputs.erp.pt.stats{q}.mask;
-   allmeas{q}.naerpindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:)));
+   allmeas{q}.naerpindex = squeeze(trapz(tmp(:,:,2,:),2)-trapz(tmp(:,:,1,:),2));
+   tmp = allmeas{q}.ttv.real.*alloutputs.erp.ttv.stats{q}.mask;
+   allmeas{q}.ttvindex = squeeze(trapz(tmp,2));
+   tmp = allmeas{q}.ttversp.real.*alloutputs.ersp.ttv.stats{q}.mask;
+   allmeas{q}.ttverspindex = squeeze(trapz(tmp,2));
 end
 
 for q = 1:numbands
@@ -238,6 +245,7 @@ end
 
 alloutputs.filesorder = allmeas{1}.filesorder;
 
+save(fullfile(settings.outputdir,[settings.datasetname '_results.mat'],'allmeas','-v7.3'))
 save([settings.outputdir '/' settings.datasetname '_results.mat'],'alloutputs','-v7.3')
 
 end

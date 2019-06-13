@@ -49,7 +49,8 @@ xl = xlabel(labels{1},'FontSize',16);
 yl = ylabel(labels{2},'FontSize',16);
 hold on;
 f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'r--');
-pos = get(gca,'Position');
+ax = gca;
+pos = ax.OuterPosition;
 if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
     tb = annotation('textbox',[pos(1)+0.2 pos(2)+0.4 0.3 0.3],'String',{['rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on');
 else

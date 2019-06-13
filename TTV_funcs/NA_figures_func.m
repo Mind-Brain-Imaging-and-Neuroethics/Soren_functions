@@ -15,7 +15,7 @@ end
 
 cd([settings.outputdir '/' settings.datasetname '_figures'])
 
-if strcmpi(settings.tfparams.method,'hilbert') || ~istdpty(find(contains(settings.steps,'calc')))
+if strcmpi(settings.tfparams.method,'hilbert') || ~isempty(find(contains(settings.steps,'tf_filter')))
     prestim_pseudo = settings.pseudo.prestim;
     prestim_real = settings.real.prestim;
     poststim_pseudo = settings.pseudo.poststim;
@@ -188,11 +188,15 @@ FixAxes(gca,20)
 savefig('Fig1d.fig')
 close
 
-%% Figure 2a: Nonadditivity of ERSP in different frequency bands
+%% Figure 2: Nonadditivity of ERSP in different frequency bands
 
 p = panel('no-manage-font');
-p.pack('h',{50 50})
-p(1).pack('v',{repmat(1/settings.nfreqs,settings.nfreqs,1)})
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*4],'Color','w');
+
+p.pack('v',{50 50})
+p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 for c = 1:settings.nfreqs
     p(1,c).select()
     t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
@@ -210,11 +214,11 @@ end
 %savefig('Fig1e.fig')
 %close
 
-p(2).pack('v',{repmat(1/settings.nfreqs,settings.nfreqs,1)})
+p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 for c = 1:settings.nfreqs
-    p(2,c,1).pack();
+    p(2,c).pack();
     for cc = 1:4
-        p(2,c,1+cc).pack({0.05+0.25*cc 0.05 0.25 0.25})
+        p(2,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
     end
     p(2,c,1).select();
     
@@ -235,7 +239,8 @@ for c = 1:settings.nfreqs
     %tindx = 
     for cc = 1:4
         p(2,c,cc+1).select()
-        plotdata = mean(squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),2,:))...
+        %axes(p(2,c,cc+1).axis)
+        plotdata = nanmedian(squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),2,:))...
             - squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),1,:)),2);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
@@ -249,19 +254,20 @@ for c = 1:settings.nfreqs
             colorbar
         end
         ax(cc) = p(2,c,cc+1).axis;
-        %title([num2str((plotindx(cc)-1*
+        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
     end
     Normalize_Clim(ax,1);
 end
 
 p.de.margin = [5 5 5 5];
+p(1).marginbottom = 18;
+p(1).de.marginright = 14;
+p(2).de.marginright = 14;
 % fix margins here
 
 AddFigureLabel(p(1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B')
-
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*1.5 pos(4)*2.5],'Color','w');
 
 savefig('Fig2.fig')
 export_fig('Fig2.png','-m4')
@@ -272,41 +278,47 @@ close
 %% Figure 3a: TTV of ERSP
 
 p = panel('no-manage-font');
-p.pack('h',{50 50});
-p(1).pack('v',{repmat(1/settings.nfreqs,settings.nfreqs,1)})
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)*3.5],'Color','w');
+
+p.pack('v',{50 50});
+p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 for c = 1:settings.nfreqs
-    p(1,c,1).pack();
+    p(1,c).pack();
     for cc = 1:4
-        p(1,c,1+cc).pack({0.05+0.25*cc 0.05 0.25 0.25})
+        p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
     end
     p(1,c,1).select();
     plotband = c;
     
-    t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-    prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-        nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-    prestimdata = nanmean(nanmean(prestimdata,3),1);
+    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
+    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+    %prestimdata = nanmean(nanmean(prestimdata,3),1);
     poststimdata = (allmeas{plotband}.ttversp.real);
     poststimdata = nanmean(nanmean(poststimdata,3),1);
-    plotdata = [prestimdata poststimdata];
+    %plotdata = [prestimdata poststimdata];
+    plotdata = poststimdata;
     %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
     %    zeros(1,length(poststimdata)));
     hold on
-    plot(t,plotdata,'b','LineWidth',3)
-    plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+    stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'std')
+    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     xlabel('Time (s)')
     ylabel('% change of TTV of ERSP')
-    ylim = get(gca,'YLim');
-    line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
-    set(gca,'YLim',ylim)
-    FixAxes(gca)
-    set(gca,'FontSize',16)
+    %ylim = get(gca,'YLim');
+    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
+    %set(gca,'YLim',ylim)
+    FixAxes(gca,14)
+    %set(gca,'FontSize',16)
     
     plotindx = linspace(0,max(settings.aucindex),5);
     plotindx(1) = [];
     for cc = 1:4
-        p(2,c,cc+1).select()
-        plotdata = mean(allmeas{c}.ttversp(:,plotindx(cc),:),3);
+        p(1,c,cc+1).select()
+        plotdata = mean(allmeas{c}.ttversp.real(:,plotindx(cc),:),3);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
                 alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)),alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
@@ -318,30 +330,55 @@ for c = 1:settings.nfreqs
         if cc == 5
             colorbar
         end
-        ax(cc) = p(2,c,cc+1).axis;
+        ax(cc) = p(1,c,cc+1).axis;
+        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
     end
     Normalize_Clim(ax,1);
 end
+clear ax
 
-p(2).pack('v',{repmat(1/settings.nfreqs,settings.nfreqs,1)})
+p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 for c = 1:settings.nfreqs
     p(2,c).pack()
-    p(2,c,
+    p(2,c).pack({[0.7 0 0.3 0.3]})
+    p(2,c,1).select()
+    nicecorrplot(nanmean(allmeas{c}.naerspindex,1),nanmean(allmeas{c}.ttverspindex,1),{'Pseudotrial-based ERSP nonadditivity','TTV-based ERSP nonadditivity'});
+    p(2,c,2).select()
+    if strcmpi(settings.datatype,'MEG')
+        if isempty(find(~isnan(alloutputs.ersp.corr.r(:,c))))
+           alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c))); 
+        end
+        ft_cluster_topoplot(settings.layout,alloutputs.ersp.corr.r(:,c),settings.datasetinfo.label,...
+            alloutputs.ersp.corr.p(:,c)',alloutputs.ersp.corr.stats{c}.mask);
+    else
+        if isempty(find(~isnan(alloutputs.ersp.corr.r(:,c))))
+            alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c)));
+        end
+        cluster_topoplot(alloutputs.ersp.corr.r(:,c),settings.layout,...
+            alloutputs.ersp.corr.p(:,c)',alloutputs.ersp.corr.stats{c}.mask);
+    end
+    colormap(lkcmap2)
+    colorbar('WestOutside')
+    FixAxes(gca,14)
+    ax(c) = p(2,c,2).axis;
 end
+Normalize_Clim(ax,1);
 
 
 p.de.margin = [5 5 5 5];
+p.marginleft = 20;
+p.marginbottom = 20;
+p(1).marginbottom = 20;
+p(2).de.marginleft = 20;
 % fix margins here
 
-AddFigureLabel(p(1,1).axis,'A')
+AddFigureLabel(p(1,1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B')
 
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*1.5 pos(4)*2.5],'Color','w');
-
-savefig('Fig2.fig')
-export_fig('Fig2.png','-m4')
-save('Panel2.mat','p')
+savefig('Fig3.fig')
+export_fig('Fig3.png','-m4')
+save('Panel3.mat','p')
 close
 
 

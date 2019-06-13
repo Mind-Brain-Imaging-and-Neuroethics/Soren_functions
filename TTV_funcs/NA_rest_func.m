@@ -21,9 +21,9 @@ end
 
 %% Calculate bandpower for each frequency band
 if strcmpi(settings.datatype,'EEG')
-    files = dir(settings.restfiles);
+    files = dir(settings.rest.restfiles);
 else
-    files = dir(settings.restfiles);
+    files = dir(settings.rest.restfiles);
 end
 
 nbchan = length(settings.datasetinfo.label);
@@ -34,7 +34,7 @@ restmeas = struct;
 filesorder = cell(1,length(files));
 
 rest_fbands = cell(length(files),length(settings.tfparams.fbandnames));
-pf =
+pf = zeros(1,length(files));
 
 parfor i = 1:length(files)
     if strcmpi(settings.datatype,'EEG')
