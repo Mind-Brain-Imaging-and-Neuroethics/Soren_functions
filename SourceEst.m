@@ -44,18 +44,25 @@ if strcmpi(opts.interp,'yes')
     cfg.interpmethod = 'nearest';
     cfg.parameter = opts.atlasparam;
     sourcemodel = ft_sourceinterpolate(cfg, atlas, sourcemodel);
+    atlas.(opts.atlasparam) = sourcemodel.(opts.atlasparam);
 end
 
 % Create forward model
-cfg = []; cfg.grad = data.grad; cfg.channel = {'MEG'};
+cfg = []; 
+if strcmpi(opts.datatype,'MEG')
+cfg.grad = data.grad; 
+elseif strcmpi(opts.datatype,'EEG')
+cfg.elec = data.elec
+end
+cfg.channel = {opts.datatype};
 sourcemodel = ft_convert_units(sourcemodel,'mm');
 headmodel = ft_convert_units(headmodel,'mm');
 cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
 cfg.headmodel = headmodel;
 leadfield = ft_prepare_leadfield(cfg);
 
-% % Select only the MEG channels
-cfg = []; cfg.channel = {'MEG'};
+% % Select only the relevant channels
+cfg = []; cfg.channel = {opts.datatype};
 data = ft_selectdata(cfg,data);
 
 % If continuous, epoch into arbitrary 2-second segments

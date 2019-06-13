@@ -59,9 +59,9 @@ cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
 cfg.headmodel = headmodel;
 leadfield = ft_prepare_leadfield(cfg);
 
-% % Select only the EEG channels
-% cfg = []; cfg.channel = {'MEG'};
-% data = ft_selectdata(cfg,data);
+ % Select only the MEG channels
+ cfg = []; cfg.channel = {'MEG'};
+ data = ft_selectdata(cfg,data);
 % clear data
 
 % % Epoch into arbitrary 2-second segments
