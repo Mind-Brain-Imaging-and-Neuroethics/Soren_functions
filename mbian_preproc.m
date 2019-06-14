@@ -17,10 +17,10 @@ function [data] = mbian_preproc(cfg,data)
 %
 %           EEG:
 %
-%           chanlocs: either 'lookup' to look up
-%              channel locations in standard file, a string specifying the
-%              file to look up locations in, or an EEGLAB chanlocs
-%              structure (default = 'lookup')
+%           chanlocs: either 'lookup' to look up channel locations in a 
+%              standard file, a string specifying the file to look up 
+%              locations in, 'none', or an EEGLAB chanlocs structure
+%              (default = 'lookup')
 %           line: structure with the following fields:
 %              method: Can be 'cleanline', 'none', or 'notch' (default =
 %                 'cleanline')
@@ -95,7 +95,7 @@ if cfgcheck(cfg,'datatype','eeg')
     if isstr(cfg.chanlocs)
         if cfgcheck(cfg,'chanlocs','lookup')
             EEG = pop_chanedit(EEG,'lookup',fullfile(char(eegdir),'plugins','dipfit2.3','standard_BESA','standard-10-5-cap385.elp'),'eval','chans = pop_chancenter( chans, [],[]);');
-        else
+        elseif ~cfgcheck(cfg,'chanlocs','none')
             EEG = pop_chanedit(EEG,'lookup',cfg.chanlocs,'eval','chans = pop_chancenter( chans, [],[]);');
         end
     else
@@ -109,11 +109,13 @@ if cfgcheck(cfg,'datatype','eeg')
     % filter in fieldtrip so you don't have to manually set the filter order
     chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
     
-    data = eeglab2fieldtrip(EEG,'preprocessing','none');
-    tmpcfg = [] ; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.bandpass; tmpcfg.bpfilttype = 'fir';
-    data = ft_preprocessing(tmpcfg,data);
-    EEG = ft2eeglab(data);
-    EEG.chanlocs = chanlocs;
+    if ~ischar(cfg.bandpass) && ~strcmpi(cfg.bandpass,'none')
+        data = eeglab2fieldtrip(EEG,'preprocessing','none');
+        tmpcfg = [] ; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.bandpass; tmpcfg.bpfilttype = 'fir';
+        data = ft_preprocessing(tmpcfg,data);
+        EEG = ft2eeglab(data);
+        EEG.chanlocs = chanlocs;
+    end
     
     EEG  = eeg_checkset(EEG);
     
@@ -139,7 +141,7 @@ if cfgcheck(cfg,'datatype','eeg')
     if cfgcheck(cfg,'asr','yes')
         orig_chanlocs = EEG.chanlocs;
         
-        EEG = clean_rawdata(EEG, 5, [-1], 0.8, -1, 5, 0.5);
+        EEG = clean_rawdata(EEG, 5, [-1], 0.8, 4, 5, 0.25);
         
         EEG = pop_interp(EEG, orig_chanlocs, 'spherical');
         

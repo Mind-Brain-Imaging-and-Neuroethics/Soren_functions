@@ -193,16 +193,20 @@ cfg.numrandomization = opts.nrand; cfg.spmversion = 'spm12'; cfg.minnbchan = opt
 cfg.type = opts.type;
 
 if isfield(opts,'parpool')
-   cfg.parpool = opts.parpool; 
+    cfg.parpool = opts.parpool;
 end
 
-design = zeros(1,size(cat(2,data{:}),2));
-currindx = 1;
-for c = 1:length(data)
-    design(1,currindx:size(data{c},2)) = 1;
-    currindx = currindx+size(data{c},2);
+if ~isfield(opts,'external')
+    design = zeros(1,size(cat(2,data{:}),2));
+    currindx = 1;
+    for c = 1:length(data)
+        design(1,currindx:size(data{c},2)) = 1;
+        currindx = currindx+size(data{c},2);
+    end
+    design = design+1;
+else
+    design = opts.external;
 end
-design = design+1;
 %design(1,(size(data{1},2)+1):(size(data{1},2) + size(data{2},2)))= 2;
 
 cfg.design = design; cfg.ivar = 1;
