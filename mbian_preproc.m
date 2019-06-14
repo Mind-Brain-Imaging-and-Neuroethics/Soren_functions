@@ -17,8 +17,8 @@ function [data] = mbian_preproc(cfg,data)
 %
 %           EEG:
 %
-%           chanlocs: either 'lookup' to look up channel locations in a 
-%              standard file, a string specifying the file to look up 
+%           chanlocs: either 'lookup' to look up channel locations in a
+%              standard file, a string specifying the file to look up
 %              locations in, 'none', or an EEGLAB chanlocs structure
 %              (default = 'lookup')
 %           line: structure with the following fields:
@@ -85,9 +85,9 @@ ft_defaults
 %% EEG pipeline
 if cfgcheck(cfg,'datatype','eeg')
     eeglab rebuild
-
+    
     eegdir = extractBefore(which('eeglab'),'eeglab.m');
-
+    
     EEG = data;
     data = [];
     
@@ -95,7 +95,7 @@ if cfgcheck(cfg,'datatype','eeg')
     if isstr(cfg.chanlocs)
         if cfgcheck(cfg,'chanlocs','lookup')
             EEG = pop_chanedit(EEG,'lookup',fullfile(char(eegdir),'plugins','dipfit2.3','standard_BESA','standard-10-5-cap385.elp'),'eval','chans = pop_chancenter( chans, [],[]);');
-        elseif ~cfgcheck(cfg,'chanlocs','none')
+        elseif ~cfgcheck(cfg,'chanlocs','no')
             EEG = pop_chanedit(EEG,'lookup',cfg.chanlocs,'eval','chans = pop_chancenter( chans, [],[]);');
         end
     else
@@ -104,12 +104,18 @@ if cfgcheck(cfg,'datatype','eeg')
     
     EEG  = eeg_checkset(EEG);
     
+    % Resample the data
+    
+    if ~strcmpi(cfg.resample,'no') && (EEG.srate ~= cfg.resample)
+        EEG = pop_resample(EEG,cfg.resample);
+    end
+    
     
     % Filter the data
     % filter in fieldtrip so you don't have to manually set the filter order
     chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
     
-    if ~ischar(cfg.bandpass) && ~strcmpi(cfg.bandpass,'none')
+    if ~ischar(cfg.bandpass) && ~strcmpi(cfg.bandpass,'no')
         data = eeglab2fieldtrip(EEG,'preprocessing','none');
         tmpcfg = [] ; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.bandpass; tmpcfg.bpfilttype = 'fir';
         data = ft_preprocessing(tmpcfg,data);
@@ -172,7 +178,7 @@ if cfgcheck(cfg,'datatype','eeg')
         EEG  = pop_subcomp(EEG,artcomps,0);
         EEG  = eeg_checkset(EEG);
     end
-
+    
     data = EEG;
     EEG = [];
     

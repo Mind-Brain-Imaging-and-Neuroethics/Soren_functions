@@ -177,7 +177,8 @@ for i = 1:length(settings.behav)
             behav_meas{i}.p(:,q) = p;
             opts.nrand = 10000;
             opts.minnbchan = 1;
-            behav_meas{i}.stats = EasyClusterCorrect({indvar(:,:,q) repmat(behav_data,1,settings.nbchan)'},settings.datasetinfo,'ft_statfun_correlationT',opts);
+            opts.external = horz(behav_data);
+            behav_meas{i}.stats = EasyClusterCorrect({indvar(:,:,q)},settings.datasetinfo,'ft_statfun_correlationT',opts);
         end
     end
     behav_meas{i}.settings = settings.behav{i};
