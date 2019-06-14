@@ -142,6 +142,7 @@ elseif cfgcheck(cfg.irasa,'do_irasa','yes')
     cfg.irasa = setdefault(cfg.irasa,'overlap',0);
     cfg.irasa = setdefault(cfg.irasa,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
     cfg.irasa = setdefault(cfg.irasa,'save_specs','yes');
+    cfg.irasa = setdefault(cfg.irasa,'load_specs','yes');
 end
 
 cfg = setdefault(cfg,'continue','no');

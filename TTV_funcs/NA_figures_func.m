@@ -275,7 +275,7 @@ save('Panel2.mat','p')
 close
 
 
-%% Figure 3a: TTV of ERSP
+%% Figure 3: TTV of ERSP
 
 p = panel('no-manage-font');
 
@@ -381,157 +381,232 @@ export_fig('Fig3.png','-m4')
 save('Panel3.mat','p')
 close
 
+% 
+% 
+% 
+% 
+% 
+% 
+% 
+% figure
+% t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
+% prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
+%     nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
+% prestimdata = nanmean(nanmean(prestimdata,3),1);
+% poststimdata = (allmeas{plotband}.ttversp.real);
+% poststimdata = nanmean(nanmean(poststimdata,3),1);
+% plotdata = [prestimdata poststimdata];
+% FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
+%     zeros(1,length(poststimdata)));
+% hold on
+% plot(t,plotdata,'b','LineWidth',3)
+% plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+% xlabel('Time (s)')
+% ylabel('% change of TTV of ERSP')
+% ylim = get(gca,'YLim');
+% line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
+% set(gca,'YLim',ylim)
+% FixAxes(gca)
+% set(gca,'FontSize',20)
+% 
+% %aucdata = 100*(allmeas{4}.ttversp.real)./...
+% %    nanmean(allmeas{4}.raw.ttversp(:,prestim_real,:),2); %REMOVE THIS IF YOU RECALCULATE
+% topoplot_data = allmeas{plotband}.ttverspindex;
+% p = alloutputs.ersp.ttv.sig(plotband,:);
+% plotstats = alloutputs.ersp.ttv.stats{plotband};
+% %plotstats = EasyClusterCorrect_signrank({topoplot_data,zeros(size(topoplot_data))},settings.datasetinfo);
+% axes('position',[0.15 0.15 0.25 0.25])
+% if strcmpi(settings.datatype,'EEG')
+%     cluster_topoplot(nanmean(topoplot_data,2),settings.layout,p,plotstats.mask)
+% else
+%     ft_cluster_topoplot(settings.layout,nanmean(topoplot_data,2),settings.datasetinfo.label,p,plotstats.mask);
+% end
+% colorbar('FontSize',12)
+% if ~istdpty(find(plotstats.mask))
+%     if isfield(plotstats,'posclusters') && ~istdpty(plotstats.posclusters)
+%         title(['p = ' num2str(round(plotstats.posclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
+%     else
+%         title(['p = ' num2str(round(plotstats.negclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
+%     end
+% end
+% colormap(lkcmap2)
+% Normalize_Clim(gcf,1)
+% savefig('Fig2a.fig')
+% close
+% 
+% %% Figure 2b: Correlation of TTVERSP with ERSP NA index
+% 
+% nicecorrplot(nanmean(allmeas{plotband}.naerspindex,1),nanmean(allmeas{plotband}.ttverspindex,1),{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'})
+% FixAxes(gca,20)
+% axes('position',[0.15 0.15 0.25 0.25])
+% if strcmpi(settings.datatype,'EEG')
+%     cluster_topoplot(alloutputs.ersp.corr.r(:,plotband),settings.layout,alloutputs.ersp.corr.p(:,plotband),alloutputs.ersp.corr.stats{plotband}.mask);
+% else
+%     ft_cluster_topoplot(settings.layout,alloutputs.ersp.corr.r(:,plotband),settings.datasetinfo.label,...
+%         alloutputs.ersp.corr.p(:,plotband),alloutputs.ersp.corr.stats{plotband}.mask);
+% end
+% colorbar('FontSize',12)
+% if ~istdpty(find(alloutputs.ersp.corr.stats{plotband}.mask))
+%     if isfield(alloutputs.ersp.corr.stats{plotband},'posclusters') && ~istdpty(alloutputs.ersp.corr.stats{plotband}.posclusters)
+%         title(['p = ' num2str(round(alloutputs.ersp.corr.stats{plotband}.posclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
+%     else
+%         title(['p = ' num2str(round(alloutputs.ersp.corr.stats{plotband}.negclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
+%         
+%     end
+% end
+% colormap(lkcmap2)
+% Normalize_Clim(gcf,1)
+% savefig('Fig2b.fig')
+% close
 
-
-
-
-
-
-
-figure
-t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-prestimdata = nanmean(nanmean(prestimdata,3),1);
-poststimdata = (allmeas{plotband}.ttversp.real);
-poststimdata = nanmean(nanmean(poststimdata,3),1);
-plotdata = [prestimdata poststimdata];
-FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
-    zeros(1,length(poststimdata)));
-hold on
-plot(t,plotdata,'b','LineWidth',3)
-plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
-xlabel('Time (s)')
-ylabel('% change of TTV of ERSP')
-ylim = get(gca,'YLim');
-line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
-set(gca,'YLim',ylim)
-FixAxes(gca)
-set(gca,'FontSize',20)
-
-%aucdata = 100*(allmeas{4}.ttversp.real)./...
-%    nanmean(allmeas{4}.raw.ttversp(:,prestim_real,:),2); %REMOVE THIS IF YOU RECALCULATE
-topoplot_data = allmeas{plotband}.ttverspindex;
-p = alloutputs.ersp.ttv.sig(plotband,:);
-plotstats = alloutputs.ersp.ttv.stats{plotband};
-%plotstats = EasyClusterCorrect_signrank({topoplot_data,zeros(size(topoplot_data))},settings.datasetinfo);
-axes('position',[0.15 0.15 0.25 0.25])
-if strcmpi(settings.datatype,'EEG')
-    cluster_topoplot(nanmean(topoplot_data,2),settings.layout,p,plotstats.mask)
-else
-    ft_cluster_topoplot(settings.layout,nanmean(topoplot_data,2),settings.datasetinfo.label,p,plotstats.mask);
-end
-colorbar('FontSize',12)
-if ~istdpty(find(plotstats.mask))
-    if isfield(plotstats,'posclusters') && ~istdpty(plotstats.posclusters)
-        title(['p = ' num2str(round(plotstats.posclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
-    else
-        title(['p = ' num2str(round(plotstats.negclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
-    end
-end
-colormap(lkcmap2)
-Normalize_Clim(gcf,1)
-savefig('Fig2a.fig')
-close
-
-%% Figure 2b: Correlation of TTVERSP with ERSP NA index
-
-nicecorrplot(nanmean(allmeas{plotband}.naerspindex,1),nanmean(allmeas{plotband}.ttverspindex,1),{'Pseudotrial-based nonadditivity','TTV-based nonadditivity'})
-FixAxes(gca,20)
-axes('position',[0.15 0.15 0.25 0.25])
-if strcmpi(settings.datatype,'EEG')
-    cluster_topoplot(alloutputs.ersp.corr.r(:,plotband),settings.layout,alloutputs.ersp.corr.p(:,plotband),alloutputs.ersp.corr.stats{plotband}.mask);
-else
-    ft_cluster_topoplot(settings.layout,alloutputs.ersp.corr.r(:,plotband),settings.datasetinfo.label,...
-        alloutputs.ersp.corr.p(:,plotband),alloutputs.ersp.corr.stats{plotband}.mask);
-end
-colorbar('FontSize',12)
-if ~istdpty(find(alloutputs.ersp.corr.stats{plotband}.mask))
-    if isfield(alloutputs.ersp.corr.stats{plotband},'posclusters') && ~istdpty(alloutputs.ersp.corr.stats{plotband}.posclusters)
-        title(['p = ' num2str(round(alloutputs.ersp.corr.stats{plotband}.posclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
-    else
-        title(['p = ' num2str(round(alloutputs.ersp.corr.stats{plotband}.negclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
-        
-    end
-end
-colormap(lkcmap2)
-Normalize_Clim(gcf,1)
-savefig('Fig2b.fig')
-close
-
-%% Figure 3a & 3b: Results of mean split ERP - broadband only
+%% Figure 4: Results of median split ERP - broadband only
 %plotindex{1} = [3 4 5 8 9 10];
 %plotindex{2} = [13 14 15 18 19 20];
-figure
-p = panel('no-manage-font')
-p.pack('h',{50 50});
-p(1).select();
-t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-hold on
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,1,:),1)),'b',0,1,'std')
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'std')
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,2,:),1)),'r',0,1,'std');
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'std')
-%FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
-%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
-%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
-legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none')
-xlabel('Time (s)')
-ylabel('Voltage (uV)')
-%ylabelunits(settings)
-FixAxes(gca,20)
 
-p(2).pack();
-p(2).pack({[0.75 0.02 0.25 0.3]});
-p(2,1).select();
+figure
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'Color','w');
+
+p = panel('no-manage-font');
+p.pack('h',{50 50});
+p(1).pack('v',{50 50})
+p(2).pack('v',{50 50});
+p(1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,1,:),1))-...
-    squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),1)),'b',0,1,'std')
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,2,:),1))-...
-    squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),1)),'r',0,1,'std')
-FillBetween(t,nanmean(nanmean(allmeas{2}.nadderp.real(:,:,1,:),4),1)-...
-    nanmean(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{2}.nadderp.real(:,:,2,:),4),1)-...
-    nanmean(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),4),1));
+stdshade(t,squeeze(allmeas{1}.erp(plotsensor,settings.real.poststim,:)),'k',0.15,1,'std');
+ylabel('Voltage (uV)')
+FixAxes(gca,16)
+
+% p(1,2).select();
+% t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+% hold on
+% stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1)),'b',0,1,'std')
+% stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'std')
+% stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1)),'r',0,1,'std');
+% stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'std')
+% %FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
+% %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{1}.nadderp.real(:,:,2,:),4),1)-...
+% %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
+% legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none')
+% xlabel('Time (s)')
+% ylabel('Voltage (uV)')
+% %ylabelunits(settings)
+% FixAxes(gca,16)
+
+% p(2).pack();
+% p(2).pack({[0.75 0.02 0.25 0.3]});
+p(1,2).pack();
+for cc = 1:4
+    p(1,2).pack({[0.25*(cc-1) 0 0.25 0.15]})
+end
+p(1,2,1).select();
+t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+hold on
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
+    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b',0.15,1,'std')
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1))-...
+    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0.15,1,'std')
+%FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
+%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{2}.nadderp.real(:,:,2,:),4),1)-...
+%    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
 legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabel('Voltage (uV)')
 %ylabelunits(settings)
-FixAxes(gca,20)
+FixAxes(gca,16)
 %axes('position',[0.75 0.135 0.15 0.2])
-p(2,2).select();
-if strcmpi(settings.datatype,'EEG')
-    cluster_topoplot(nanmean(allmeas{1}.naerpindex,2),settings.layout,alloutputs.erp.pt.sig(1,:)',alloutputs.erp.pt.stats{1}.mask)
-elseif strcmpi(settings.datatype,'MEG')
-    ft_cluster_topoplot(settings.layout,nanmean(allmeas{2}.naerpindex,2),settings.datasetinfo.label,...
-        alloutputs.erp.pt.sig(2,:)',alloutputs.erp.pt.stats{2}.mask);
-end
-if ~istdpty(find(alloutputs.erp.pt.stats{1}.mask))
-    if isfield(alloutputs.erp.pt.stats{1},'posclusters') && ~istdpty(alloutputs.erp.pt.stats{1}.posclusters)
-        title(['p = ' num2str(round(alloutputs.erp.pt.stats{1}.posclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
-    else
-        title(['p = ' num2str(round(alloutputs.erp.pt.stats{1}.negclusters(1).prob,2,'significant')) '*'],'FontWeight','normal','FontSize',18)
+    plotindx = linspace(0,max(settings.aucindex),5);
+    plotindx(1) = [];
+    plotindx = plotindx - settings.srate/10;
+    for cc = 1:4
+        p(1,2,cc+1).select()
+        plotdata = nanmean(squeeze(allmeas{1}.nadderp.diff(:,plotindx(cc),2,:)-allmeas{1}.nadderp.diff(:,plotindx(cc),1,:)),2);
+        if strcmpi(settings.datatype,'MEG')
+            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
+                alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+        else
+            cluster_topoplot(plotdata,settings.layout,...
+                alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+        end
+        colormap(lkcmap2)
+        if cc == 4
+            colorbar
+        end
+        ax(cc) = p(1,2,cc+1).axis;
+        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
     end
+Normalize_Clim(ax,1)
+
+
+p(2,1).pack();
+for cc = 1:4
+    p(2,1).pack({[0.25*(cc-1) 0 0.25 0.15]})
 end
-%title('No significant clusters','FontWeight','normal','FontSize',14)
-colormap(lkcmap2)
-Normalize_Clim(gcf,1)
+p(2,1,1).select();
+t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+hold on
+stdshade(t,squeeze(nanmean(allmeas{1}.ttv.real,1)),'k',0.15,1,'std')
+xlabel('Time (s)')
+ylabelunits(settings)
+%ylabelunits(settings)
+FixAxes(gca,16)
+%axes('position',[0.75 0.135 0.15 0.2])
+    plotindx = linspace(0,max(settings.aucindex),5);
+    plotindx(1) = [];
+    plotindx = plotindx - settings.srate/10;
+    for cc = 1:4
+        p(2,1,cc+1).select()
+        plotdata = nanmean(allmeas{1}.ttv.real(:,plotindx(cc),:),3);
+        if strcmpi(settings.datatype,'MEG')
+            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
+                alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)));
+        else
+            cluster_topoplot(plotdata,settings.layout,...
+                alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+        end
+        colormap(lkcmap2)
+        if cc == 4
+            colorbar
+        end
+        ax(cc) = p(2,1,cc+1).axis;
+        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
+        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
+    end
+Normalize_Clim(ax,1)
+
+p(2,2).pack();
+p(2,2).pack({[0.7 0 0.3 0.3]});
+p(2,2,1).select();
+nicecorrplot(nanmean(allmeas{1}.naerpindex,1),nanmean(allmeas{1}.ttvindex,1),{'Pseudotrial-based ERSP nonadditivity','TTV-based ERSP nonadditivity'});
+FixAxes(gca,16)
+p(2,2,2).select()
+plotdata = alloutputs.erp.corr.r(:,1);
+if strcmpi(settings.datatype,'MEG')
+    ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
+        alloutputs.erp.corr.p(:,1),alloutputs.erp.corr.stats{1}.mask);
+else
+    cluster_topoplot(plotdata,settings.layout,...
+        alloutputs.erp.corr.p(:,1),alloutputs.erp.corr.stats{1}.mask);
+end
+Normalize_Clim(gca,1)
 colorbar('WestOutside')
 
 
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*2.5 pos(4)*1.5],'Color','w');
-
 p.margin = [28 22 6 5];
 p(1).marginright = 18;
-AddFigureLabel(p(1).axis,'A')
-AddFigureLabel(p(2,1).axis,'B');
+AddFigureLabel(p(1,1).axis,'A')
+AddFigureLabel(p(1,2,1).axis,'B');
+AddFigureLabel(p(2,1,1).axis,'C');
+AddFigureLabel(p(2,2,1).axis,'D');
 
 
 %set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
-savefig('Fig3.fig')
-export_fig('Fig3.png','-m4')
-save('Panel3.mat','p')
+savefig('Fig4.fig')
+export_fig('Fig4.png','-m4')
+save('Panel4.mat','p')
 close
 
 %% Figure 4a: Poststim TTV decrease
