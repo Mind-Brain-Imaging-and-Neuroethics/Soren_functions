@@ -50,16 +50,11 @@ yl = ylabel(labels{2},'FontSize',16);
 hold on;
 f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'r--');
 ax = gca;
-pos = ax.OuterPosition;
-if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
-    tb = annotation('textbox',[pos(1)+0.2 pos(2)+0.4 0.3 0.3],'String',{['rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on');
-else
-    tb = annotation('textbox',[pos(1)+0.2 pos(2)+0.5 0.3 0.3],'String',{['rho = ' num2str(round(corrrho,3))],['p = ' num2str(round(corrp,3,'significant'))]},'FitBoxToText','on');
-end
+pos = ax.Position;
+
 %ylim([-0.1 0.1])
 
 set(f,'LineWidth',1.5)
-set(tb,'LineStyle','none','FontSize',16)
 
 set(gca, ...
     'Box'         , 'off'     , ...
@@ -72,3 +67,20 @@ set(gca, ...
 
 set(xl,'FontSize',20)
 set(yl,'FontSize',20)
+
+if CheckInput(varargin,'Plot') && EasyParse(varargin,'Plot','r')
+    tb = annotation('textbox','String',{['rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+    tbsize = get(tb,'Position');
+    delete(tb)
+    edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
+    tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-pos(4)*0.05 tbsize(3) tbsize(4)],...
+        'String',{['rho = ' num2str(round(corrrho,3))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+else
+    tb = annotation('textbox','String',{['rho = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},...
+        'FitBoxToText','on','LineStyle','none','FontSize',14);
+    tbsize = get(tb,'Position');
+    delete(tb)
+    edges = [pos(1) pos(2) pos(1)+pos(3) pos(2)+pos(4)]; %left bottom right top
+    tb = annotation('textbox','Position',[edges(3)-tbsize(3)-pos(3)*0.05 edges(4)-tbsize(4)-0.05*pos(4) tbsize(3) tbsize(4)],...
+        'String',{['rho = ' num2str(round(corrrho,3))];['p = ' num2str(round(corrp,3,'significant'))]},'FitBoxToText','on','LineStyle','none','FontSize',14);
+end

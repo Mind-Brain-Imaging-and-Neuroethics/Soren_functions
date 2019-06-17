@@ -15,7 +15,7 @@ delete(a)
 
 
 if ~exist('topo','var') || strcmpi(topo,'no')
-offset = [outpos(1) inpos(2)+inpos(4)-tbsize(2)+1/2*(outpos(2)+outpos(4)-inpos(2)-inpos(4))];
+    offset = [outpos(1) inpos(2)+inpos(4)-tbsize(2)+1/2*(outpos(2)+outpos(4)-inpos(2)-inpos(4))];
 else
     offset = [outpos(1)-tbsize(1)*2 inpos(2)+inpos(4)+-tbsize(2)/2+1/2*(outpos(2)+outpos(4)-inpos(2)-inpos(4))];
 end
@@ -26,7 +26,7 @@ a = annotation(gcf,'textbox',[offset 0.02 0.075],...
     'String',string,...
     'FitBoxToText','on',...
     'EdgeColor','none',...
-    'FontSize',24,'FontWeight','bold'); %just get the textbox size from this, then clear it
+    'FontSize',24,'FontWeight','bold'); 
 
 
 

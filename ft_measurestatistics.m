@@ -61,7 +61,7 @@ if ~cfgcheck(cfg,'multcompare')
 end
 
 if cfgcheck(cfg,'multcompare','cluster') && ~isfield(cfg,'cluster')
-cfg.cluster = struct;    
+    cfg.cluster = struct;
 end
 
 if ~cfgcheck(cfg,'effectsize')
@@ -166,33 +166,34 @@ for i = 1:length(data{1}.meas)
                 case 'empirical'
                     % finish later
             end
+            
             switch cfg.test
-                case 'ttest','ttest2','ranksum','signrank'
+                case {'ttest','ttest2','ranksum','signrank'}
                     stats{i}.effsize{c} = mes(data{1}.data(:,c,i),data{2}.data(:,c,i),cfg.effectsize);
-                case 'anova','rmanova','kruskalwallis','friedman'
+                case {'anova','rmanova','kruskalwallis','friedman'}
                     % not implemented yet
             end
         end
         
         switch cfg.multcompare
             case 'cluster'
-if ~isfield(cfg.cluster,'datasetinfo')
-                if isfield(data{1},'elec')
-                    datasetinfo.elec = data{1}.elec;
-                elseif isfield(data{1},'grad')
-                    datasetinfo.grad = data{1}.grad;
+                if ~isfield(cfg.cluster,'datasetinfo')
+                    if isfield(data{1},'elec')
+                        datasetinfo.elec = data{1}.elec;
+                    elseif isfield(data{1},'grad')
+                        datasetinfo.grad = data{1}.grad;
+                    end
+                    datasetinfo.label = data{1}.chan;
+                else
+                    datasetinfo = cfg.cluster.datasetinfo;
                 end
-                datasetinfo.label = data{1}.chan;
-else
-datasetinfo = cfg.cluster.datasetinfo;
-end
-
+                
                 for c = 1:length(data)
                     input{c} = data{c}.data(:,:,i)';
                 end
                 stats{i}.cluster = EasyClusterCorrect(input,datasetinfo,cfg.cluster.statfun,cfg.cluster);
             case 'fdr'
-                stats{i}.fdr = mafdr(stats{i}.p(c),'BHFDR',true);
+                stats{i}.fdr = mafdr(stats{i}.p,'BHFDR',true);
         end
     elseif cfgcheck(cfg,'multcompare','mean')
         switch cfg.test

@@ -230,11 +230,11 @@ elseif cfgcheck(cfg,'plotmode','violin')
     end
 elseif cfgcheck(cfg,'plotmode','combined')
     for i = cfg.meas
-        tmpcfg = cfg; tmpcfg.plotmode = 'topo'; tmpcfg.meas = i;
+        tmpcfg = cfg; tmpcfg.plotmode = 'topo'; tmpcfg.meas = i; tmpcfg.savefig = 'no';
         topofig = ft_measurestatplot(tmpcfg,data,stats);
         topofig = topofig(i);
         
-        tmpcfg.plotmode = 'violin'; tmpcfg.meas = i;
+        tmpcfg.plotmode = 'violin'; tmpcfg.meas = i; tmpcfg.savefig = 'no';
         violinfig = ft_measurestatplot(tmpcfg,data,stats);
         violinfig = violinfig(i);
         
