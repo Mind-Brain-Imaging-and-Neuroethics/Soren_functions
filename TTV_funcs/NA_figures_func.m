@@ -32,7 +32,10 @@ end
 
 %% Figure 1a. ERSP mean split schematic
 
-p = panel('no-manage-font')
+p = panel('no-manage-font');
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*4],'Color','w');
 
 p.pack('h',{1/3 1/3 1/3})
 
@@ -81,16 +84,16 @@ legend({'Pseudotrial prestim low','Pseudotrial prestim high'},'EdgeColor','none'
 
 p(1,2).select()
 tmp = nanmean(squeeze(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,1,:)),2);
-plot(t,tmp,'b--','LineWidth',2);
+plot(t,tmp,'b','LineWidth',2);
 hold on
 plot(t,Make_signal_to_ampenv(tmp,settings.srate/mean(settings.tfparams.fbands{plotband}),rand),...
     'Color',[0.5 0.5 1],'LineWidth',0.5,'HandleVisibility','off')
 
 tmp = nanmean(squeeze(allmeas{plotband}.naddersp.raw.real(plotsensor,trange,2,:)),2);
-plot(t,tmp,'r--','LineWidth',2);
+plot(t,tmp,'r','LineWidth',2);
 plot(t,Make_signal_to_ampenv(tmp,settings.srate/mean(settings.tfparams.fbands{plotband}),rand),...
     'Color',[1 0.5 0.5],'LineWidth',0.5,'HandleVisibility','off')
-FixAxes(gca)
+FixAxes(gca,14)
 ylim = get(gca,'YLim');
 line([0 0],ylim,'Color','k','LineWidth',2,'HandleVisibility','off')
 line([linepos linepos],ylim,'Color','k','LineWidth',2,'LineStyle','--','HandleVisibility','off')
@@ -107,16 +110,16 @@ t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings
 hold on
 stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1)),'b',0,1,'std')
 stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,1,:),1)),'b--',0,1,'std')
-FillBetween(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1)),...
-    squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1)),'FaceColor',[0 0 1]);
+%FillBetween(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1)),...
+%    squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,1,:),1)),'FaceColor',[0 0 1]);
 stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1)),'r',0,1,'std');
 stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.pseudo(:,:,2,:),1)),'r--',0,1,'std')
-FillBetween(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1)),...
-    squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1)),'FaceColor',[1 0 0]);
+%FillBetween(t,squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1)),...
+%    squeeze(nanmean(allmeas{plotband}.naddersp.real(:,:,2,:),1)),'FaceColor',[1 0 0]);
 legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none','location','east')
 xlabel('Time (s)')
 ylabelunits(settings)
-FixAxes(gca,20)
+FixAxes(gca,16)
 
 p(3).select()
 
@@ -129,14 +132,17 @@ FillBetween(t,nanmean(nanmean(allmeas{plotband}.naddersp.diff(:,:,1,:),4),1),...
 legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabelunits(settings)
-FixAxes(gca,20)
+FixAxes(gca,16)
 
 % fix margins
+p.marginleft = 20;
+p(2).marginleft = 22;
+p(3).marginleft = 18;
+p.marginbottom = 18;
 
-
-AddFigureLabel('A',p(1,1).axis);
-AddFigureLabel('B',p(2).axis);
-AddFigureLabel('C',p(3).axis);
+AddFigureLabel(p(1,1).axis,'A');
+AddFigureLabel(p(2).axis,'B');
+AddFigureLabel(p(3).axis,'C');
 
 
 savefig('Fig1.fig')
@@ -263,7 +269,7 @@ for c = 1:settings.nfreqs
     %    zeros(1,length(poststimdata)));
     hold on
     stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'std')
-    Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+    Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     xlabel('Time (s)')
     ylabel('% change of TTV of ERSP')
@@ -300,9 +306,10 @@ clear ax
 p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 for c = 1:settings.nfreqs
     p(2,c).pack()
-    p(2,c).pack({[0.7 0 0.3 0.3]})
+    p(2,c).pack({[0 0 0.5 0.3]})
     p(2,c,1).select()
-    nicecorrplot(nanmean(allmeas{c}.naerspindex,1),nanmean(allmeas{c}.ttverspindex,1),{'Pseudotrial-based ERSP nonadditivity','TTV-based ERSP nonadditivity'});
+    nicecorrplot(nanmean(allmeas{c}.naerspindex,1),nanmean(allmeas{c}.ttverspindex,1),{['Pseudotrial-based' newline 'ERSP nonadditivity'],'TTV-based ERSP nonadditivity'});
+    FixAxes(gca,14)
     p(2,c,2).select()
     if strcmpi(settings.datatype,'MEG')
         if isempty(find(~isnan(alloutputs.ersp.corr.r(:,c))))
@@ -318,7 +325,7 @@ for c = 1:settings.nfreqs
             alloutputs.ersp.corr.p(:,c)',alloutputs.ersp.corr.stats{c}.mask);
     end
     colormap(lkcmap2)
-    colorbar('WestOutside')
+    colorbar('EastOutside')
     FixAxes(gca,14)
     ax(c) = p(2,c,2).axis;
 end
@@ -327,9 +334,10 @@ Normalize_Clim(ax,1);
 
 p.de.margin = [5 5 5 5];
 p.marginleft = 20;
-p.marginbottom = 20;
+p.marginbottom = 22;
 p(1).marginbottom = 20;
-p(2).de.marginleft = 20;
+p(1).de.marginleft = 15;
+p(2).de.marginleft = 16;
 % fix margins here
 
 AddFigureLabel(p(1,1,1).axis,'A')
@@ -344,7 +352,7 @@ close
 %% Figure 2.5 (or supplement) - pseudotrial-based and ttv-based time course differences?
 
 %Pseudotrial based first
-p = panel('no-manage-font')
+p = panel('no-manage-font');
 
 p.pack(settings.nfreqs,settings.nfreqs);
 
@@ -427,17 +435,18 @@ ylabel('Voltage (uV)')
 FixAxes(gca,16)
 
 
-p(1,2).pack();
+p(2,1).pack();
 for cc = 1:4
-    p(1,2).pack({[0.25*(cc-1) 0 0.25 0.15]})
+    p(2,1).pack({[0.25*(cc-1) 0 0.25 0.15]})
 end
-p(1,2,1).select();
+p(2,1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
 stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
     squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b',0.15,1,'std')
 stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1))-...
     squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0.15,1,'std')
+Plot_sigmask(gca,alloutputs.erp.pt.stats{1}.mask,'cmapline','LineWidth',5)
 %FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
 %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{2}.nadderp.real(:,:,2,:),4),1)-...
 %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
@@ -451,34 +460,35 @@ plotindx = linspace(0,max(settings.aucindex),5);
 plotindx(1) = [];
 plotindx = plotindx - settings.srate/10;
 for cc = 1:4
-    p(1,2,cc+1).select()
+    p(2,1,cc+1).select()
     plotdata = nanmean(squeeze(allmeas{1}.nadderp.diff(:,plotindx(cc),2,:)-allmeas{1}.nadderp.diff(:,plotindx(cc),1,:)),2);
     if strcmpi(settings.datatype,'MEG')
         ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-            alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+            0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
     else
         cluster_topoplot(plotdata,settings.layout,...
-            alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+            0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
     end
     colormap(lkcmap2)
     if cc == 4
         colorbar
     end
-    ax(cc) = p(1,2,cc+1).axis;
+    ax(cc) = p(2,1,cc+1).axis;
     title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
     Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
 end
 Normalize_Clim(ax,1)
 
 
-p(2,1).pack();
+p(1,2).pack();
 for cc = 1:4
-    p(2,1).pack({[0.25*(cc-1) 0 0.25 0.15]})
+    p(1,2).pack({[0.25*(cc-1) 0 0.25 0.15]})
 end
-p(2,1,1).select();
+p(1,2,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
 stdshade(t,squeeze(nanmean(allmeas{1}.ttv.real,1)),'k',0.15,1,'std')
+Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
 xlabel('Time (s)')
 ylabelunits(settings)
 %ylabelunits(settings)
@@ -488,20 +498,20 @@ plotindx = linspace(0,max(settings.aucindex),5);
 plotindx(1) = [];
 plotindx = plotindx - settings.srate/10;
 for cc = 1:4
-    p(2,1,cc+1).select()
+    p(1,2,cc+1).select()
     plotdata = nanmean(allmeas{1}.ttv.real(:,plotindx(cc),:),3);
     if strcmpi(settings.datatype,'MEG')
         ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-            alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)));
+            0.*alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)));
     else
         cluster_topoplot(plotdata,settings.layout,...
-            alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+            0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
     end
     colormap(lkcmap2)
     if cc == 4
         colorbar
     end
-    ax(cc) = p(2,1,cc+1).axis;
+    ax(cc) = p(1,2,cc+1).axis;
     title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
     Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
 end
@@ -525,11 +535,11 @@ Normalize_Clim(gca,1)
 colorbar('WestOutside')
 
 
-p.margin = [28 22 6 5];
+p.margin = [22 22 6 5];
 p(1).marginright = 18;
 AddFigureLabel(p(1,1).axis,'A')
-AddFigureLabel(p(1,2,1).axis,'B');
-AddFigureLabel(p(2,1,1).axis,'C');
+AddFigureLabel(p(2,1,1).axis,'B');
+AddFigureLabel(p(1,2,1).axis,'C');
 AddFigureLabel(p(2,2,1).axis,'D');
 
 
@@ -544,21 +554,31 @@ close
 if isfield(settings,'rest')
     mainfig = figure;
     
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+
     p = panel('no-manage-font');
     p.pack('v',{30 30 40});
     
     pwidth = ceil((settings.nfreqs-1)/2);
-    p(1).pack(2,pwidth);
+    %p(1).pack(2,pwidth);
+    p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
     
-    plotindx = [1:pwidth 1:pwidth];
+    %plotindx = [1:pwidth 1:pwidth];
     for c = 2:settings.nfreqs       
-        p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
-        p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0.7 0.7 0.3 0.3]})
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+        p(1,c-1).pack()
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+        p(1,c-1).pack({[0 0 0.4 0.4]})
         
-        p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
-        nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:))',1),nanmean(allmeas{c}.erspindex',1),{'Resting-state relative power','ERSP AUC'})
         
-        p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+        p(1,c-1,1).select()
+        nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
+        FixAxes(gca,14)
+        
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+        p(1,c-1,2).select()
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,restmeas.rel_bp.index.r.subject(:,c),settings.datasetinfo.label,...
                 restmeas.rel_bp.index.p.subject(:,c),restmeas.rel_bp.index.stats{c}.mask);
@@ -568,23 +588,30 @@ if isfield(settings,'rest')
         end
         title(settings.tfparams.fbandnames{c})
         cbar = colorbar('peer',gca,'FontSize',12);
-        ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+        %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+        ax(c-1) = p(1,c-1,2).axis;
     end
     %cbar.Label.String = 'Spearman''s rho';
     %cbar.Label.FontSize = 14;
     colormap(lkcmap2)
     Normalize_Clim(ax,1);
     
-    p(2).pack(2,pwidth);
+    %p(2).pack(2,pwidth);
+    p(2).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
     
     for c = 2:settings.nfreqs       
-        p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
-        p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0.7 0.7 0.3 0.3]})
+        %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+        %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+        p(2,c-1).pack();
+        p(2,c-1).pack({[0 0 0.4 0.4]})
         
-        p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
-        nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:))',1),nanmean(allmeas{c}.naerspindex',1),{'Resting-state relative power','ERSP nonadditivity'})
+        %p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+        p(2,c-1,1).select()
+        nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.naerspindex,1),{'Resting-state relative power','ERSP nonadditivity'})
+        FixAxes(gca,14)
         
-                p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+                %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+                p(2,c-1,2).select()
 
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,restmeas.rel_bp.naindex.r.subject(:,c),settings.datasetinfo.label,...
@@ -595,14 +622,15 @@ if isfield(settings,'rest')
         end
         title(settings.tfparams.fbandnames{c})
         cbar = colorbar('peer',gca,'FontSize',12);
-        ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+        %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+        ax(c-1) = p(2,c-1,2).select();
     end
     %cbar.Label.String = 'Spearman''s rho';
     %cbar.Label.FontSize = 14;
     colormap(lkcmap2)
     Normalize_Clim(ax,1);
   
-    newfig = figure;
+    bandindex = find(strcmpi(fbands,'Alpha'));
     opts = struct;
     opts.display_mod = 1;
     opts.display = 0;
@@ -613,16 +641,17 @@ if isfield(settings,'rest')
     mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
         double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
         double(nanmean(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
-    figaxes = findobj('Parent',newfig,'Type','axes');
+    figaxes = findobj('Parent',gcf,'Type','axes');
 
     p(3).select(figaxes)
-    close(newfig)
-    
+   
     %fix margins here
     
-    AddFigureLabel('A',p(1,1,1,1).axis);
-    AddFigureLabel('B',p(2,1,1,1).axis);
-    AddFigureLabel('C',p(3).axis);
+    %AddFigureLabel('A',p(1,1,1,1).axis);
+    %AddFigureLabel('B',p(2,1,1,1).axis);
+    AddFigureLabel(p(1,1,1).axis,'A')
+    AddFigureLabel(p(2,1,1).axis,'B')
+    AddFigureLabel(p(3).axis,'C');
     
     savefig('Fig5.fig')
     export_fig('Fig5.png','-m4')

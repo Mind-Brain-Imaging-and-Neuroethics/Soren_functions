@@ -116,11 +116,13 @@ if cfgcheck(cfg,'datatype','eeg')
     chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
     
     if ~ischar(cfg.bandpass) && ~strcmpi(cfg.bandpass,'no')
+        event = EEG.event;
         data = eeglab2fieldtrip(EEG,'preprocessing','none');
         tmpcfg = [] ; tmpcfg.bpfilter = 'yes'; tmpcfg.bpfreq = cfg.bandpass; tmpcfg.bpfilttype = 'fir';
         data = ft_preprocessing(tmpcfg,data);
         EEG = ft2eeglab(data);
         EEG.chanlocs = chanlocs;
+        EEG.event = event;
     end
     
     EEG  = eeg_checkset(EEG);
@@ -133,12 +135,13 @@ if cfgcheck(cfg,'datatype','eeg')
             delete(gcf)
         case 'notch'
             chanlocs = EEG.chanlocs; %ft2eeglab doesn't handle chanlocs well, so save these
-            
+            event = EEG.event;
             data = eeglab2fieldtrip(EEG,'preprocessing','none');
             tmpcfg = [] ; tmpcfg.bsfilter = 'yes'; tmpcfg.bsfreq = cfg.line.freq; tmpcfg.bpfilttype = 'fir';
             data = ft_preprocessing(tmpcfg,data);
             EEG = ft2eeglab(data);
             EEG.chanlocs = chanlocs;
+            EEG.event = event;
     end
     EEG  = eeg_checkset(EEG);
     
@@ -147,7 +150,7 @@ if cfgcheck(cfg,'datatype','eeg')
     if cfgcheck(cfg,'asr','yes')
         orig_chanlocs = EEG.chanlocs;
         
-        EEG = clean_rawdata(EEG, 5, [-1], 0.8, 4, 5, 0.25);
+        EEG = clean_rawdata(EEG, 5, [-1], 0.85, 4, 20,-1,'availableRAM_GB',4);
         
         EEG = pop_interp(EEG, orig_chanlocs, 'spherical');
         

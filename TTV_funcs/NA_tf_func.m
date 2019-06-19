@@ -18,11 +18,12 @@ end
 
 parfor i = 1:length(files)
     if strcmpi(settings.datatype,'EEG')
-        EEG = pop_loadset('filename',files(c).name,'filepath',settings.inputdir);
+        EEG = pop_loadset('filename',files(i).name,'filepath',settings.inputdir);
         data = eeglab2fieldtrip(EEG,'preprocessing','none');
     else
         data = parload(files(i).name,'data');
     end
+%    data = ft_struct2single(data);
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
         [freqs pf(i)] = NA_convert_alpha_pf(settings,ft_concat(data));
@@ -51,9 +52,11 @@ parfor i = 1:length(files)
                         cfg.bpfilter = 'yes'; cfg.bpfreq = freqs{q}; cfg.bpinstabilityfix = 'split';
                     end
                     timefreq_data{q} = ft_preprocessing(cfg,data);
-                else
+%                    timefreq_data{q} = ft_struct2single(timefreq_data{q});
+		else
                     timefreq_data{q} = data;
-                end
+%                    timefreq_data{q} = ft_struct2single(timefreq_data{q});
+		end
                 cfg = []; cfg.hilbert = 'complex';
                 timefreq_data{q} = ft_preprocessing(cfg,timefreq_data{q});
             end

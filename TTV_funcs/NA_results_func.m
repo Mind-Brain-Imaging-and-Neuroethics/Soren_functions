@@ -245,7 +245,7 @@ end
 
 alloutputs.filesorder = allmeas{1}.filesorder;
 
-save(fullfile(settings.outputdir,[settings.datasetname '_results.mat'],'allmeas','-v7.3'))
-save([settings.outputdir '/' settings.datasetname '_results.mat'],'alloutputs','-v7.3')
+save(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'allmeas','-v7.3')
+save(fullfile(settings.outputdir,[settings.datasetname '_results.mat']),'alloutputs','-v7.3')
 
 end

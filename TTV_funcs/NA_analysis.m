@@ -14,7 +14,7 @@ function NA_analysis(settings)
 %  aucindex: vector of data indices for computation of the TTV, ERSP, and
 %        ITC indices
 %  datasetinfo: a structure with the labels and channel/gradiometer
-%        locations for the data set (default = extracted from preprocessing)
+%        locations for the data set
 %  datatype: 'EEG', 'MEG' or 'ECoG'
 %  layout: .lay file or structure for plotting if MEG data, or EEGLAB
 %        chanlocs structure for EEG data
@@ -60,8 +60,8 @@ rmpath(genpath('/home/soren/Documents/MATLAB/osl-core-master'))
 rmpath(genpath('/home/soren/Documents/MATLAB/ImaGIN2'))
 
 if strcmpi(settings.datatype,'EEG')
-    eeglab rebuild
-    addpath('/group/northoff/share/fieldtrip-master/external/eeglab')
+%    eeglab rebuild
+%    addpath('/group/northoff/share/fieldtrip-master/external/eeglab')
 end
 
 settings = SetDefaults(settings);
