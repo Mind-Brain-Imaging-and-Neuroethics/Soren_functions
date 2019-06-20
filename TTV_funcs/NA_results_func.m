@@ -5,6 +5,13 @@ numbands = length(settings.tfparams.fbandnames);
 
 fbands = settings.tfparams.fbandnames;
 
+if strcmpi(settings.tfparams.pf_adjust,'yes')
+  alloutputs.alpha_pf = settings.alpha_pf;
+  alloutputs.fbands_adjusted = settings.tfparams.fbands;
+end
+
+save(fullfile(settings.outputdir,[settings.datasetname '_results.mat']),'alloutputs','-v7.3')
+
 % Construct allmeas
 if ~exist(fullfile(settings.outputdir,[settings.datasetname '_allmeas.mat']),'file') || strcmpi(settings.load_allmeas,'no')
     files = dir([settings.datasetname '*calc.mat']);
@@ -61,11 +68,6 @@ aucindex = settings.aucindex;
 alloutputs = struct;
 
 nbchan = settings.nbchan;
-
-%if strcmpi(settings.tfparams.pf_adjust,'yes')
-%   alloutputs.alpha_pf = settings.alpha_pf;
-%   alloutputs.fbands_adjusted = settings.tfparams.fbands;
-%end
 
 %% Comparison of TTV and ERSP time course in each frequency band
 

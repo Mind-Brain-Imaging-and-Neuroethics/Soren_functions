@@ -548,7 +548,11 @@ function [EEG] = SubSample(cfg,EEG)
 sampleSize = cfg.subsample.length;
 
 if cfgcheck(cfg.subsample,'startpoint','random') %if no startpoint specified, pick a random one
-    startPoint = randi(length(EEG.data)-sampleSize);
+    if sampleSize < length(EEG.data)
+        startPoint = randi(length(EEG.data)-sampleSize);
+    else
+        startPoint = 1;
+    end
 else %specify a specific latency to start at
     startPoint = cfg.subsample.startpoint;
 end

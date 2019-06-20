@@ -1,4 +1,4 @@
-function TTV_ERSP_rest_func(settings)
+function NA_rest_func(settings)
 
 cd(settings.rest.restdir)
 load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
@@ -49,6 +49,7 @@ parfor i = 1:length(files)
     if strcmpi(settings.tfparams.pf_adjust,'yes')
         [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
         rest_fbands{i} = horz(fbands);
+        fbands = alloutputs.fbands_adjusted{i,:}; % don't actually use the frequency bands calculated from rest, just get them for posterity
     end
     
     for c = 1:length(fbands)
