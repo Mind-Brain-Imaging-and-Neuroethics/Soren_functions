@@ -155,11 +155,11 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     alloutputs.erp.pt.stats = erp_pt_stats;
     alloutputs.erp.ttv.stats = erp_ttv_stats;
     
-    alloutputs.fdrfields = {'dist.stats','ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats','ersp.pt.tcoursestats','ersp.ttv.tcoursestats',...
+    alloutputs.fdrfields = {'ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats','ersp.pt.tcoursestats','ersp.ttv.tcoursestats',...
         'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
 elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean') || strcmpi(settings.ecog.method,'median'))
     alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
-        'erp.corr.p','dist.sigerspvitc'};
+        'erp.corr.p'};
 end
 
 % Save these results since they take so long to calculate

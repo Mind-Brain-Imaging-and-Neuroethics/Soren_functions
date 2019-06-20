@@ -126,6 +126,7 @@ if iscell(cfg)
        alloutputs{i} = ft_applymeasure(cfg{i});
     end
     outputs = ft_concat_outputs(alloutputs{:});
+    outputs.cfg = cfg;
     parsave(cfg{1}.outfile,'outputs',outputs);
 else
     %% Set up defaults
