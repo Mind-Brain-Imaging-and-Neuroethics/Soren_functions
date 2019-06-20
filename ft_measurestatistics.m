@@ -43,6 +43,8 @@ function [stats] = ft_measurestatistics(cfg,data)
 
 %% Set defaults
 
+ft_defaults
+
 if ~cfgcheck(cfg,'test')
     if length(data) == 2
         cfg.test = 'ranksum';
