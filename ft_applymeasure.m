@@ -32,11 +32,11 @@ function [outputs] = ft_applymeasure(cfg)
 %         for DFA)
 %         do_envelope: default = 'no'
 %         method: 'fieldtrip','nbt' or 'irasa' (default = 'fieldtrip')
-%         bandpass: required input for nbt method - otherwise, use the 
+%         bandpass: required input for nbt method - otherwise, use the
 %            'filter' option instead
 %         save_envelope: save the enveloped data to make future
 %            computations faster - mostly used for irasa (default = 'no')
-%         load_envelope: load precomputed envelope from a previous run - 
+%         load_envelope: load precomputed envelope from a previous run -
 %            set 'no' if you've changed some settings (default = 'yes')
 %         winsize, overlap,hset: options as in irasa (below) for the irasa
 %            method (default winsize = 3, default overlap = 0.95, default
@@ -53,10 +53,20 @@ function [outputs] = ft_applymeasure(cfg)
 %         load_specs: load precomputed spectra from a previous run - set
 %            'no' if you've changed some settings (default = 'yes')
 %
+%      Because of the comptutationally expensive nature of methods like the
+%      IRASA, data transformations apply to the whole set of measures.
+%      Currently, you cannot apply a filter or amplitude envelope with one
+%      measure and not with others. To facilitate batch processing given
+%      this constraint, you can input a cell array of cfg structures
+%      instead of a single structure, each with their own set of
+%      transformation options. The final outputs will be concatenated
+%      together.
+%
 %      Other options:
 %
 %      continue: This option loads the output file and restarts the loop
-%         from the last subject saved (default = 'no')
+%         from the last subject saved. Cannot be used with a cell array cfg
+%         input (default = 'no')
 %      ftvar: for fieltrip format - the variable name in the .mat file
 %         which corresponds to your data (default = the first structure
 %         found in the data file)
@@ -88,6 +98,9 @@ function [outputs] = ft_applymeasure(cfg)
 %         bootstrap: sets the number of subsamples to take (default = 1);
 %
 %
+% To facilitate easy batch processing with
+%
+%
 % Outputs:
 %
 % outputs: a structure with the following fields:
@@ -107,439 +120,446 @@ function [outputs] = ft_applymeasure(cfg)
 %         defaults that were set
 
 
-
-%% Set up defaults
-cfg = setdefault(cfg,'format','eeglab');
-
-if ~cfgcheck(cfg,'files')
-    if cfgcheck(cfg,'format','eeglab')
-        cfg.files = '*.set';
-    else
-        cfg.files = '*.mat';
+if iscell(cfg)
+    alloutputs = cell(size(cfg));
+    for i = 1:length(cfg)
+       alloutputs{i} = ft_applymeasure(cfg{i});
     end
-end
-
-cfg = setdefault(cfg,'outfile',fullfile(pwd,'outputs.mat'));
-
-cfg = setdefault(cfg,'filter','no');
-
-if ~cfgcheck(cfg,'envelope')
-    cfg.envelope.do_envelope = 'no';
-elseif cfgcheck(cfg.envelope,'do_envelope','yes')
-    cfg.envelope = setdefault(cfg.envelope,'method','fieldtrip');
-    cfg.envelope = setdefault(cfg.envelope,'save_envelope','no');
-    if cfgcheck(cfg.envelope,'method','irasa')
-        cfg.envelope = setdefault(cfg.envelope,'winsize',3);
-        cfg.envelope = setdefault(cfg.envelope,'overlap',0.95);
-        cfg.envelope = setdefault(cfg.envelope,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
-    end
-end
-
-if ~cfgcheck(cfg,'irasa')
-    cfg.irasa.do_irasa = 'no';
-elseif cfgcheck(cfg.irasa,'do_irasa','yes')
-    cfg.irasa = setdefault(cfg.irasa,'winsize',10);
-    cfg.irasa = setdefault(cfg.irasa,'overlap',0);
-    cfg.irasa = setdefault(cfg.irasa,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
-    cfg.irasa = setdefault(cfg.irasa,'save_specs','yes');
-    cfg.irasa = setdefault(cfg.irasa,'load_specs','yes');
-end
-
-cfg = setdefault(cfg,'continue','no');
-
-cfg = setdefault(cfg,'concatenate','yes');
-
-cfg = setdefault(cfg,'single','no');
-
-if ~cfgcheck(cfg,'parallel')
-    cfg.parallel.do_parallel = 'no';
-end
-
-cfg.parallel = setdefault(cfg.parallel,'pool','default');
-
-if ~cfgcheck(cfg,'surrogate')
-    cfg.surrogate.do_surr = 'no';
-elseif cfgcheck(cfg,'surrogate','yes')
-    cfg.surrogate = setdefault(cfg.surrogate,'nsurr',200);
-    cfg.surrogate = setdefault(cfg.surrogate,'method','aaft');
-end
-
-if ~cfgcheck(cfg,'subsample')
-    cfg.subsample.do_subsample = 'no';
-elseif cfgcheck(cfg.subsample,'do_subsample','yes')
-    cfg.subsample = setdefault(cfg.subsample,'startpoint','random');
-    cfg.subsample = setdefault(cfg.subsample,'bootstrap',1);
-end
-
-
-%% Start up fieldtrip, eeglab if necessary
-if cfgcheck(cfg,'format','eeglab')
-    eeglab rebuild
-end
-
-ft_defaults
-
-%% Find the base directory
-dirname = cfgparse(cfg,'dir');
-if isnan(dirname)
-    dirname = uigetdir;
-end
-
-
-files = dir(fullfile(dirname,cfg.files));
-
-%% Set up the outputs structure
-if cfgcheck(cfg,'continue','yes')
-    load(cfg.outfile)
+    outputs = ft_concat_outputs(alloutputs{:});
+    parsave(cfg{1}.outfile,'outputs',outputs);
 else
-    outputs = struct;
-    if cfgcheck(cfg.subsample,'do_subsample','no') && cfgcheck(cfg.surrogate,'do_surr','no')
-        outputs.dimord = 'sub_chan_meas';
-    elseif cfgcheck(cfg.subsample,'do_subsample','no') && cfgcheck(cfg.surrogate,'do_surr','yes')
-        outputs.dimord = 'sub_chan_meas_surr';
-        outputs.surr = 1:cfg.surrogate.nsurr;
-    elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
-        if cfg.subsample.bootstrap > 1
-            outputs.dimord = 'sub_chan_meas_sample';
-            outputs.sample = 1:cfg.subsample.bootstrap;
+    %% Set up defaults
+    cfg = setdefault(cfg,'format','eeglab');
+    
+    if ~cfgcheck(cfg,'files')
+        if cfgcheck(cfg,'format','eeglab')
+            cfg.files = '*.set';
         else
-            outputs.dimord = 'sub_chan_meas';
+            cfg.files = '*.mat';
         end
-        %     elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','yes')
-        %         outputs.dimord = 'sub_chan_meas_sample_surr';
     end
-    outputs.meas = cfg.measure;
-    outputs.startsub = 1;
     
-end
-
-cfg = setdefault(cfg,'subsrange',outputs.startsub:length(files));
-
-% Trim the sub range to be no larger than the number of files to avoid error 
-cfg.subsrange = cfg.subsrange(find(cfg.subsrange <= length(files)));
-
-
-if cfgcheck(cfg.parallel,'do_parallel','no')
+    cfg = setdefault(cfg,'outfile',fullfile(pwd,'outputs.mat'));
     
-    for i = cfg.subsrange
+    cfg = setdefault(cfg,'filter','no');
+    
+    if ~cfgcheck(cfg,'envelope')
+        cfg.envelope.do_envelope = 'no';
+    elseif cfgcheck(cfg.envelope,'do_envelope','yes')
+        cfg.envelope = setdefault(cfg.envelope,'method','fieldtrip');
+        cfg.envelope = setdefault(cfg.envelope,'save_envelope','no');
+        if cfgcheck(cfg.envelope,'method','irasa')
+            cfg.envelope = setdefault(cfg.envelope,'winsize',3);
+            cfg.envelope = setdefault(cfg.envelope,'overlap',0.95);
+            cfg.envelope = setdefault(cfg.envelope,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
+        end
+    end
+    
+    if ~cfgcheck(cfg,'irasa')
+        cfg.irasa.do_irasa = 'no';
+    elseif cfgcheck(cfg.irasa,'do_irasa','yes')
+        cfg.irasa = setdefault(cfg.irasa,'winsize',10);
+        cfg.irasa = setdefault(cfg.irasa,'overlap',0);
+        cfg.irasa = setdefault(cfg.irasa,'hset',[1.1:0.05:1.95 2.05:0.05:2.9]);
+        cfg.irasa = setdefault(cfg.irasa,'save_specs','yes');
+        cfg.irasa = setdefault(cfg.irasa,'load_specs','yes');
+    end
+    
+    cfg = setdefault(cfg,'continue','no');
+    
+    cfg = setdefault(cfg,'concatenate','yes');
+    
+    cfg = setdefault(cfg,'single','no');
+    
+    if ~cfgcheck(cfg,'parallel')
+        cfg.parallel.do_parallel = 'no';
+    end
+    
+    cfg.parallel = setdefault(cfg.parallel,'pool','default');
+    
+    if ~cfgcheck(cfg,'surrogate')
+        cfg.surrogate.do_surr = 'no';
+    elseif cfgcheck(cfg,'surrogate','yes')
+        cfg.surrogate = setdefault(cfg.surrogate,'nsurr',200);
+        cfg.surrogate = setdefault(cfg.surrogate,'method','aaft');
+    end
+    
+    if ~cfgcheck(cfg,'subsample')
+        cfg.subsample.do_subsample = 'no';
+    elseif cfgcheck(cfg.subsample,'do_subsample','yes')
+        cfg.subsample = setdefault(cfg.subsample,'startpoint','random');
+        cfg.subsample = setdefault(cfg.subsample,'bootstrap',1);
+    end
+    
+    
+    %% Start up fieldtrip, eeglab if necessary
+    if cfgcheck(cfg,'format','eeglab')
+        eeglab rebuild
+    end
+    
+    ft_defaults
+    
+    %% Find the base directory
+    dirname = cfgparse(cfg,'dir');
+    if isnan(dirname)
+        dirname = uigetdir;
+    end
+    
+    
+    files = dir(fullfile(dirname,cfg.files));
+    
+    %% Set up the outputs structure
+    if cfgcheck(cfg,'continue','yes')
+        load(cfg.outfile)
+    else
+        outputs = struct;
+        if cfgcheck(cfg.subsample,'do_subsample','no') && cfgcheck(cfg.surrogate,'do_surr','no')
+            outputs.dimord = 'sub_chan_meas';
+        elseif cfgcheck(cfg.subsample,'do_subsample','no') && cfgcheck(cfg.surrogate,'do_surr','yes')
+            outputs.dimord = 'sub_chan_meas_surr';
+            outputs.surr = 1:cfg.surrogate.nsurr;
+        elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
+            if cfg.subsample.bootstrap > 1
+                outputs.dimord = 'sub_chan_meas_sample';
+                outputs.sample = 1:cfg.subsample.bootstrap;
+            else
+                outputs.dimord = 'sub_chan_meas';
+            end
+            %     elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','yes')
+            %         outputs.dimord = 'sub_chan_meas_sample_surr';
+        end
+        outputs.meas = cfg.measure;
+        outputs.startsub = 1;
         
-        %% Load the data
-        filename = files(i).name;
-        outputs.sub{i} = files(i).name;
-        outputs.startsub = i+1;
+    end
+    
+    cfg = setdefault(cfg,'subsrange',outputs.startsub:length(files));
+    
+    % Trim the sub range to be no larger than the number of files to avoid error
+    cfg.subsrange = cfg.subsrange(find(cfg.subsrange <= length(files)));
+    
+    
+    if cfgcheck(cfg.parallel,'do_parallel','no')
         
-        disp(' ')
-        disp(['Now processing subject ' num2str(i)])
-        
-        
-        if cfgcheck(cfg,'format','fieldtrip')
-            EEG = struct;
-            allvars = load(fullfile(files(i).folder,filename));
-            if ~cfgcheck(cfg,'ftvar')
-                names = fieldnames(allvars);
-                for c = 1:length(names)
-                    if isstruct(allvars.(names{c}))
-                        data = allvars.(names{c});
-                        clear allvars
-                        break
+        for i = cfg.subsrange
+            
+            %% Load the data
+            filename = files(i).name;
+            outputs.sub{i} = files(i).name;
+            outputs.startsub = i+1;
+            
+            disp(' ')
+            disp(['Now processing subject ' num2str(i)])
+            
+            
+            if cfgcheck(cfg,'format','fieldtrip')
+                EEG = struct;
+                allvars = load(fullfile(files(i).folder,filename));
+                if ~cfgcheck(cfg,'ftvar')
+                    names = fieldnames(allvars);
+                    for c = 1:length(names)
+                        if isstruct(allvars.(names{c}))
+                            data = allvars.(names{c});
+                            clear allvars
+                            break
+                        end
+                    end
+                    clear names
+                else
+                    data = allvars.(ftvar);
+                end
+                
+                if cfgcheck(cfg,'single','yes')
+                    data = ft_struct2single(data);
+                end
+                
+                if cfgcheck(cfg,'concatenate','yes')
+                    data = ft_concat(data);
+                end
+                
+                if i == outputs.startsub-1
+                    if isfield(data,'label')
+                        outputs.chan = data.label;
+                    end
+                    if isfield(data,'elec')
+                        outputs.elec = data.elec;
+                    elseif isfield(data,'grad')
+                        outputs.grad = data.grad;
                     end
                 end
-                clear names
+                
+                EEG = ft2eeglab(data);
             else
-                data = allvars.(ftvar);
-            end
-            
-            if cfgcheck(cfg,'single','yes')
-                data = ft_struct2single(data);
-            end
-                
-            if cfgcheck(cfg,'concatenate','yes')
-                data = ft_concat(data);
-            end
-            
-            if i == outputs.startsub-1
-                if isfield(data,'label')
-                    outputs.chan = data.label;
-                end
-                if isfield(data,'elec')
-                    outputs.elec = data.elec;
-                elseif isfield(data,'grad')
-                    outputs.grad = data.grad;
+                EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
+                outputs.chanlocs = EEG.chanlocs;
+                if i == outputs.startsub-1
+                    data = eeglab2fieldtrip(EEG,'preprocessing','none');
+                    if isfield(data,'label')
+                        outputs.chan = data.label;
+                    end
+                    if isfield(data,'elec')
+                        outputs.elec = data.elec;
+                    elseif isfield(data,'grad')
+                        outputs.grad = data.grad;
+                    end
                 end
             end
             
-            EEG = ft2eeglab(data);
-        else
-            EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
-            outputs.chanlocs = EEG.chanlocs;
-            if i == outputs.startsub-1
-                data = eeglab2fieldtrip(EEG,'preprocessing','none');
-                if isfield(data,'label')
-                    outputs.chan = data.label;
-                end
-                if isfield(data,'elec')
-                    outputs.elec = data.elec;
-                elseif isfield(data,'grad')
-                    outputs.grad = data.grad;
-                end
-            end
-        end
-        
-        EEG.filename = fullfile(files(i).folder,files(i).name);
-        
-        
-        %% Subsample, surrogate, and apply the measures
-        if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
-            EEG = transform_data(cfg,EEG);
-            for c = 1:length(cfg.measure)
-                outputs.data(i,:,c) = cfg.measure{c}(EEG);
-            end
+            EEG.filename = fullfile(files(i).folder,files(i).name);
             
-        elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
-            disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
-            for q = 1:cfg.subsample.bootstrap
-                tmpcfg = cfg;
-                tmpcfg.irasa = 'no';
+            
+            %% Subsample, surrogate, and apply the measures
+            if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
                 EEG = transform_data(cfg,EEG);
-                
-                newEEG = SubSample(cfg,EEG);
-                
-                if cfgcheck(cfg.irasa,'do_irasa','yes')
-                    tmpcfg = cfg;
-                    tmpcfg.envelope.do_envelope = 'no';
-                    tmpcfg.filter = 'no';
-                    EEG = transform_data(tmpcfg,EEG);
-                end
-                
-                fprintf([num2str(q) ' '])
                 for c = 1:length(cfg.measure)
-                    outputs.data(i,:,q,c) = cfg.measure{c}(newEEG);
+                    outputs.data(i,:,c) = cfg.measure{c}(EEG);
                 end
-            end
-        elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','no')
-            for c = 1:EEG.nbchan
-                disp(' ')
-                disp(['Creating surrogates for channel ' num2str(c)])
-                if ~cfgcheck(cfg,'filter','no')
+                
+            elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
+                disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
+                for q = 1:cfg.subsample.bootstrap
                     tmpcfg = cfg;
-                    tmpcfg.irasa.do_irasa = 'no';
-                    tmpcfg.envelope.do_envelope = 'no';
-                    EEG = transform_data(tmpcfg,EEG);
+                    tmpcfg.irasa = 'no';
+                    EEG = transform_data(cfg,EEG);
+                    
+                    newEEG = SubSample(cfg,EEG);
+                    
+                    if cfgcheck(cfg.irasa,'do_irasa','yes')
+                        tmpcfg = cfg;
+                        tmpcfg.envelope.do_envelope = 'no';
+                        tmpcfg.filter = 'no';
+                        EEG = transform_data(tmpcfg,EEG);
+                    end
+                    
+                    fprintf([num2str(q) ' '])
+                    for c = 1:length(cfg.measure)
+                        outputs.data(i,:,q,c) = cfg.measure{c}(newEEG);
+                    end
                 end
-                
-                switch cfg.surrogate.method
-                    case 'aaft'
-                        tmp = AAFT(EEG.data(c,:),cfg.surrogate.nsurr);
-                    case 'iaaft'
-                        tmp = IAAFT(EEG.data(c,:),cfg.surrogate.nsurr);
-                    case 'random'
-                        tmp = zeros(EasyParse(varargin,'Surrogate'),length(EEG.data));
-                        for q = 1:cfg.surrogate.nsurr
-                            tmp(q,:) = EEG.data(c,randperm(length(EEG.data)));
-                        end
+            elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','no')
+                for c = 1:EEG.nbchan
+                    disp(' ')
+                    disp(['Creating surrogates for channel ' num2str(c)])
+                    if ~cfgcheck(cfg,'filter','no')
+                        tmpcfg = cfg;
+                        tmpcfg.irasa.do_irasa = 'no';
+                        tmpcfg.envelope.do_envelope = 'no';
+                        EEG = transform_data(tmpcfg,EEG);
+                    end
+                    
+                    switch cfg.surrogate.method
+                        case 'aaft'
+                            tmp = AAFT(EEG.data(c,:),cfg.surrogate.nsurr);
+                        case 'iaaft'
+                            tmp = IAAFT(EEG.data(c,:),cfg.surrogate.nsurr);
+                        case 'random'
+                            tmp = zeros(EasyParse(varargin,'Surrogate'),length(EEG.data));
+                            for q = 1:cfg.surrogate.nsurr
+                                tmp(q,:) = EEG.data(c,randperm(length(EEG.data)));
+                            end
+                    end
+                    newEEG = EEG;
+                    newEEG.data = tmp';
+                    newEEG.nbchan = cfg.surrogate.nsurr;
+                    
+                    if cfgcheck(cfg.irasa,'do_irasa','yes') || cfgcheck(cfg.envelope,'do_envelope','yes')
+                        tmpcfg = cfg;
+                        tmpcfg.filter = 'no';
+                        EEG = transform_data(tmpcfg,EEG);
+                    end
+                    
+                    for cc = 1:length(cfg.measure)
+                        outputs.data(i,c,cc,:) = cfg.measure{cc}(newEEG);
+                    end
                 end
-                newEEG = EEG;
-                newEEG.data = tmp';
-                newEEG.nbchan = cfg.surrogate.nsurr;
-                
-                if cfgcheck(cfg.irasa,'do_irasa','yes') || cfgcheck(cfg.envelope,'do_envelope','yes')
-                    tmpcfg = cfg;
-                    tmpcfg.filter = 'no';
-                    EEG = transform_data(tmpcfg,EEG);
-                end
-                
-                for cc = 1:length(cfg.measure)
-                    outputs.data(i,c,cc,:) = cfg.measure{cc}(newEEG);
+            elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','yes')
+                % finish later
+            end
+            
+            outputs.cfg = cfg;
+            
+            %% Save after every subject so you can continue later
+            if ~cfgcheck(cfg,'outfile','none')
+                try
+                    save(cfg.outfile,'outputs');
+                catch
+                    warning('Saving failed')
                 end
             end
-        elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','yes')
-            % finish later
+            
         end
         
-        outputs.cfg = cfg;
-        
-        %% Save after every subject so you can continue later
-        if ~cfgcheck(cfg,'outfile','none')
-            try
-                save(cfg.outfile,'outputs');
-            catch
-                warning('Saving failed')
-            end
-        end
-        
-    end
-    
-else
-    %% Parallel version
-    
-    if cfgcheck(cfg,'format','fieldtrip')
-        allvars = parload(fullfile(files(1).folder,files(1).name));
-        if ~cfgcheck(cfg,'ftvar')
-            names = fieldnames(allvars);
-            for c = 1:length(names)
-                if isstruct(allvars.(names{c}))
-                    tmpdata = allvars.(names{c});
-                    allvars = [];
-                    break
-                end
-            end
-            names = [];
-        else
-            tmpdata = allvars.(ftvar);
-        end
     else
-        EEG = pop_loadset('filename',files(1).name,'filepath',files(1).folder);
-        outputs.chanlocs = EEG.chanlocs;
-        tmpdata = eeglab2fieldtrip(EEG,'preprocessing','none');
-    end
-    
-    if isfield(tmpdata,'label')
-        outputs.chan = tmpdata.label;
-    end
-    if isfield(tmpdata,'elec')
-        outputs.elec = tmpdata.elec;
-    elseif isfield(tmpdata,'grad')
-        outputs.grad = tmpdata.grad;
-    end
-    
-    currpool = gcp('nocreate');
-    if ~isempty(currpool) && ~cfgcheck(cfg.parallel,'pool','default') 
-        if currpool.NumWorkers ~= cfg.parallel.pool
-            delete(gcp('nocreate'))
-            parpool(cfg.parallel.pool)
-        end
-    end
-    
-    clear data
-    
-    sub = cell(1,length(files));
-    outdata = cell(1,length(files));
-    
-    
-    parfor i = cfg.subsrange
-        
-        %% Load the data
-        filename = files(i).name;
-        sub{i} = files(i).name;
-        %outputs.startsub = i+1;
-        
-        disp(' ')
-        disp(['Now processing subject ' num2str(i)])
-        
+        %% Parallel version
         
         if cfgcheck(cfg,'format','fieldtrip')
-            EEG = struct;
-            allvars = parload(fullfile(files(i).folder,filename));
+            allvars = parload(fullfile(files(1).folder,files(1).name));
             if ~cfgcheck(cfg,'ftvar')
                 names = fieldnames(allvars);
                 for c = 1:length(names)
                     if isstruct(allvars.(names{c}))
-                        data = allvars.(names{c});
+                        tmpdata = allvars.(names{c});
                         allvars = [];
                         break
                     end
                 end
                 names = [];
             else
-                data = allvars.(ftvar);
+                tmpdata = allvars.(ftvar);
             end
-            
-            if cfgcheck(cfg,'concatenate','yes')
-                data = ft_concat(data);
-            end
-            
-            EEG = ft2eeglab(data);
         else
-            EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
+            EEG = pop_loadset('filename',files(1).name,'filepath',files(1).folder);
+            outputs.chanlocs = EEG.chanlocs;
+            tmpdata = eeglab2fieldtrip(EEG,'preprocessing','none');
         end
         
-        EEG.filename = fullfile(files(i).folder,files(i).name);
+        if isfield(tmpdata,'label')
+            outputs.chan = tmpdata.label;
+        end
+        if isfield(tmpdata,'elec')
+            outputs.elec = tmpdata.elec;
+        elseif isfield(tmpdata,'grad')
+            outputs.grad = tmpdata.grad;
+        end
         
-        %% Subsample, surrogate, and apply the measures
-        if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
-            EEG = transform_data(cfg,EEG);
-            for c = 1:length(cfg.measure)
-                outdata{i}(1,:,c) = cfg.measure{c}(EEG);
+        currpool = gcp('nocreate');
+        if ~isempty(currpool) && ~cfgcheck(cfg.parallel,'pool','default')
+            if currpool.NumWorkers ~= cfg.parallel.pool
+                delete(gcp('nocreate'))
+                parpool(cfg.parallel.pool)
+            end
+        end
+        
+        clear data
+        
+        sub = cell(1,length(files));
+        outdata = cell(1,length(files));
+        
+        
+        parfor i = cfg.subsrange
+            
+            %% Load the data
+            filename = files(i).name;
+            sub{i} = files(i).name;
+            %outputs.startsub = i+1;
+            
+            disp(' ')
+            disp(['Now processing subject ' num2str(i)])
+            
+            
+            if cfgcheck(cfg,'format','fieldtrip')
+                EEG = struct;
+                allvars = parload(fullfile(files(i).folder,filename));
+                if ~cfgcheck(cfg,'ftvar')
+                    names = fieldnames(allvars);
+                    for c = 1:length(names)
+                        if isstruct(allvars.(names{c}))
+                            data = allvars.(names{c});
+                            allvars = [];
+                            break
+                        end
+                    end
+                    names = [];
+                else
+                    data = allvars.(ftvar);
+                end
+                
+                if cfgcheck(cfg,'concatenate','yes')
+                    data = ft_concat(data);
+                end
+                
+                EEG = ft2eeglab(data);
+            else
+                EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
             end
             
-        elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
-            disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
-            for q = 1:cfg.subsample.bootstrap
-                tmpcfg = cfg;
-                tmpcfg.irasa.do_irasa = 'no';
-                EEG = transform_data(tmpcfg,EEG);
-                
-                EEG = SubSample(cfg,EEG);
-                
-                if cfgcheck(cfg.irasa,'do_irasa','yes')
-                    tmpcfg = cfg;
-                    tmpcfg.envelope.do_envelope = 'no';
-                    tmpcfg.filter = 'no';
-                    EEG = transform_data(tmpcfg,EEG);
-                end
-                
-                fprintf([num2str(q) ' '])
-                %EEG = transform_data(cfg,EEG);
+            EEG.filename = fullfile(files(i).folder,files(i).name);
+            
+            %% Subsample, surrogate, and apply the measures
+            if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')
+                EEG = transform_data(cfg,EEG);
                 for c = 1:length(cfg.measure)
-                    outdata{i}(1,:,c,q) = cfg.measure{c}(EEG);
+                    outdata{i}(1,:,c) = cfg.measure{c}(EEG);
                 end
-            end
-        elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','no')
-            for c = 1:EEG.nbchan
-                disp(' ')
-                disp(['Creating surrogates for channel ' num2str(c)])
-                if ~cfgcheck(cfg,'filter','no')
+                
+            elseif cfgcheck(cfg.subsample,'do_subsample','yes') && cfgcheck(cfg.surrogate,'do_surr','no')
+                disp(['Taking ' num2str(cfg.subsample.bootstrap) ' subsamples...'])
+                for q = 1:cfg.subsample.bootstrap
                     tmpcfg = cfg;
                     tmpcfg.irasa.do_irasa = 'no';
-                    tmpcfg.envelope.do_envelope = 'no';
                     EEG = transform_data(tmpcfg,EEG);
+                    
+                    EEG = SubSample(cfg,EEG);
+                    
+                    if cfgcheck(cfg.irasa,'do_irasa','yes')
+                        tmpcfg = cfg;
+                        tmpcfg.envelope.do_envelope = 'no';
+                        tmpcfg.filter = 'no';
+                        EEG = transform_data(tmpcfg,EEG);
+                    end
+                    
+                    fprintf([num2str(q) ' '])
+                    %EEG = transform_data(cfg,EEG);
+                    for c = 1:length(cfg.measure)
+                        outdata{i}(1,:,c,q) = cfg.measure{c}(EEG);
+                    end
                 end
-                
-                switch cfg.surrogate.method
-                    case 'aaft'
-                        tmp = AAFT(EEG.data(c,:),cfg.surrogate.nsurr);
-                    case 'iaaft'
-                        tmp = IAAFT(EEG.data(c,:),cfg.surrogate.nsurr);
-                    case 'random'
-                        tmp = zeros(EasyParse(varargin,'Surrogate'),length(EEG.data));
-                        for q = 1:cfg.surrogate.nsurr
-                            tmp(q,:) = EEG.data(c,randperm(length(EEG.data)));
-                        end
+            elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','no')
+                for c = 1:EEG.nbchan
+                    disp(' ')
+                    disp(['Creating surrogates for channel ' num2str(c)])
+                    if ~cfgcheck(cfg,'filter','no')
+                        tmpcfg = cfg;
+                        tmpcfg.irasa.do_irasa = 'no';
+                        tmpcfg.envelope.do_envelope = 'no';
+                        EEG = transform_data(tmpcfg,EEG);
+                    end
+                    
+                    switch cfg.surrogate.method
+                        case 'aaft'
+                            tmp = AAFT(EEG.data(c,:),cfg.surrogate.nsurr);
+                        case 'iaaft'
+                            tmp = IAAFT(EEG.data(c,:),cfg.surrogate.nsurr);
+                        case 'random'
+                            tmp = zeros(EasyParse(varargin,'Surrogate'),length(EEG.data));
+                            for q = 1:cfg.surrogate.nsurr
+                                tmp(q,:) = EEG.data(c,randperm(length(EEG.data)));
+                            end
+                    end
+                    EEG.data = tmp';
+                    EEG.nbchan = cfg.surrogate.nsurr;
+                    
+                    if cfgcheck(cfg.irasa,'do_irasa','yes') || cfgcheck(cfg.envelope,'do_envelope','yes')
+                        tmpcfg = cfg;
+                        tmpcfg.filter = 'no';
+                        EEG = transform_data(tmpcfg,EEG);
+                    end
+                    
+                    for cc = 1:length(cfg.measure)
+                        outdata{i}(1,c,cc,:) = cfg.measure{cc}(EEG);
+                    end
                 end
-                EEG.data = tmp';
-                EEG.nbchan = cfg.surrogate.nsurr;
-                
-                if cfgcheck(cfg.irasa,'do_irasa','yes') || cfgcheck(cfg.envelope,'do_envelope','yes')
-                    tmpcfg = cfg;
-                    tmpcfg.filter = 'no';
-                    EEG = transform_data(tmpcfg,EEG);
-                end
-                
-                for cc = 1:length(cfg.measure)
-                    outdata{i}(1,c,cc,:) = cfg.measure{cc}(EEG);
-                end
+            elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','yes')
+                % finish later
             end
-        elseif cfgcheck(cfg.surrogate,'do_surr','yes') && cfgcheck(cfg.subsample,'do_subsample','yes')
-            % finish later
+            
+            
         end
         
+        outputs.data = cat(1,outdata{:});
+        outputs.sub = sub;
+        outputs.cfg = cfg;
+        
+        if ~cfgcheck(cfg,'outfile','none')
+            try
+                parsave(cfg.outfile,'outputs',outputs);
+            catch
+                warning('Saving failed')
+            end
+        end
         
     end
-    
-    outputs.data = cat(1,outdata{:});
-    outputs.sub = sub;
-    outputs.cfg = cfg;
-    
-    if ~cfgcheck(cfg,'outfile','none')
-        try
-            parsave(cfg.outfile,'outputs',outputs);
-        catch
-            warning('Saving failed')
-        end
-    end
-    
 end
-
 
 end
 
