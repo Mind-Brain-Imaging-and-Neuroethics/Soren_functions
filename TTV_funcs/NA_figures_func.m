@@ -4,9 +4,16 @@ fbands = settings.tfparams.fbandnames;
 load('lkcmap2.mat')
 
 load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
-load([settings.outputdir '/' settings.datasetname '_results.mat'])
-if isfield(settings,'rest')
-    load([settings.outputdir '/' settings.datasetname '_restmeas.mat'])
+if exist([settings.outputdir '/' settings.datasetname '_results.mat'],'file')
+    load([settings.outputdir '/' settings.datasetname '_results_FDR.mat'])
+    if isfield(settings,'rest')
+        load([settings.outputdir '/' settings.datasetname '_restmeas_FDR.mat'])
+    end
+else
+    load([settings.outputdir '/' settings.datasetname '_results.mat'])
+    if isfield(settings,'rest')
+        load([settings.outputdir '/' settings.datasetname '_restmeas.mat'])
+    end
 end
 
 if strcmpi(settings.datatype,'EEG')
@@ -293,7 +300,7 @@ for c = 1:settings.nfreqs
         end
         colormap(lkcmap2)
         if cc == 4
-            colorbar
+            cbars1(c) = colorbar;
         end
         ax(cc) = p(1,c,cc+1).axis;
         title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
@@ -325,25 +332,35 @@ for c = 1:settings.nfreqs
             1-(0.*alloutputs.ersp.corr.p(:,c))',0.*alloutputs.ersp.corr.stats{c}.mask);
     end
     colormap(lkcmap2)
-    cbar = colorbar('EastOutside');
+    cbars2(c) = colorbar('EastOutside');
     FixAxes(gca,14)
     ax(c) = p(2,c,2).axis;
-    cbar.Position = [ax(c).Position(1)+ax(c).Position(3)-cbar.Position(3) ax(c).Position(2) cbar.Position(3) cbar.Position(4)];
+    ax2(c) =p(2,c,1).axis;
+    %cbar(c).Position = [ax2(c).Position(1)+ax2(c).Position(3)-cbar(c).Position(3) ax2(c).Position(2) cbar(c).Position(3) cbar(c).Position(4)];
 end
 Normalize_Clim(ax,1);
 
 
 p.de.margin = [5 5 5 5];
-p.marginleft = 20;
+p.marginleft = 22;
 p.marginbottom = 22;
 p.margintop = 8;
-p(1).marginbottom = 20;
-p(1).de.marginleft = 15;
-p(2).de.marginleft = 16;
+p(1).marginbottom = 18;
+p(1).de.marginleft = 18;
+p(2).de.marginleft = 24;
 % fix margins here
 
 AddFigureLabel(p(1,1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B')
+
+for c = 1:length(ax)
+    ax(c) = p(2,c,1).axis;
+    cbars2(c).Position = [ax(c).Position(1)+0.85*ax(c).Position(3) ax(c).Position(2)+0.02*ax(c).Position(4) 0.07*ax(c).Position(3) 0.28*ax(c).Position(4)];
+    ax(c) = p(1,c,1).axis;
+    cbars1(c).Position = [ax(c).Position(1)+ax(c).Position(3) ax(c).Position(2) cbars1(c).Position(3) 0.15*ax(c).Position(4)];
+end
+
+set(gcf,'Color','w')
 
 savefig('Fig3.fig')
 export_fig('Fig3.png','-m4')
@@ -355,6 +372,8 @@ close
 
 %Pseudotrial based first
 p = panel('no-manage-font');
+
+set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'Color','w');
 
 p.pack(settings.nfreqs,settings.nfreqs);
 
@@ -399,12 +418,12 @@ for q = 1:settings.nfreqs-1
             set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
             
         elseif qq == q % on the diagonal, just plot a line
-           p(q,qq).select()
-          % plot(linspace(0,1,100),linspace(1,0,100),'k','LineWidth',5)
-           axis(p(q,qq).axis,'off')
-                       if q == 1
+            p(q,qq).select()
+            % plot(linspace(0,1,100),linspace(1,0,100),'k','LineWidth',5)
+            axis(p(q,qq).axis,'off')
+            if q == 1
                 title(fbands{q},'FontSize',11)
-                       end
+            end
             
         end
     end
@@ -493,7 +512,7 @@ p(1,2,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
 stdshade(t,squeeze(nanmean(allmeas{1}.ttv.real,1)),'k',0.15,1,'std')
-Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
+%Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
 xlabel('Time (s)')
 ylabelunits(settings)
 title('TTV-based nonadditivity')
@@ -531,7 +550,7 @@ FixAxes(gca,16)
 p(2,2,2).select()
 plotdata = alloutputs.erp.corr.r(:,1);
 if isempty(find(~isnan(plotdata)))
-   plotdata = zeros(size(plotdata)); 
+    plotdata = zeros(size(plotdata));
 end
 
 if strcmpi(settings.datatype,'MEG')
@@ -555,6 +574,9 @@ AddFigureLabel(p(2,1,1).axis,'B');
 AddFigureLabel(p(1,2,1).axis,'C');
 AddFigureLabel(p(2,2,1).axis,'D');
 colormap(lkcmap2)
+p(1,2,1).select()
+Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
+
 
 %set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
 savefig('Fig4.fig')
@@ -567,9 +589,9 @@ close
 if isfield(settings,'rest')
     mainfig = figure;
     
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
-
+    pos = get(gcf,'position');
+    set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+    
     p = panel('no-manage-font');
     p.pack('v',{30 30 40});
     
@@ -578,7 +600,7 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
     p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
     
     %plotindx = [1:pwidth 1:pwidth];
-    for c = 2:settings.nfreqs       
+    for c = 2:settings.nfreqs
         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         p(1,c-1).pack()
         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
@@ -590,7 +612,7 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
         FixAxes(gca,14)
         title(settings.tfparams.fbandnames{c})
-
+        
         
         %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
         p(1,c-1,2).select()
@@ -613,7 +635,7 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
     %p(2).pack(2,pwidth);
     p(2).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
     
-    for c = 2:settings.nfreqs       
+    for c = 2:settings.nfreqs
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
         p(2,c-1).pack();
@@ -624,15 +646,15 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.naerspindex,1),{'Resting-state relative power','ERSP nonadditivity'})
         FixAxes(gca,14)
         
-                %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
-                p(2,c-1,2).select()
-
+        %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+        p(2,c-1,2).select()
+        
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,restmeas.rel_bp.naindex.r.subject(:,c),settings.datasetinfo.label,...
                 restmeas.rel_bp.naindex.p.subject(:,c),restmeas.rel_bp.naindex.stats{c}.mask);
         else
             cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
-                restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
+                restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
         end
         title(settings.tfparams.fbandnames{c})
         cbar = colorbar('peer',gca,'FontSize',12);
@@ -643,7 +665,7 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
     %cbar.Label.FontSize = 14;
     colormap(lkcmap2)
     Normalize_Clim(ax,1);
-  
+    
     bandindex = find(strcmpi(fbands,'Alpha'));
     opts = struct;
     opts.display_mod = 1;
@@ -655,16 +677,27 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
     mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
         double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
         double(nanmean(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
+    mediationfig = gcf;
     figaxes = findobj('Parent',gcf,'Type','axes');
-
+    
     p(3).select(figaxes)
-   
+    
+    close(mediationfig);
     %fix margins here
+    p.de.margin = [5 5 5 5];
+    p.marginleft = 18;
+    p.margintop = 8;
+    p.marginbottom = 8;
+    p(1).de.marginleft = 14;
+    p(1).marginbottom = 15;
+    p(2).de.marginleft = 18;
+    p(2).marginbottom = 14;
+    
     
     %AddFigureLabel('A',p(1,1,1,1).axis);
     %AddFigureLabel('B',p(2,1,1,1).axis);
-    AddFigureLabel(p(1,1,1).axis,'A')
-    AddFigureLabel(p(2,1,1).axis,'B')
+    AddFigureLabel(p(1,1,1).axis,'A');
+    AddFigureLabel(p(2,1,1).axis,'B');
     AddFigureLabel(p(3).axis,'C');
     
     savefig('Fig5.fig')
