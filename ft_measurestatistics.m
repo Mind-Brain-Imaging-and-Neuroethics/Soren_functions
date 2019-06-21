@@ -57,6 +57,8 @@ if ~cfgcheck(cfg,'channel')
     cfg.channel = 'all';
 end
 
+cfg = setdefault(cfg,'meas',1:length(data{1}.meas));
+
 if ~cfgcheck(cfg,'multcompare')
     cfg.multcompare = 'cluster';
     cfg.cluster = struct;
@@ -88,7 +90,7 @@ if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'statfun')
         case 'ranksum'
             cfg.cluster.statfun = 'ft_statfun_ranksum';
         case 'signrank'
-            cfg.cluster.statfun = 'ft_statfun_signrank';
+            cfg.cluster.statfun = 'ft_statfun_fast_signrank';
         case 'anova'
             cfg.cluster.statfun = 'ft_statfun_indepsamplesF'; % probably broken
         case 'rmanova'
@@ -130,7 +132,7 @@ for c = 1:length(data)
 end
 
 %% Calculate stats
-for i = 1:length(data{1}.meas)
+for i = cfg.meas
     %dimns = tokenize(data{1}.dimord,'_');
     if ~cfgcheck(cfg,'multcompare','mean')
         for c = 1:length(data{1}.chan)
