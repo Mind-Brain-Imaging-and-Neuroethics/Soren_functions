@@ -129,7 +129,7 @@ stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.diff(:,:,1,:),1)),'b',0,1,
 stdshade(t,squeeze(nanmean(allmeas{plotband}.naddersp.diff(:,:,2,:),1)),'r',0,1,'std')
 FillBetween(t,nanmean(nanmean(allmeas{plotband}.naddersp.diff(:,:,1,:),4),1),...
     nanmean(nanmean(allmeas{plotband}.naddersp.diff(:,:,2,:),4),1));
-legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
+legend({'Prestim low (real - pseudo)','Prestim high (real - pseudo)'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabelunits(settings)
 FixAxes(gca,16)
@@ -190,8 +190,6 @@ for c = 1:settings.nfreqs
         squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:))),'k',0.15,1,'std');
     Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     
-    
-    title(fbands{c})
     %legend({'Corrected prestim low','Corrected prestim high'})
     xlabel('Time (s)')
     ylabelunits(settings)
@@ -211,10 +209,10 @@ for c = 1:settings.nfreqs
                 0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)),0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
         else
             cluster_topoplot(plotdata,settings.layout,...
-                alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)),alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
+                ~(0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc))),0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
         end
         colormap(lkcmap2)
-        if cc == 5
+        if cc == 4
             colorbar
         end
         ax(cc) = p(2,c,cc+1).axis;
@@ -271,6 +269,8 @@ for c = 1:settings.nfreqs
     stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'std')
     Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
+    
+    title(fbands{c})
     xlabel('Time (s)')
     ylabel('% change of TTV of ERSP')
     %ylim = get(gca,'YLim');
@@ -289,10 +289,10 @@ for c = 1:settings.nfreqs
                 0.*alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
         else
             cluster_topoplot(plotdata,settings.layout,...
-                alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)),alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
+                1-(0.*alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
         end
         colormap(lkcmap2)
-        if cc == 5
+        if cc == 4
             colorbar
         end
         ax(cc) = p(1,c,cc+1).axis;
@@ -322,12 +322,13 @@ for c = 1:settings.nfreqs
             alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c)));
         end
         cluster_topoplot(alloutputs.ersp.corr.r(:,c),settings.layout,...
-            alloutputs.ersp.corr.p(:,c)',alloutputs.ersp.corr.stats{c}.mask);
+            1-(0.*alloutputs.ersp.corr.p(:,c))',0.*alloutputs.ersp.corr.stats{c}.mask);
     end
     colormap(lkcmap2)
-    colorbar('EastOutside')
+    cbar = colorbar('EastOutside');
     FixAxes(gca,14)
     ax(c) = p(2,c,2).axis;
+    cbar.Position = [ax(c).Position(1)+ax(c).Position(3)-cbar.Position(3) ax(c).Position(2) cbar.Position(3) cbar.Position(4)];
 end
 Normalize_Clim(ax,1);
 
@@ -335,6 +336,7 @@ Normalize_Clim(ax,1);
 p.de.margin = [5 5 5 5];
 p.marginleft = 20;
 p.marginbottom = 22;
+p.margintop = 8;
 p(1).marginbottom = 20;
 p(1).de.marginleft = 15;
 p(2).de.marginleft = 16;
@@ -431,7 +433,9 @@ p(1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
 stdshade(t,squeeze(allmeas{1}.erp(plotsensor,settings.real.poststim,:)),'k',0.15,1,'std');
+xlabel('Time (ms)')
 ylabel('Voltage (uV)')
+title('Average ERP')
 FixAxes(gca,16)
 
 
@@ -453,6 +457,7 @@ Plot_sigmask(gca,alloutputs.erp.pt.stats{1}.mask,'cmapline','LineWidth',5)
 legend({'Corrected prestim low','Corrected prestim high'},'EdgeColor','none')
 xlabel('Time (s)')
 ylabel('Voltage (uV)')
+title('Pseudotrial-based nonadditivity')
 %ylabelunits(settings)
 FixAxes(gca,16)
 %axes('position',[0.75 0.135 0.15 0.2])
@@ -467,7 +472,7 @@ for cc = 1:4
             0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
     else
         cluster_topoplot(plotdata,settings.layout,...
-            0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+            1-(0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc))),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
     end
     colormap(lkcmap2)
     if cc == 4
@@ -491,6 +496,7 @@ stdshade(t,squeeze(nanmean(allmeas{1}.ttv.real,1)),'k',0.15,1,'std')
 Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
 xlabel('Time (s)')
 ylabelunits(settings)
+title('TTV-based nonadditivity')
 %ylabelunits(settings)
 FixAxes(gca,16)
 %axes('position',[0.75 0.135 0.15 0.2])
@@ -505,7 +511,7 @@ for cc = 1:4
             0.*alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.ttv.stats{1}.mask(:,plotindx(cc)));
     else
         cluster_topoplot(plotdata,settings.layout,...
-            0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
+            1-(0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc))),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));
     end
     colormap(lkcmap2)
     if cc == 4
@@ -524,24 +530,31 @@ nicecorrplot(nanmean(allmeas{1}.naerpindex,1),nanmean(allmeas{1}.ttvindex,1),{'P
 FixAxes(gca,16)
 p(2,2,2).select()
 plotdata = alloutputs.erp.corr.r(:,1);
+if isempty(find(~isnan(plotdata)))
+   plotdata = zeros(size(plotdata)); 
+end
+
 if strcmpi(settings.datatype,'MEG')
     ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
         alloutputs.erp.corr.p(:,1),alloutputs.erp.corr.stats{1}.mask);
 else
     cluster_topoplot(plotdata,settings.layout,...
-        alloutputs.erp.corr.p(:,1),alloutputs.erp.corr.stats{1}.mask);
+        1-(0.*alloutputs.erp.corr.p(:,1)),alloutputs.erp.corr.stats{1}.mask);
 end
 Normalize_Clim(gca,1)
 colorbar('WestOutside')
 
 
-p.margin = [22 22 6 5];
-p(1).marginright = 18;
+p.margin = [20 20 5 8];
+p.de.margin = [5 5 5 5];
+p(1).marginright = 25;
+p(1,1).marginbottom = 25;
+p(2,1).marginbottom = 18;
 AddFigureLabel(p(1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B');
 AddFigureLabel(p(1,2,1).axis,'C');
 AddFigureLabel(p(2,2,1).axis,'D');
-
+colormap(lkcmap2)
 
 %set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
 savefig('Fig4.fig')
@@ -576,6 +589,8 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
         p(1,c-1,1).select()
         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
         FixAxes(gca,14)
+        title(settings.tfparams.fbandnames{c})
+
         
         %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
         p(1,c-1,2).select()
@@ -586,7 +601,6 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
             cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
                 restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
         end
-        title(settings.tfparams.fbandnames{c})
         cbar = colorbar('peer',gca,'FontSize',12);
         %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
         ax(c-1) = p(1,c-1,2).axis;
@@ -634,9 +648,9 @@ set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
     opts = struct;
     opts.display_mod = 1;
     opts.display = 0;
-    opts.indvar = ['Rest' newline 'alpha'];
-    opts.depvar = ['Poststim' newline 'alpha'];
-    opts.mediator = ['Prestim' newline 'alpha'];
+    opts.indvar = ['Rest' newline 'alpha' newline 'power'];
+    opts.depvar = ['Poststim' newline 'alpha' newline 'power'];
+    opts.mediator = ['Prestim' newline 'alpha' newline 'power'];
     opts.sobelp = restmeas.rel_bp.mediation{bandindex}.sobel.p;
     mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
         double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
