@@ -47,9 +47,10 @@ parfor i = 1:length(files)
     fbands = settings.tfparams.fbandnames;
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
-        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
-        rest_fbands{i} = horz(fbands);
+%        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
+%        rest_fbands{i} = horz(fbands);
         fbands = alloutputs.fbands_adjusted{i,:}; % don't actually use the frequency bands calculated from rest, just get them for posterity
+         rest_fbands{i} = horz(fbands);
     end
     
     for c = 1:length(fbands)
