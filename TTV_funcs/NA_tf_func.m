@@ -23,7 +23,7 @@ parfor i = 1:length(files)
     else
         data = parload(files(i).name,'data');
     end
-%    data = ft_struct2single(data);
+    %data = ft_struct2single(data);
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
         [freqs pf(i)] = NA_convert_alpha_pf(settings,ft_concat(data));
@@ -52,11 +52,11 @@ parfor i = 1:length(files)
                         cfg.bpfilter = 'yes'; cfg.bpfreq = freqs{q}; cfg.bpinstabilityfix = 'split';
                     end
                     timefreq_data{q} = ft_preprocessing(cfg,data);
-%                    timefreq_data{q} = ft_struct2single(timefreq_data{q});
-		else
+                    %                    timefreq_data{q} = ft_struct2single(timefreq_data{q});
+                else
                     timefreq_data{q} = data;
-%                    timefreq_data{q} = ft_struct2single(timefreq_data{q});
-		end
+                    %                    timefreq_data{q} = ft_struct2single(timefreq_data{q});
+                end
                 cfg = []; cfg.hilbert = 'complex';
                 timefreq_data{q} = ft_preprocessing(cfg,timefreq_data{q});
             end
@@ -71,24 +71,24 @@ parfor i = 1:length(files)
             end
             
             data_allrange = (settings.pseudo.prestim(1)-settings.srate/5):(settings.real.poststim(end));
-            cfg = []; cfg.method = 'wavelet'; cfg.output = 'fourier'; cfg.foi = logspace(freqs{2}(1),freqs{end}(2),50);
+            cfg = []; cfg.method = 'wavelet'; cfg.output = 'fourier'; cfg.foi = exp(linspace(log(freqs{2}(1)),log(freqs{end}(2)),50));
             cfg.keeptrials = 'yes'; cfg.toi = data.time{1}(data_allrange); cfg.width = 3;
             freqdata = ft_freqanalysis(cfg,data);
-            foi{i} = cfg.foi;
+            foi{i} = freqdata.freq;
             
             timefreq_data{1} = data;
             for c = 1:length(timefreq_data{1}.trial)
                 timefreq_data{1}.trial{c} = timefreq_data{1}.trial{c}(:,data_allrange);
             end
             
-            for c = 1:length(cfg.foi)
+            for c = 1:length(foi{i})
                 for cc = 1:length(data.trial)
                     timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,c,:));
                 end
                 timefreq_data{c+1}.time = freqdata.time;
                 timefreq_data{c+1}.label = data.label;
                 for cc = 1:length(freqs)
-                    if ~isempty(freqs{cc}) && cfg.foi(c) >= freqs{cc}(1) && cfg.foi(c) <= freqs{cc}(2)
+                    if ~isempty(freqs{cc}) && foi{i}(c) >= freqs{cc}(1) && foi{i}(c) <= freqs{cc}(2)
                         timefreq_data{c+1}.parent = cc;
                     end
                 end
@@ -104,25 +104,25 @@ parfor i = 1:length(files)
             end
             
             data_allrange = (settings.pseudo.prestim(1)-settings.srate/5):(settings.real.poststim(end));
-            cfg = []; cfg.method = 'mtmconvol'; cfg.output = 'fourier'; cfg.foi = freqs{2}(1):2:freqs{end}(2);
+            cfg = []; cfg.method = 'mtmconvol'; cfg.output = 'fourier'; cfg.foi = exp(linspace(log(freqs{2}(1)),log(freqs{end}(2)),50));
             cfg.keeptrials = 'yes'; cfg.taper = 'hanning'; cfg.t_ftimwin = ones(length(cfg.foi))*1;
             cfg.toi = [data.time{1}(data_allrange)];
             freqdata = ft_freqanalysis(cfg,data);
-            foi{i} = cfg.foi;
+            foi{i} = freqdata.freq;
             
             timefreq_data{1} = data;
             for c = 1:length(timefreq_data{1}.trial)
                 timefreq_data{1}.trial{c} = timefreq_data{1}.trial{c}(:,data_allrange);
             end
             
-            for c = 1:length(cfg.foi)
+            for c = 1:length(foi{i})
                 for cc = 1:length(data.trial)
                     timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,c,:));
                 end
                 timefreq_data{c+1}.time = freqdata.time;
                 timefreq_data{c+1}.label = data.label;
                 for cc = 1:length(freqs)
-                    if ~isempty(freqs{cc}) && cfg.foi(c) >= freqs{cc}(1) && cfg.foi(c) <= freqs{cc}(2)
+                    if ~isempty(freqs{cc}) && foi{i}(c) >= freqs{cc}(1) && foi{i}(c) <= freqs{cc}(2)
                         timefreq_data{c+1}.parent = cc;
                     end
                 end
@@ -181,6 +181,17 @@ settings.alpha_pf = pf;
 
 if ~strcmpi(settings.tfparams.method,'hilbert')
     settings.nfreqs = length(foi{1})+1;
+    
+    prestim_pseudo = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    prestim_real = settings.real.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    poststim_pseudo = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    
+    
+    settings.pseudo.prestim = prestim_pseudo;
+    settings.real.prestim = prestim_real;
+    settings.pseudo.poststim = poststim_pseudo;
+    settings.real.poststim = poststim_real;
 end
 
 
@@ -188,7 +199,7 @@ end
 
 function [settings] = Calc_sub(settings,timefreq_data,filename)
 
-numbands = settings.nfreqs;
+numbands = length(timefreq_data);
 
 aucindex = settings.aucindex;
 
@@ -288,11 +299,11 @@ for q = 1:numbands
     for c = 1:nbchan
         splitindex = split_pseudo(c,:) > median(split_pseudo(c,:));
         
-        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(abs(datacat(c,:,find(~splitindex))),3); 
+        datacalc{q}.naddersp.raw.pseudo(c,:,1) = mean(abs(datacat(c,:,find(~splitindex))),3);
         datacalc{q}.naddersp.raw.pseudo(c,:,2) = mean(abs(datacat(c,:,find(splitindex))),3);
         
         datacalc{q}.naddersp.pseudo(c,:,1) = (mean(abs(datacat(c,poststim_pseudo,find(~splitindex))),3)...
-            -mean(mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),3),2)); 
+            -mean(mean(abs(datacat(c,prestim_pseudo,find(~splitindex))),3),2));
         datacalc{q}.naddersp.pseudo(c,:,2) = (mean(abs(datacat(c,poststim_pseudo,find(splitindex))),3)...
             -mean(mean(abs(datacat(c,prestim_pseudo,find(splitindex))),3),2));
         
@@ -432,7 +443,7 @@ end
 
 
 if ~strcmpi(settings.tfparams.method,'hilbert')
-    timefreq_data = parload(files(1).name,'timefreq_data');
+    %timefreq_data = parload(files(1).name,'timefreq_data');
     for c = 2:length(timefreq_data)
         parents(c) = timefreq_data{c}.parent;
     end
@@ -464,6 +475,8 @@ if ~strcmpi(settings.tfparams.method,'hilbert')
         end
         newmeas{1} = assignfield_nest(newmeas{1},fields{cc},nanmean(tmp,dimn+1));
     end
+    
+    % for broadband, put the ERP and TTV stuff back to the original values
     newmeas{1}.erp = datacalc{1}.erp;
     newmeas{1}.nadderp = datacalc{1}.nadderp;
     newmeas{1}.ttv = datacalc{1}.ttv;

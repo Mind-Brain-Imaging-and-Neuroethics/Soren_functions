@@ -1,8 +1,8 @@
 function NA_rest_func(settings)
 
 cd(settings.rest.restdir)
-load([settings.outputdir '/' settings.datasetname '_allmeas.mat'])
-load([settings.outputdir '/' settings.datasetname '_results.mat'])
+allmeas = parload([settings.outputdir '/' settings.datasetname '_allmeas.mat'],'allmeas');
+alloutputs = parload([settings.outputdir '/' settings.datasetname '_results.mat'],'alloutputs');
 
 %for c = 1:length(settings.tfparams.fbands)
 %    if isempty(settings.tfparams.fbands{c})
@@ -44,12 +44,14 @@ parfor i = 1:length(files)
         data = parload(files(i).name,'data');
     end
     
+    data = ft_concat(data);
+    
     fbands = settings.tfparams.fbandnames;
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
 %        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
 %        rest_fbands{i} = horz(fbands);
-        fbands = alloutputs.fbands_adjusted{i,:}; % don't actually use the frequency bands calculated from rest, just get them for posterity
+        fbands = alloutputs.fbands_adjusted(i,:); % don't actually use the frequency bands calculated from rest, just get them for posterity
          rest_fbands{i} = horz(fbands);
     end
     
@@ -67,7 +69,6 @@ parfor i = 1:length(files)
     end
     filesorder{i} = files(i).name;
 end
-
 if strcmpi(settings.tfparams.pf_adjust,'yes')
     restmeas.rest_fbands = cat(1,rest_fbands{:});
     restmeas.alpha_pf = pf;

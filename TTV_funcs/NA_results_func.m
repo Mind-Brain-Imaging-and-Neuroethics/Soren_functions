@@ -5,6 +5,8 @@ numbands = length(settings.tfparams.fbandnames);
 
 fbands = settings.tfparams.fbandnames;
 
+alloutputs = struct;
+
 if strcmpi(settings.tfparams.pf_adjust,'yes')
   alloutputs.alpha_pf = settings.alpha_pf;
   alloutputs.fbands_adjusted = settings.tfparams.fbands;
@@ -64,8 +66,6 @@ elseif strcmpi(settings.load_allmeas,'yes')
 end
 
 aucindex = settings.aucindex;
-
-alloutputs = struct;
 
 nbchan = settings.nbchan;
 
