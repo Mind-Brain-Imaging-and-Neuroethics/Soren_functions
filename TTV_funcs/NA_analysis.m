@@ -122,7 +122,7 @@ if ~isempty(find(contains(settings.steps,'figures')))
     disp('Generating figures...')
     tic;
     system(['mkdir ' settings.outputdir '/' settings.datasetname '_figures'])
-    TTV_ERSP_figures_func(settings)
+    NA_figures_func(settings)
     time_post = toc;
     disp(['Creating figures took ' num2str(time_post) ' seconds'])
 end
