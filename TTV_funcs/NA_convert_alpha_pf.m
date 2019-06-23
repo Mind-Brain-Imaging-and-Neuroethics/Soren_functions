@@ -13,12 +13,18 @@ else
     pf = psum.cog;
 end
 
+if isempty(pf) || isnan(pf)
+   pf = 10;
+   f = [8 13]; 
+   psum.iaw = [1 2];
+end
+
 if f(psum.iaw(1)) < f(psum.iaw(2))
-fbands{individindx(2)} = [f(psum.iaw(1)) f(psum.iaw(2))];
+    fbands{individindx(2)} = [f(psum.iaw(1)) f(psum.iaw(2))];
 end
 if settings.tfparams.fbands{individindx(1)}(1) < f(psum.iaw(1))
-fbands{individindx(1)} = [settings.tfparams.fbands{individindx(1)}(1) f(psum.iaw(1))];
+    fbands{individindx(1)} = [settings.tfparams.fbands{individindx(1)}(1) f(psum.iaw(1))];
 end
 if f(psum.iaw(2)) < settings.tfparams.fbands{individindx(3)}(2)
-fbands{individindx(3)} = [f(psum.iaw(2)) settings.tfparams.fbands{individindx(3)}(2)];
+    fbands{individindx(3)} = [f(psum.iaw(2)) settings.tfparams.fbands{individindx(3)}(2)];
 end
