@@ -92,6 +92,13 @@ parfor i = 1:length(files)
                         timefreq_data{c+1}.parent = cc;
                     end
                 end
+		if ~isfield(timefreq_data{c+1},'parent')
+		    if freqs{2}(1) > foi{i}(c)
+			timefreq_data{c+1}.parent = 2;
+		    elseif freqs{end}(2) < foi{i}(c)
+			timefreq_data{c+1}.parent = length(freqs);
+		    end 
+  		end
             end
             freqdata = [];
         case 'fft'
@@ -124,6 +131,13 @@ parfor i = 1:length(files)
                 for cc = 1:length(freqs)
                     if ~isempty(freqs{cc}) && foi{i}(c) >= freqs{cc}(1) && foi{i}(c) <= freqs{cc}(2)
                         timefreq_data{c+1}.parent = cc;
+                    end
+                end
+                if ~isfield(timefreq_data{c+1},'parent')
+                    if freqs{2}(1) > foi{i}(c)
+                        timefreq_data{c+1}.parent = 2;
+                    elseif freqs{end}(2) < foi{i}(c)
+                        timefreq_data{c+1}.parent = length(freqs);
                     end
                 end
             end
