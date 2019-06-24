@@ -24,13 +24,14 @@ parfor i = 1:length(files)
         data = parload(files(i).name,'data');
     end
     %data = ft_struct2single(data);
-    
+
     if strcmpi(settings.tfparams.pf_adjust,'yes')
         [freqs pf(i)] = NA_convert_alpha_pf(settings,ft_concat(data));
         allfreqs{i} = horz(freqs);
     end
     
     timefreq_data = cell(1,length(freqs));
+    if strcmpi(settings.tfparams.continue,'no') ||  ~exist(fullfile(settings.outputdir,[settings.datasetname '_' files(i).name '_calc.mat']),'file')
     switch settings.tfparams.method
         case 'hilbert'
             if data.fsample ~= settings.srate
@@ -175,6 +176,7 @@ parfor i = 1:length(files)
             freqdata = [];
             
     end
+
     
     for q = 1:length(freqs)
         if ~isempty(freqs{q}) && isnan(freqs{q}(1)) && isfield(settings,'rest')
@@ -183,7 +185,7 @@ parfor i = 1:length(files)
     end
     
     Calc_sub(settings,timefreq_data,files(i).name)
-    
+    end    
     %    parsave([settings.outputdir '/' files(i).name '_timefreq_filtered.mat'],'timefreq_data',timefreq_data);
 end
 
@@ -505,11 +507,15 @@ end
 
 %% Calculating indices
 for q = 1:numbands
+    try
     datacalc{q}.ttvindex = squeeze(trapz(datacalc{q}.ttv.real(:,aucindex,:),2));% - squeeze(trapz(datacalc{q}.ttv.pseudo(:,aucindex,:),2));
     datacalc{q}.erspindex = squeeze(trapz(datacalc{q}.ersp.real(:,aucindex,:),2));% - squeeze(trapz(datacalc{q}.ersp.pseudo(:,aucindex,:),2));
     datacalc{q}.itcindex = squeeze(trapz(datacalc{q}.itc.real(:,aucindex,:),2));% - squeeze(trapz(datacalc{q}.itc.pseudo(:,aucindex,:),2));
     datacalc{q}.ttverspindex = squeeze(trapz(datacalc{q}.ttversp.real(:,aucindex,:),2));% - squeeze(trapz(datacalc{q}.ttversp.pseudo(:,aucindex,:),2));
-    
+    catch errormsg
+    save(fullfile(settings.outputdir,'errorinfo.mat'),'-v7.3')
+error('Error saved')
+    end
     %datacalc{q}.ttvsig =
     
     % abs((prestim high real - pseudo)) - abs((prestim low real - pseudo))

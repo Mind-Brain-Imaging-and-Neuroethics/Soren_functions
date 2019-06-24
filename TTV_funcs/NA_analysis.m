@@ -148,7 +148,6 @@ if ~isfield(settings,'files')
     end
 end
 
-
 if isfield(settings,'rest')
     if strcmpi(settings.datatype,'EEG')
         settings.rest.restfiles = '*.set';
@@ -172,6 +171,8 @@ settings = setdefault(settings,'units','prcchange');
 settings.tfparams = setdefault(settings.tfparams,'trials','all');
 
 settings.tfparams = setdefault(settings.tfparams,'method','hilbert');
+
+settings.tfparams = setdefault(settings.tfparams,'continue','no');
 
 settings = setdefault(settings,'fdr','yes');
 

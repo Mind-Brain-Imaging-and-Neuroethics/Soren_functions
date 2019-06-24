@@ -48,7 +48,7 @@ end
 
 % Time to samples
 window=window*fs;
-lag=lag*fs;
+lag=floor(lag*fs);
 
 
 % Sliding window for computing autocorrelation function (ACF)

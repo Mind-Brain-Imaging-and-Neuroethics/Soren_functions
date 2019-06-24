@@ -424,10 +424,12 @@ else
         end
         
         currpool = gcp('nocreate');
-        if ~isempty(currpool) && ~cfgcheck(cfg.parallel,'pool','default')
-            if currpool.NumWorkers ~= cfg.parallel.pool
+        if ~cfgcheck(cfg.parallel,'pool','default')
+            if ~isempty(currpool) && (currpool.NumWorkers ~= cfg.parallel.pool)
                 delete(gcp('nocreate'))
                 parpool(cfg.parallel.pool)
+            elseif isempty(currpool)
+                parpool(cfg.parallel.pool);
             end
         end
         

@@ -21,6 +21,9 @@ function [stats] = ft_measurestatistics(cfg,data)
 %         inputs to the 'mes.m' function from the Measures of Effect Size
 %         Toolbox (Hentschke and St�ttgen, 2011) (default set based on
 %         cfg.test)
+%      subs: a vector or cell array of subject indices to choose from. This
+%         allows selection of common subjects if some are missing from one 
+%         condition (default = all subjects for each element of 'data')
 %      cluster: if you chose 'cluster' as the multiple comparison
 %         correction method, you can add optional inputs for the
 %         permutation test
@@ -111,6 +114,8 @@ if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'minnbchan')
     cfg.cluster.minnbchan = 1;
 end
 
+cfg = setdefault(cfg,'subs',repmat({'all'},1,length(data)));
+
 %% Select channels
 if isfield(data{1},'elec')
     chans = ft_channelselection(cfg.channel,data{1}.elec);
@@ -129,6 +134,17 @@ for c = 1:length(data)
     %dimns = tokenize(data{1}.dimord,'_');
     %chans = find(strcmpi(dimns,'chan'));
     data{c}.data = data{c}.data(:,chans,:,:);
+end
+
+%% Select subjects
+
+for c = 1:length(data)
+   if ~strcmpi(cfg.subs{c},'all')
+       data{c}.data = data{c}.data(cfg.subs{c},:,:,:);
+       if isfield(data{c},'sub')
+            data{c}.sub = data{c}.sub(cfg.subs{c});
+       end
+   end
 end
 
 %% Calculate stats
