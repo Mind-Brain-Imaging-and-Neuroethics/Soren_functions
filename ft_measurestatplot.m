@@ -159,7 +159,7 @@ if cfgcheck(cfg,'plotmode','topo')
                         cfg.datasetinfo.sourcemodel,cfg.datasetinfo.atlas,stats{c}.p < 0.05)
                 end
                 title([cfg.cond{1} ' - ' cfg.cond{2}])
-                Normalize_Clim(gcf)
+                Normalize_Clim(gcf,1)
                 cbar = colorbar('Location','eastoutside'); cbar.Label.String = cfg.measname{c}; cbar.Label.FontSize = 14;
                 %FixAxes(gca,16)
                 colormap(cfg.colormap)
@@ -210,6 +210,7 @@ if cfgcheck(cfg,'plotmode','topo')
                     title(cfg.cond{cc})
                     FixAxes(gca,16)
                     colormap(cfg.colormap)
+                    Normalize_Clim(gcf,1)
                 end
                             set(figs(c),'name',cfg.measname{c})
     

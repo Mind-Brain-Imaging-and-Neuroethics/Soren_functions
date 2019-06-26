@@ -14,7 +14,7 @@ plotmask = double(plotmask);
 bnd.pnt = sourcemodel.pos;
 bnd.tri = sourcemodel.tri;
 
-ft_plot_mesh(bnd);
+ft_plot_mesh(bnd,'facealpha',vert(1-plotmask));
 ft_plot_mesh(bnd, 'vertexcolor', vert(plotdata), 'facealpha', vert(plotmask), 'maskstyle', 'opacity');
 
 lighting gouraud
