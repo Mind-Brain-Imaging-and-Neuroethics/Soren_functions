@@ -73,13 +73,13 @@ end
 
 if ~cfgcheck(cfg,'effectsize')
     switch cfg.test
-        case 'ttest','ttest2'
+        case {'ttest','ttest2'}
             cfg.effectsize = 'hedgesg';
         case 'ranksum'
             cfg.effectsize = 'auroc';
         case 'signrank'
             cfg.effectsize = 'rbcorr';
-        case 'anova','kruskalwallis','friedman'
+        case {'anova','kruskalwallis','friedman'}
             cfg.effectsize = 'psi';
     end
 end

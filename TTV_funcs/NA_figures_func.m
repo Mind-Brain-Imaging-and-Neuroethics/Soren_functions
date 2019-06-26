@@ -322,13 +322,13 @@ for c = 1:settings.nfreqs
         if isempty(find(~isnan(alloutputs.ersp.corr.r(:,c))))
             alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c)));
         end
-        ft_cluster_topoplot(settings.layout,alloutputs.ersp.corr.r(:,c),settings.datasetinfo.label,...
+        ft_cluster_topoplot(settings.layout,real(alloutputs.ersp.corr.r(:,c)),settings.datasetinfo.label,...
             alloutputs.ersp.corr.p(:,c)',alloutputs.ersp.corr.stats{c}.mask);
     else
         if isempty(find(~isnan(alloutputs.ersp.corr.r(:,c))))
             alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c)));
         end
-        cluster_topoplot(alloutputs.ersp.corr.r(:,c),settings.layout,...
+        cluster_topoplot(real(alloutputs.ersp.corr.r(:,c)),settings.layout,...
             1-(0.*alloutputs.ersp.corr.p(:,c))',0.*alloutputs.ersp.corr.stats{c}.mask);
     end
     colormap(lkcmap2)
@@ -451,7 +451,7 @@ p(2).pack('v',{50 50});
 p(1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(allmeas{1}.erp(plotsensor,settings.real.poststim,:)),'k',0.15,1,'std');
+stdshade(t,squeeze(allmeas{1}.erp(plotsensor,poststim_real,:)),'k',0.15,1,'std');
 xlabel('Time (ms)')
 ylabel('Voltage (uV)')
 title('Average ERP')
@@ -650,13 +650,13 @@ if isfield(settings,'rest')
         p(2,c-1,2).select()
         
         if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,restmeas.rel_bp.naindex.r.subject(:,c),settings.datasetinfo.label,...
+            ft_cluster_topoplot(settings.layout,real(restmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
                 restmeas.rel_bp.naindex.p.subject(:,c),restmeas.rel_bp.naindex.stats{c}.mask);
         else
-            cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
+            cluster_topoplot(real(restmeas.rel_bp.index.r.subject(:,c)),settings.layout,...
                 restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
         end
-        title(settings.tfparams.fbandnames{c})
+        %title(settings.tfparams.fbandnames{c})
         cbar = colorbar('peer',gca,'FontSize',12);
         %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
         ax(c-1) = p(2,c-1,2).select();

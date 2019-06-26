@@ -1,5 +1,7 @@
 function ft_cluster_topoplot(layout,vect,label,sig,sigmask)
 
+vect = vert(vect);
+
 tlock = [];
 tlock.avg = vect;
 tlock.dimord = 'chan_time';

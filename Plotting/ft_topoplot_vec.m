@@ -1,5 +1,7 @@
 function ft_topoplot_vec(layout,vect,label)
 
+vect = vert(vect);
+
 tlock = [];
 tlock.avg = vect;
 tlock.dimord = 'chan_time';
@@ -15,5 +17,9 @@ cfg.layout = layout;
 cfg.interpolateovernan = 'yes';
 cfg.lay = layout;
 cfg.channel = label;
+cfg.comment = 'no'; cfg.interactive = 'no';
+cfg.marker = 'no';
+%cfg.markersymbol = '.';
+%cfg.markersize = 3;
 
 ft_topoplotER(cfg,tlock);

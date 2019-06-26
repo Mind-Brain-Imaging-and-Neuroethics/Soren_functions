@@ -86,10 +86,12 @@ end
 if isfield(datasetinfo,'grad') || isfield(datasetinfo,'elec')
     if length(datasetinfo.label) >= 32
         cfg = []; cfg.method = 'distance';
-    else
+    elseif length(datasetinfo.label) > 1
         cfg = []; cfg.method = 'triangulation';
     end
-    neighbs = ft_prepare_neighbours(cfg,datasetinfo);
+    if length(datasetinfo.label) > 1
+        neighbs = ft_prepare_neighbours(cfg,datasetinfo);
+    end
 else
     switch datasetinfo.atlasname
         case 'aal'
@@ -171,17 +173,21 @@ for c = 1:length(data)
     tlock{c} = ft_selectdata(cfg,tlock{c});
 end
 
-rmneighbs = zeros(1,length(neighbs));
-for c = 1:length(neighbs)
-    if ~isempty(find(strcmpi(neighbs(c).label,badlabels)))
-        rmneighbs(c) = 1;
+if length(datasetinfo.label) > 1
+    rmneighbs = zeros(1,length(neighbs));
+    for c = 1:length(neighbs)
+        if ~isempty(find(strcmpi(neighbs(c).label,badlabels)))
+            rmneighbs(c) = 1;
+        end
     end
+    neighbs(find(rmneighbs)) = [];
 end
-neighbs(find(rmneighbs)) = [];
 
 cfg = []; cfg.method = 'montecarlo'; cfg.statistic = statfun;
 cfg.correctm = 'cluster'; cfg.clusterstatistic = 'maxsum';
-cfg.neighbours = neighbs;
+if length(datasetinfo.label) > 1
+    cfg.neighbours = neighbs;
+end
 
 if length(data) == 2
     cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025;
