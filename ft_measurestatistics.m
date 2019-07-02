@@ -8,7 +8,7 @@ function [stats] = ft_measurestatistics(cfg,data)
 %      test: the test you want to use, passed in as a string. Inputs
 %         include 'ttest' (for paired samples), 'ttest2' (for unpaired),
 %         'signrank', 'ranksum', 'anova', 'rmanova', 'kruskalwallis',
-%         'friedman', and 'empirical'. Use empirical for comparing one
+%         'friedman', 'tost', and 'empirical'. Use empirical for comparing one
 %         outputs structure with a fourth dimension (either surrogates or
 %         subsamples) with another outputs structure with only three
 %         dimensions. (default = 'ranksum' or 'kruskal-wallis' depending on
@@ -34,6 +34,7 @@ function [stats] = ft_measurestatistics(cfg,data)
 %              test (default = set based on cfg.test)
 %              datasetinfo: the channel information used by EasyClusterCorrect
 %              (default = from data)
+%      eqinterval: equivalence interval for non-inferiority testing. 
 % data: a 1 X N cell array, each cell containing one "outputs" structure
 %      from ft_applymeasure. Each outputs structure must have the same
 %      dimensions
@@ -73,7 +74,7 @@ end
 
 if ~cfgcheck(cfg,'effectsize')
     switch cfg.test
-        case {'ttest','ttest2'}
+        case {'ttest','ttest2','tost'}
             cfg.effectsize = 'hedgesg';
         case 'ranksum'
             cfg.effectsize = 'auroc';
@@ -112,6 +113,10 @@ end
 
 if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'minnbchan')
     cfg.cluster.minnbchan = 1;
+end
+
+if isfield(cfg,'eqinterval')
+   cfg.cluster.eqinterval = cfg.eqinterval; 
 end
 
 cfg = setdefault(cfg,'subs',repmat({'all'},1,length(data)));
@@ -185,6 +190,10 @@ for i = cfg.meas
                     stats{i}.p(c) = friedman(dat,1,'off');
                 case 'empirical'
                     % finish later
+                case 'tost'
+                    [p1,p2] = TOST(data{1}.data(:,c,i),data{2}.data(:,c,i),...
+                        cfg.eqinterval(1),cfg.eqinterval(2),0.05);
+                    stats{i}.p(c) = max(p1,p2);
             end
             
             switch cfg.test
@@ -250,13 +259,15 @@ for i = cfg.meas
             case 'empirical'
                 % finish later
                 
-            case 'empirical'
-                % finish later
+            case 'tost'
+                [p1,p2] = TOST(nanmean(data{1}.data(:,:,i),2),nanmean(data{2}.data(:,:,i),2),...
+                    cfg.eqinterval(1),cfg.eqinterval(2),0.05);
+                stats{i}.p = max(p1,p2);
         end
         switch cfg.test
-            case 'ttest','ttest2','ranksum','signrank'
+            case {'ttest','ttest2','ranksum','signrank''tost'}
                 stats{i}.effsize = mes(mean(data{1}.data(:,:,i),2),mean(data{2}.data(:,:,i),2),cfg.effectsize);
-            case 'anova','rmanova','kruskalwallis','friedman'
+            case {'anova','rmanova','kruskalwallis','friedman'}
                 % not implemented yet
         end
     end
