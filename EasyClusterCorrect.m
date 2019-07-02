@@ -225,6 +225,10 @@ if any(cell2mat(cellfun(@any,cellfun(@isnan,newdata,'UniformOutput',false),'Unif
     cfg.nanrand = 'yes';
 end
 
+if isfield(opts,'eqinterval')
+   cfg.eqinterval = opts.eqinterval; 
+end
+
 %if isfield(datasetinfo,'grad')
 %    cfg.channel = {'MEG'};
 %else
