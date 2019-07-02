@@ -439,11 +439,11 @@ else
         outdata = cell(1,length(files));
         
         
-        parfor i = cfg.subsrange
+        parfor i = 1:length(cfg.subsrange)
             
             %% Load the data
-            filename = files(i).name;
-            sub{i} = files(i).name;
+            filename = files(cfg.subsrange(i)).name;
+            sub{i} = files(cfg.subsrange(i)).name;
             %outputs.startsub = i+1;
             
             disp(' ')
@@ -452,7 +452,7 @@ else
             
             if cfgcheck(cfg,'format','fieldtrip')
                 EEG = struct;
-                allvars = parload(fullfile(files(i).folder,filename));
+                allvars = parload(fullfile(files(cfg.subsrange(i)).folder,filename));
                 if ~cfgcheck(cfg,'ftvar')
                     names = fieldnames(allvars);
                     for c = 1:length(names)
@@ -473,10 +473,10 @@ else
                 
                 EEG = ft2eeglab(data);
             else
-                EEG = pop_loadset( 'filename', filename, 'filepath', files(i).folder);
+                EEG = pop_loadset( 'filename', filename, 'filepath', files(cfg.subsrange(i)).folder);
             end
             
-            EEG.filename = fullfile(files(i).folder,files(i).name);
+            EEG.filename = fullfile(files(cfg.subsrange(i)).folder,files(cfg.subsrange(i)).name);
             
             %% Subsample, surrogate, and apply the measures
             if cfgcheck(cfg.surrogate,'do_surr','no') && cfgcheck(cfg.subsample,'do_subsample','no')

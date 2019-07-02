@@ -5,12 +5,19 @@ opts.minnbchan = 1;
 opts.parpool = settings.pool;
 
 for c = 1:settings.nfreqs
+    %pt_diff_stats{c} = EasyClusterCorrect({permute(squeeze(allmeas1{c}.naddersp.diff(:,:,2,:)-allmeas1{c}.naddersp.diff(:,:,1,:)),[1 3 2]),...
+    %    permute(squeeze(allmeas2{c}.naddersp.diff(:,:,2,:)-allmeas2{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
+    %    settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+    %ttv_diff_stats{c} = EasyClusterCorrect({permute(allmeas1{c}.ttversp.real,[1 3 2]),permute(allmeas2{c}.ttversp.real,[1 3 2])},...
+    %    settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+
     pt_diff_stats{c} = EasyClusterCorrect({permute(squeeze(allmeas1{c}.naddersp.diff(:,:,2,:)-allmeas1{c}.naddersp.diff(:,:,1,:)),[1 3 2]),...
         permute(squeeze(allmeas2{c}.naddersp.diff(:,:,2,:)-allmeas2{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
-        settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        settings.datasetinfo,'ft_statfun_tost',opts);
     ttv_diff_stats{c} = EasyClusterCorrect({permute(allmeas1{c}.ttversp.real,[1 3 2]),permute(allmeas2{c}.ttversp.real,[1 3 2])},...
-        settings.datasetinfo,'ft_statfun_fast_signrank',opts);
-    
+        settings.datasetinfo,'ft_statfun_tost',opts);        
+
+
     ersp_diff_stats{c} = EasyClusterCorrect({permute(allmeas1{c}.ersp.real,[1 3 2]) permute(allmeas2{c}.ersp.real,[1 3 2])},...
         settings.datasetinfo,'ft_statfun_fast_signrank',opts);
 end
@@ -18,6 +25,10 @@ end
 compstats.ptdiff = pt_diff_stats;
 compstats.ttvdiff = ttv_diff_stats;
 compstats.erspdiff = ersp_diff_stats;
+
+save(fullfile(settings.outputdir,[settings.datasetname '_compstats.mat']),'compstats','-v7.3')
+
+cd(settings.outputdir)
 
 figure
 
@@ -142,9 +153,3 @@ set(gcf,'Color','w')
 
 savefig(gcf,'Fig_compare.fig')
 export_fig('Fig_compare.png','-m4')
-
-
-
-
-
-

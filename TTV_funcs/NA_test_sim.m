@@ -37,19 +37,102 @@ settings = parload('settings_camcan_1Hz.mat','settings');
 datasetinfo = settings.datasetinfo;
 datasetinfo.label = datasetinfo.label(1);
 
-allstats = cell(length(mvals),length(nvals));
+allstats_pt = cell(length(mvals),length(nvals));
+allstats_ttv = allstats_pt;
 for c = 1:length(mvals)
     opts.minnbchan = 0; opts.nrand = 1000;
     stats = cell(1,length(nvals));
     parfor cc = 1:length(nvals)
-        stats{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,1,:)),[3 2 1]),...
-            permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[3 2 1])},datasetinfo,'ft_statfun_fast_signrank',opts);
+        %stats_pt{cc} = EasyClusterCorrect({permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,1,:)),[3 2 1]),...
+        %    permute(squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[3 2 1])},datasetinfo,'ft_statfun_fast_signrank',opts);
+        stats_ttv{cc} = EasyClusterCorrect({permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2]) 0.*permute(all_datacalc{c,cc}.ttversp.real(1,:,:),[1 3 2])},...
+            datasetinfo,'ft_statfun_fast_signrank',opts)
     end
-    allstats(c,:) = stats;
+    allstats_pt(c,:) = stats_pt;
+    allstats_ttv(c,:) = stats_ttv;
 end
 
+p = panel('no-manage-font');
+
+pos = get(gcf,'position');
+
+set(gcf,'position',[pos(1) pos(2) pos(3)*3 pos(4)*3]);
+
+p.pack(13,13)
+
+p.de.margin = [5 5 5 5];
+
+t = linspace(0,800,400);
+warning('Hard-coded')
+for c = 1:length(mvals)
+    for cc = 1:length(nvals)
+        p(c,cc).select()
+        ylim1 = stdshade(t,squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,1,:)),[0 0 1],0.15,1,'std');
+        hold on
+        ylim2 = stdshade(t,squeeze(all_datacalc{c,cc}.naddersp.diff(1,:,2,:)),[1 0 0],0.15,1,'std');
+        set(gca,'XTickLabel',{},'YTickLabel',{},'XLim',[0 800],'YLim',[min(ylim1(1),ylim2(1)) max(ylim1(2),ylim2(2))])
+        Plot_sigmask(gca,allstats_pt{c,cc}.prob < 0.05,'bar')
+        set(gca,'XLim',[0 800])
+        if c == 1
+           title(['Noise TTV ' 0.3*num2str(nvals(cc))],'FontSize',10) 
+        end
+        if cc == 1
+           AddFigureLabel(gca,['SNR ' newline num2str(1/mvals(c))],'middle_left','FontSize',10) 
+        end
+%         if c == length(mvals)
+%            xlabel('Time (ms)')
+%         end
+%         if cc == 1
+%            ylabel('% change from prestim') 
+%         end
+    end
+end
+
+set(gcf,'Color','w')
+    
+savefig('Simulation_fig_pseudotrial.fig')
+export_fig('Simulation_fig_pseudotrial.png','-m4')
 
 
+
+p = panel('no-manage-font');
+
+pos = get(gcf,'position');
+
+set(gcf,'position',[pos(1) pos(2) pos(3)*3 pos(4)*3]);
+
+p.pack(13,13)
+
+p.de.margin = [5 5 5 5];
+
+t = linspace(0,800,400);
+warning('Hard-coded')
+for c = 1:length(mvals)
+    for cc = 1:length(nvals)
+        p(c,cc).select()
+        ylim1 = stdshade(t,squeeze(all_datacalc{c,cc}.ttversp.real(1,:,:)),[0 0 1],0.15,1,'std');
+        set(gca,'XTickLabel',{},'YTickLabel',{},'XLim',[0 800],'YLim',ylim1)
+        Plot_sigmask(gca,allstats_pt{c,cc}.prob < 0.05,'bar')
+        set(gca,'XLim',[0 800])
+        if c == 1
+           title(['Noise TTV ' 0.3*num2str(nvals(cc))],'FontSize',10) 
+        end
+        if cc == 1
+           AddFigureLabel(gca,['SNR ' newline num2str(1/mvals(c))],'middle_left','FontSize',10) 
+        end
+%         if c == length(mvals)
+%            xlabel('Time (ms)')
+%         end
+%         if cc == 1
+%            ylabel('% change from prestim') 
+%         end
+    end
+end
+
+set(gcf,'Color','w')
+    
+savefig('Simulation_fig_ttv.fig')
+export_fig('Simulation_fig_ttv.png','-m4')
 
 
 function [datacalc] = Calc_sub(settings,sim)

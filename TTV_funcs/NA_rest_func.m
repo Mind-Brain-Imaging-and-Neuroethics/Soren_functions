@@ -36,6 +36,19 @@ filesorder = cell(1,length(files));
 rest_fbands = cell(length(files),length(settings.tfparams.fbandnames));
 pf = zeros(1,length(files));
 
+if strcmpi(settings.tfparams.method,'hilbert') || ~isempty(find(contains(settings.steps,'tf_filter')))
+    prestim_pseudo = settings.pseudo.prestim;
+    prestim_real = settings.real.prestim;
+    poststim_pseudo = settings.pseudo.poststim;
+    poststim_real = settings.real.poststim;
+else
+    settings.pseudo.prestim = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    settings.real.prestim = settings.real.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    settings.pseudo.poststim = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    settings.real.poststim = settings.real.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+end
+
+
 parfor i = 1:length(files)
     if strcmpi(settings.datatype,'EEG')
         EEG = pop_loadset(files(i).name,pwd);
@@ -83,6 +96,8 @@ restmeas.bp.vals = bp;
 restmeas.rel_bp.vals = rel_bp;
 
 clear bp rel_bp EEG
+
+settings.nfreqs = length(settings.tfparams.fbandnames)
 
 %% Correlate the resting state bandpower with evoked power,
 

@@ -1,4 +1,4 @@
-function stdshade(F,amatrix,acolor,alpha,dimn,method,smth)
+function [ylim] = stdshade(F,amatrix,acolor,alpha,dimn,method,smth)
 % usage: stdshading(amatrix,alpha,acolor,F,smth)
 % plot mean and sem/std coming from a matrix of data.
 %sem/std is shown as shading.
@@ -11,6 +11,8 @@ function stdshade(F,amatrix,acolor,alpha,dimn,method,smth)
 % smusall 2010/4/23
 
 %modified by SWT on 19/03/2019
+
+%modified by SWT on 27/06/2019
 
 if dimn == 1
     amatrix = amatrix';
@@ -52,6 +54,8 @@ if exist('alpha','var')==0 || isempty(alpha)
     acolor='k';
 else fill([F fliplr(F)],[amean+astd fliplr(amean-astd)],acolor, 'FaceAlpha', alpha,'linestyle','none','HandleVisibility','off');
 end
+
+ylim = [min([amean+astd amean-astd]),max([amean+astd amean-astd])];
 
 if ishold==0
     check=true; else check=false;

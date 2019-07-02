@@ -45,11 +45,16 @@ elseif strcmpi(type,'bar')
     diffmask = diff([0 sigmask]);
     startindices = find(diffmask == 1);
     stopindices = find(diffmask == -1);
+    if length(stopindices) < length(startindices)
+       stopindices = [stopindices length(sigmask)]; 
+    end
     indices = [vert(startindices) vert(stopindices)];
     
+    if ~isempty(indices)
     for c = 1:size(indices,1)
         line([xax(indices(c,1)) xax(indices(c,2))],[yl(2)-ysize*0.04 yl(2)-ysize*0.04],...
             'color',[color alpha],'linewidth',linewidth);
+    end
     end
 elseif strcmpi(type,'cmapline') % for plotting the number of significant channels as the colour of the line
     yl = get(ax,'YLim');
