@@ -3,6 +3,7 @@ function compstats = NA_compare_outputs(settings,allmeas1,allmeas2)
 opts.nrand = 1000;
 opts.minnbchan = 1;
 opts.parpool = settings.pool;
+opts.eqinterval = [-2 2];
 
 for c = 1:settings.nfreqs
     %pt_diff_stats{c} = EasyClusterCorrect({permute(squeeze(allmeas1{c}.naddersp.diff(:,:,2,:)-allmeas1{c}.naddersp.diff(:,:,1,:)),[1 3 2]),...

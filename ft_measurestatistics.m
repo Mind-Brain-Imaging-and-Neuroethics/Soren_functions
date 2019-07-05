@@ -104,6 +104,8 @@ if cfgcheck(cfg,'multcompare','cluster') && ~cfgcheck(cfg.cluster,'statfun')
             cfg.cluster.statfun = 'ft_statfun_kruskal';
         case 'friedman'
             cfg.cluster.statfun = 'ft_statfun_friedman';
+	case 'tost'
+	    cfg.cluster.statfun = 'ft_statfun_tost';
     end
 end
 

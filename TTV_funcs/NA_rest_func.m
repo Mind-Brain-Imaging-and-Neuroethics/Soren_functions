@@ -42,10 +42,10 @@ if strcmpi(settings.tfparams.method,'hilbert') || ~isempty(find(contains(setting
     poststim_pseudo = settings.pseudo.poststim;
     poststim_real = settings.real.poststim;
 else
-    settings.pseudo.prestim = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
     settings.real.prestim = settings.real.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
     settings.pseudo.poststim = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
     settings.real.poststim = settings.real.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    settings.pseudo.prestim = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
 end
 
 
