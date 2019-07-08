@@ -1,4 +1,4 @@
-function [data] = ft_freqsimulation(cfg)
+function [data] = ft_freqsimulation_swt(cfg)
 
 % FT_FREQSIMULATION makes simulated data in FieldTrip format. The data is
 % built up from fifferent frequencies and can contain a signal in which the
@@ -334,7 +334,7 @@ elseif strcmp(cfg.method,'mix_oscifrac') % added by SWT on 11/06/2019
     cfg.osci.noise.ampl = 0;
     cfg.osci.method = 'superimposed'; cfg.osci.fsample = cfg.fsample; cfg.osci.trllen = cfg.trllen;
     cfg.osci.numtrl = cfg.numtrl;
-    sim_osci = ft_freqsimulation(cfg.osci);
+    sim_osci = ft_freqsimulation_swt(cfg.osci);
     tmpcfg = []; tmpcfg.channel = {'s1','s2','s3'};
     sim_osci = ft_selectdata(tmpcfg,sim_osci);
     
