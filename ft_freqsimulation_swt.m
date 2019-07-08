@@ -294,13 +294,17 @@ if strcmp(cfg.method, 'superimposed')
         cfg.noise.ampl = repmat(cfg.noise.ampl,1,length(timevec));
     end
     
+    if ~iscell(cfg.s1.ampl)
+       cfg.s1.ampl = repmat({cfg.s1.ampl},1,length(timevec)); 
+    end
+    
     % make data
     for iTr = 1 : length(timevec)
         if ischar(cfg.s1.phase); phase_s1 = rand * 2 *pi; else phase_s1 = cfg.s1.phase; end
         if ischar(cfg.s2.phase); phase_s2 = rand * 2 *pi; else phase_s2 = cfg.s2.phase; end
         if ischar(cfg.s3.phase); phase_s3 = rand * 2 *pi; else phase_s3 = cfg.s3.phase; end
         
-        s1    = cfg.s1.ampl.*cos(2*pi*cfg.s1.freq*timevec{iTr} + phase_s1);
+        s1    = cfg.s1.ampl{iTr}.*cos(2*pi*cfg.s1.freq*timevec{iTr} + phase_s1);
         s2    = cfg.s2.ampl.*cos(2*pi*cfg.s2.freq*timevec{iTr} + phase_s2);
         s3    = cfg.s3.ampl.*cos(2*pi*cfg.s3.freq*timevec{iTr} + phase_s3);
         noise = cfg.noise.ampl(iTr)*randn(size(timevec{iTr}));
