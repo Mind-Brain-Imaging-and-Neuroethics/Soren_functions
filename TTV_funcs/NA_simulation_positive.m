@@ -17,7 +17,11 @@ for m = mvals
                 spont = createFN(1.75/2,2000);
                 spont = ft_preproc_lowpassfilter(spont,500,10,4);
                 spont = NormOntoRange(spont,[1 2]);
-                cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:1000)*pi/1000)];
+                %prestim(cc) = mean(spont(951:1000))-1;
+                corrfact = 0.5*(mean(spont(951:1000))-1+rand);
+                evoked = -[zeros(1,1000) corrfact*sin((1:1000)*pi/1000)];
+                cfg.osci.s1.ampl{cc} = horz(spont)+horz(evoked);
+                %poststim(cc) = mean(evoked(1301:1400));
             end
             sim{c} = ft_freqsimulation_swt(cfg);
             
@@ -59,7 +63,7 @@ for c = 1:length(mvals)
     allstats_ttv(c,:) = stats_ttv;
 end
 
-save('simulation_alloutputs.mat','allstats_pt','allstats_ttv','all_datacalc','-v7.3')
+save('simulation_positive_alloutputs.mat','allstats_pt','allstats_ttv','all_datacalc','-v7.3')
 
 p = panel('no-manage-font');
 
@@ -99,8 +103,8 @@ end
 
 set(gcf,'Color','w')
 
-savefig('Simulation_fig_pseudotrial.fig')
-export_fig('Simulation_fig_pseudotrial.png','-m4')
+savefig('Simulation_positive_fig_pseudotrial.fig')
+export_fig('Simulation_positive_fig_pseudotrial.png','-m4')
 
 
 
@@ -140,8 +144,8 @@ end
 
 set(gcf,'Color','w')
 
-savefig('Simulation_fig_ttv.fig')
-export_fig('Simulation_fig_ttv.png','-m4')
+savefig('Simulation_positive_fig_ttv.fig')
+export_fig('Simulation_positive_fig_ttv.png','-m4')
 
 
 function [datacalc] = Calc_sub(settings,sim)
