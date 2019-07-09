@@ -465,11 +465,11 @@ end
 p(2,1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,1,:),1))-...
-    squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,1,:),1)),'b',0.15,1,'std')
-stdshade(t,squeeze(nanmean(allmeas{2}.nadderp.real(:,:,2,:),1))-...
-    squeeze(nanmean(allmeas{2}.nadderp.pseudo(:,:,2,:),1)),'r',0.15,1,'std')
-Plot_sigmask(gca,alloutputs.erp.pt.stats{2}.mask,'cmapline','LineWidth',5)
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1))-...
+    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b',0.15,1,'std')
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1))-...
+    squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r',0.15,1,'std')
+Plot_sigmask(gca,alloutputs.erp.pt.stats{1}.mask,'cmapline','LineWidth',5)
 %FillBetween(t,nanmean(nanmean(allmeas{1}.nadderp.real(:,:,1,:),4),1)-...
 %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),4),1),nanmean(nanmean(allmeas{2}.nadderp.real(:,:,2,:),4),1)-...
 %    nanmean(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),4),1));
@@ -485,7 +485,7 @@ plotindx(1) = [];
 plotindx = plotindx - settings.srate/10;
 for cc = 1:4
     p(2,1,cc+1).select()
-    plotdata = nanmean(squeeze(allmeas{1}.nadderp.diff(:,plotindx(cc),2,:)-allmeas{5}.nadderp.diff(:,plotindx(cc),1,:)),2);
+    plotdata = nanmean(squeeze(allmeas{1}.nadderp.diff(:,plotindx(cc),2,:)-allmeas{1}.nadderp.diff(:,plotindx(cc),1,:)),2);
     if strcmpi(settings.datatype,'MEG')
         ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
             0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)),0.*alloutputs.erp.pt.stats{1}.mask(:,plotindx(cc)));

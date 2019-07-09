@@ -150,9 +150,9 @@ end
 
 if isfield(settings,'rest')
     if strcmpi(settings.datatype,'EEG')
-        settings.rest.restfiles = '*.set';
+        settings.rest = setdefault(settings.rest,'restfiles','*.set');
     else
-        settings.rest.restfiles = '*.mat';
+        settings.rest = setdefault(settings.rest,'restfiles','*.mat');
     end
 end
 

@@ -20,11 +20,11 @@ end
 
 
 %% Calculate bandpower for each frequency band
-if strcmpi(settings.datatype,'EEG')
+%if strcmpi(settings.datatype,'EEG')
     files = dir(settings.rest.restfiles);
-else
-    files = dir(settings.rest.restfiles);
-end
+%else
+%    files = dir(settings.rest.restfiles);
+%end
 
 nbchan = length(settings.datasetinfo.label);
 bp = cell(1,length(files));
