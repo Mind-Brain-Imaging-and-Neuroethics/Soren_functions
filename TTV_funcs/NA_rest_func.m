@@ -59,7 +59,7 @@ parfor i = 1:length(files)
     
     data = ft_concat(data);
     
-    fbands = settings.tfparams.fbandnames;
+    fbands = settings.tfparams.fbands;
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
 %        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)

@@ -311,9 +311,11 @@ end
 clear ax
 
 p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
+alloutputs.ersp.corr.r = real(alloutputs.ersp.corr.r);
 for c = 1:settings.nfreqs
     p(2,c).pack()
-    p(2,c).pack({[0 0 0.5 0.3]})
+    p(2,c).pack({[0 0.7 0.5 0.3]})
+    if ~isempty(find(~isnan(alloutputs.ersp.corr.r(:,c)))) && ~isempty(find(alloutputs.ersp.corr.r(:,c)))
     p(2,c,1).select()
     nicecorrplot(nanmean(allmeas{c}.naerspindex,1),nanmean(allmeas{c}.ttverspindex,1),{['Pseudotrial-based' newline 'ERSP nonadditivity'],'TTV-based ERSP nonadditivity'});
     FixAxes(gca,14)
@@ -336,6 +338,7 @@ for c = 1:settings.nfreqs
     FixAxes(gca,14)
     ax(c) = p(2,c,2).axis;
     ax2(c) =p(2,c,1).axis;
+    end
     %cbar(c).Position = [ax2(c).Position(1)+ax2(c).Position(3)-cbar(c).Position(3) ax2(c).Position(2) cbar(c).Position(3) cbar(c).Position(4)];
 end
 Normalize_Clim(ax,1);
@@ -355,7 +358,7 @@ AddFigureLabel(p(2,1,1).axis,'B')
 
 for c = 1:length(ax)
     ax(c) = p(2,c,1).axis;
-    cbars2(c).Position = [ax(c).Position(1)+0.85*ax(c).Position(3) ax(c).Position(2)+0.02*ax(c).Position(4) 0.07*ax(c).Position(3) 0.28*ax(c).Position(4)];
+    cbars2(c).Position = [ax(c).Position(1)+0.85*ax(c).Position(3) ax(c).Position(2)+0.7*ax(c).Position(4) 0.07*ax(c).Position(3) 0.28*ax(c).Position(4)];
     ax(c) = p(1,c,1).axis;
     cbars1(c).Position = [ax(c).Position(1)+ax(c).Position(3) ax(c).Position(2) cbars1(c).Position(3) 0.15*ax(c).Position(4)];
 end
@@ -368,73 +371,7 @@ save('Panel3.mat','p')
 close
 
 
-%% Figure 2.5 (or supplement) - pseudotrial-based and ttv-based time course differences?
 
-%Pseudotrial based first
-p = panel('no-manage-font');
-
-set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'Color','w');
-
-p.pack(settings.nfreqs,settings.nfreqs);
-
-for q = 1:settings.nfreqs-1
-    for qq = 1:settings.nfreqs-1
-        if qq > q %below the diagonal = pseudotrial
-            p(q,qq).select();
-            t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-            hold on
-            stdshade(t,squeeze(nanmean(allmeas{q}.naddersp.diff(:,:,2,:),1))-...
-                squeeze(nanmean(allmeas{q}.naddersp.diff(:,:,1,:))),'b',0.15,1,'std');
-            stdshade(t,squeeze(nanmean(allmeas{qq}.naddersp.diff(:,:,2,:),1))-...
-                squeeze(nanmean(allmeas{qq}.naddersp.diff(:,:,1,:))),'r',0.15,1,'std');
-            Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{q,qq}.prob < 0.05,'cmapline','LineWidth',5)
-            
-            if q == 1
-                title(fbands{qq})
-            end
-            %legend({'Corrected prestim low','Corrected prestim high'})
-            xlabel('Time (s)')
-            ylabelunits(settings)
-            FixAxes(gca)
-            set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
-            
-            
-        elseif qq < q %above the diagonal, plot TTV
-            p(q,qq).select()
-            t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-            hold on
-            stdshade(t,squeeze(nanmean(allmeas{q}.ttversp.real,1)),'b',0.15,1,'std');
-            stdshade(t,squeeze(nanmean(allmeas{qq}.ttversp.real,1)),'r',0.15,1,'std');
-            
-            Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{qq,q}.prob < 0.05,'cmapline','LineWidth',5)
-            
-            if q == 1
-                title(fbands{qq})
-            end
-            %legend({'Corrected prestim low','Corrected prestim high'})
-            xlabel('Time (s)')
-            ylabelunits(settings)
-            FixAxes(gca)
-            set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
-            
-        elseif qq == q % on the diagonal, just plot a line
-            p(q,qq).select()
-            % plot(linspace(0,1,100),linspace(1,0,100),'k','LineWidth',5)
-            axis(p(q,qq).axis,'off')
-            if q == 1
-                title(fbands{q},'FontSize',11)
-            end
-            
-        end
-    end
-end
-
-% fix margins, add text boxes etc
-
-savefig('FigS1.fig')
-export_fig('FigS1.png','-m4')
-save('PanelS1.mat','p')
-close
 
 
 %% Figure 4: ERP nonadditivity
@@ -451,10 +388,14 @@ p(2).pack('v',{50 50});
 p(1,1).select();
 t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
 hold on
-stdshade(t,squeeze(allmeas{1}.erp(plotsensor,poststim_real,:)),'k',0.15,1,'std');
+%stdshade(t,squeeze(allmeas{1}.erp(plotsensor,poststim_real,:)),'k',0.15,1,'std');
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,1,:),1)),'b',0,1,'std')
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,1,:),1)),'b--',0,1,'std')
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.real(:,:,2,:),1)),'r',0,1,'std');
+stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'std')
 xlabel('Time (ms)')
 ylabel('Voltage (uV)')
-title('Average ERP')
+title('ERP real trials and pseudotrials')
 FixAxes(gca,16)
 
 
@@ -638,6 +579,7 @@ if isfield(settings,'rest')
     for c = 2:settings.nfreqs
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+                if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
         p(2,c-1).pack();
         p(2,c-1).pack({[0 0 0.4 0.4]})
         
@@ -648,7 +590,7 @@ if isfield(settings,'rest')
         
         %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
         p(2,c-1,2).select()
-        
+        restmeas.rel_bp.naindex.r.subject = real(restmeas.rel_bp.naindex.r.subject);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,real(restmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
                 restmeas.rel_bp.naindex.p.subject(:,c),restmeas.rel_bp.naindex.stats{c}.mask);
@@ -660,6 +602,7 @@ if isfield(settings,'rest')
         cbar = colorbar('peer',gca,'FontSize',12);
         %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
         ax(c-1) = p(2,c-1,2).select();
+                end
     end
     %cbar.Label.String = 'Spearman''s rho';
     %cbar.Label.FontSize = 14;
@@ -704,6 +647,74 @@ if isfield(settings,'rest')
     export_fig('Fig5.png','-m4')
     save('Panel5.mat','p')
 end
+
+%% Figure 2.5 (or supplement) - pseudotrial-based and ttv-based time course differences?
+
+%Pseudotrial based first
+p = panel('no-manage-font');
+
+set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'Color','w');
+
+p.pack(settings.nfreqs,settings.nfreqs);
+
+for q = 1:settings.nfreqs-1
+    for qq = 1:settings.nfreqs-1
+        if qq > q %below the diagonal = pseudotrial
+            p(q,qq).select();
+            t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+            hold on
+            stdshade(t,squeeze(nanmean(allmeas{q}.naddersp.diff(:,:,2,:),1))-...
+                squeeze(nanmean(allmeas{q}.naddersp.diff(:,:,1,:))),'b',0.15,1,'std');
+            stdshade(t,squeeze(nanmean(allmeas{qq}.naddersp.diff(:,:,2,:),1))-...
+                squeeze(nanmean(allmeas{qq}.naddersp.diff(:,:,1,:))),'r',0.15,1,'std');
+            Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{q,qq}.prob < 0.05,'cmapline','LineWidth',5)
+            
+            if q == 1
+                title(fbands{qq})
+            end
+            %legend({'Corrected prestim low','Corrected prestim high'})
+            xlabel('Time (s)')
+            ylabelunits(settings)
+            FixAxes(gca)
+            set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
+            
+            
+        elseif qq < q %above the diagonal, plot TTV
+            p(q,qq).select()
+            t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
+            hold on
+            stdshade(t,squeeze(nanmean(allmeas{q}.ttversp.real,1)),'b',0.15,1,'std');
+            stdshade(t,squeeze(nanmean(allmeas{qq}.ttversp.real,1)),'r',0.15,1,'std');
+            
+            Plot_sigmask(p(q,qq).axis,alloutputs.ersp.pt.tcoursestats{qq,q}.prob < 0.05,'cmapline','LineWidth',5)
+            
+            if q == 1
+                title(fbands{qq})
+            end
+            %legend({'Corrected prestim low','Corrected prestim high'})
+            xlabel('Time (s)')
+            ylabelunits(settings)
+            FixAxes(gca)
+            set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
+            
+        elseif qq == q % on the diagonal, just plot a line
+            p(q,qq).select()
+            % plot(linspace(0,1,100),linspace(1,0,100),'k','LineWidth',5)
+            axis(p(q,qq).axis,'off')
+            if q == 1
+                title(fbands{q},'FontSize',11)
+            end
+            
+        end
+    end
+end
+
+% fix margins, add text boxes etc
+
+savefig('FigS1.fig')
+export_fig('FigS1.png','-m4')
+save('PanelS1.mat','p')
+close
 end
 
 function ylabelunits(settings)

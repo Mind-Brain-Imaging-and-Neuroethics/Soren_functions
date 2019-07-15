@@ -28,6 +28,8 @@ parfor i = 1:length(files)
     if strcmpi(settings.tfparams.pf_adjust,'yes')
         [freqs pf(i)] = NA_convert_alpha_pf(settings,ft_concat(data));
         allfreqs{i} = horz(freqs);
+else
+freqs = settings.tfparams.fbands;
     end
     
     timefreq_data = cell(1,length(freqs));
@@ -189,11 +191,11 @@ parfor i = 1:length(files)
     %    parsave([settings.outputdir '/' files(i).name '_timefreq_filtered.mat'],'timefreq_data',timefreq_data);
 end
 
-
+if strcmpi(settings.tfparams.pf_adjust,'yes')
 allfreqs = cat(1,allfreqs{:});
 settings.tfparams.fbands = allfreqs;
 settings.alpha_pf = pf;
-
+end
 
 if ~strcmpi(settings.tfparams.method,'hilbert')
     settings.nfreqs = length(foi{1})+1;

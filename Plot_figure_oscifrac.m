@@ -250,14 +250,14 @@ for c = 1:6
     opts.nrand = 1000;
     opts.minnbchan = 0;
     %opts.parpool = 24; %remove later
-    if isempty(plotstats{1,c})
-        plotstats{1,c} = EasyClusterCorrect(statdata,datasetinfo,statfun,opts);
+    if isempty(plotstats{2,c})
+        plotstats{2,c} = EasyClusterCorrect(statdata,datasetinfo,statfun,opts);
     end
     
     
     for cc = 1:length(fields)
         p(2,2,x,y,cc+1).select()
-        cluster_topoplot(nanmean(frac.(fields{cc})(:,:,c),1),chanlocs,plotstats{1,c}.prob,plotstats{1,c}.prob < 0.05,1);
+        cluster_topoplot(nanmean(frac.(fields{cc})(:,:,c),1),chanlocs,plotstats{2,c}.prob,plotstats{2,c}.prob < 0.05,1);
         ax(cc) = gca;
         if cc == length(fields)
            pos = ax(cc).Position;
