@@ -541,6 +541,117 @@ close
 %
 
 %% Figure 5: Resting state
+
+% if isfield(settings,'rest')
+%     mainfig = figure;
+%         
+%     pos = get(gcf,'position');
+%     set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+%     
+%     p = panel('no-manage-font');
+%     p.pack('v',{25 25 40});
+%     
+%     pwidth = ceil((settings.nfreqs-1)/2);
+%     p(1).pack(2,pwidth);
+%     p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+%     
+%     plotindx = [1:pwidth 1:pwidth];
+%     for c = 2:settings.nfreqs
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+%         p(1,c-1).pack()
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+%         p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+%         
+%         
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+%         p(1,c-1,1).select()
+%         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
+%         FixAxes(gca,14)
+%         title(settings.tfparams.fbandnames{c})
+%         
+%         
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+%         p(1,c-1,2).select()
+%         if strcmpi(settings.datatype,'MEG')
+%             ft_cluster_topoplot(settings.layout,restmeas.rel_bp.index.r.subject(:,c),settings.datasetinfo.label,...
+%                 restmeas.rel_bp.index.p.subject(:,c),restmeas.rel_bp.index.stats{c}.mask);
+%         else
+%             cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
+%                 restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
+%         end
+%         cbar = colorbar('WestOutside');
+%         cbar.Label.FontSize = 12;
+%         ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+%         ax(c-1) = p(1,c-1,2).axis;
+%     end
+%     cbar.Label.String = 'Spearman''s rho';
+%     cbar.Label.FontSize = 14;
+%     colormap(lkcmap2)
+%     Normalize_Clim(ax,1);
+%     
+%     p(2).pack(2,pwidth);
+%     p(2).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+%     
+%     for c = 2:settings.nfreqs
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+%         if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
+%         p(2,c-1).pack();
+%         p(2,c-1).pack({[0.7 0.7 0.3 0.3]})
+%         
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+%         p(2,c-1,1).select()
+%         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.naerspindex,1),{'Resting-state relative power','ERSP nonadditivity'})
+%         FixAxes(gca,14)
+%         
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+%         p(2,c-1,2).select()
+%         restmeas.rel_bp.naindex.r.subject = real(restmeas.rel_bp.naindex.r.subject);
+%         if strcmpi(settings.datatype,'MEG')
+%             ft_cluster_topoplot(settings.layout,real(restmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
+%                 restmeas.rel_bp.naindex.p.subject(:,c),restmeas.rel_bp.naindex.stats{c}.mask);
+%         else
+%             cluster_topoplot(real(restmeas.rel_bp.index.r.subject(:,c)),settings.layout,...
+%                 restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
+%         end
+%         title(settings.tfparams.fbandnames{c})
+%         cbar = colorbar('WestOutside');
+%         set(cbar,'peer',gca,'FontSize',12);
+%         ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+%         ax(c-1) = p(2,c-1,2).select();
+%         end
+%     end
+%     cbar.Label.String = 'Spearman''s rho';
+%     cbar.Label.FontSize = 14;
+%     colormap(lkcmap2)
+%     Normalize_Clim(ax,1);
+%     
+%     close(mediationfig);
+%     fix margins here
+%     p.de.margin = [5 5 5 5];
+%     p.marginleft = 22;
+%     p.margintop = 8;
+%     p.marginbottom = 8;
+%     p(1).de.marginleft = 18;
+%     p(1).marginbottom = 18;
+%     p(2).de.marginleft = 22;
+%     p(2).marginbottom = 14;
+%     
+%     
+%     AddFigureLabel('A',p(1,1,1,1).axis);
+%     AddFigureLabel('B',p(2,1,1,1).axis);
+%     AddFigureLabel(p(1,1,1).axis,'A');
+%     AddFigureLabel(p(2,1,1).axis,'B');
+%     AddFigureLabel(p(3).axis,'C');
+%     
+%     set(gcf,'Color','w')
+%     
+%     savefig('Fig5.fig')
+%     export_fig('Fig5.png','-m4')
+%     save('Panel5.mat','p')
+% end
+
+% %% Figure 5: Resting state
 if isfield(settings,'rest')
     mainfig = figure;
     
@@ -665,6 +776,52 @@ if isfield(settings,'rest')
     export_fig('Fig5.png','-m4')
     save('Panel5.mat','p')
 end
+
+%% Figure ?: PLE correlation (for supplement?)
+p = panel('no-manage-font')
+
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+
+p = panel('no-manage-font');
+p.pack('h',repmat({1/(settings.nfreqs-1)},1,settings.nfreqs-1));
+
+for c = 2:settings.nfreqs
+    %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+    p(1,c-1).pack()
+    %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+    p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+    
+    
+    %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+    p(1,c-1,1).select()
+    nicecorrplot(nanmean(restmeas.ple.vals,2),nanmean(allmeas{c}.naerspindex,1),{'Resting-state PLE','ERSP Nonadditivity'})
+    FixAxes(gca,14)
+    title(settings.tfparams.fbandnames{c})
+    
+    
+    %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+    p(1,c-1,2).select()
+    if strcmpi(settings.datatype,'MEG')
+        ft_cluster_topoplot(settings.layout,restmeas.ple.naindex.r(:,c),settings.datasetinfo.label,...
+            restmeas.ple.naindex.p(:,c),restmeas.ple.naindex.stats{c}.mask);
+    else
+        cluster_topoplot(restmeas.ple.naindex.r(:,c),settings.layout,...
+            restmeas.ple.naindex.p(:,c),(restmeas.ple.naindex.stats{c}.mask));
+    end
+    cbar = colorbar('WestOutside');
+    %cbar.Label.FontSize = 12;
+    %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+    ax(c-1) = p(1,c-1,2).axis;
+end
+colormap(lkcmap2)
+Normalize_Clim(ax,1)
+
+set(gcf,'Color','w')
+
+savefig('Fig6.fig')
+export_fig('Fig6.png','-m4')
+save('Panel6.mat','p')
 
 %% Figure 2.5 (or supplement) - pseudotrial-based and ttv-based time course differences?
 
