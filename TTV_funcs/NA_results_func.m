@@ -137,12 +137,14 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
         erp_ttv_stats{q} = EasyClusterCorrect({permute(allmeas{q}.ttv.real,[1 3 2]) permute(zeromat,[1 3 2])},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         %erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
         
+        if strcmpi(settings.comparefreqs,'yes')
         for c = (q+1):6
             ersp_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)-allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),...
                 permute(squeeze(allmeas{c}.naddersp.diff(:,:,2,:)-allmeas{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
             settings.datasetinfo,'ft_statfun_fast_signrank',opts);
             ttv_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(allmeas{q}.ttversp.real,[1 3 2]),permute(allmeas{c}.ttversp.real,[1 3 2])},...
                 settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+        end
         end
     end
     
@@ -155,7 +157,7 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
     alloutputs.erp.pt.stats = erp_pt_stats;
     alloutputs.erp.ttv.stats = erp_ttv_stats;
     
-    alloutputs.fdrfields = {'ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats','ersp.pt.tcoursestats','ersp.ttv.tcoursestats',...
+    alloutputs.fdrfields = {'ersp.pt.stats','ersp.ttv.stats','ersp.corr.stats',...
         'erp.pt.stats','erp.ttv.stats','erp.corr.stats'};
 elseif strcmpi(settings.datatype,'ECoG') && (strcmpi(settings.ecog.method,'mean') || strcmpi(settings.ecog.method,'median'))
     alloutputs.fdrfields = {'ersp.pt.sig','ersp.ttv.sig','ersp.corr.p','erp.pt.sig','erp.ttv.sig',...
@@ -179,8 +181,8 @@ for q = 1:numbands
 end
 
 for q = 1:numbands
-    ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
-    erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
+    ersp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerspindex,allmeas{q}.ttverspindex},settings.datasetinfo,'ft_statfun_spearman',opts);
+    erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_spearman',opts);
 end
 
 alloutputs.ersp.corr.stats = ersp_corrstats;

@@ -166,10 +166,10 @@ opts2 = struct;
 opts2.nrand = 1000;
 
 parfor q = 1:settings.nfreqs
-    rel_bp_index_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),allmeas{q}.erspindex},settings.datasetinfo,opts2);
-    rel_bp_naindex_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),allmeas{q}.naerspindex},settings.datasetinfo,opts2);
+    rel_bp_index_stats{q} = EasyClusterCorrect({squeeze(restmeas.rel_bp.vals(q,:,:)),allmeas{q}.erspindex},settings.datasetinfo,'ft_statfun_spearman',opts2);
+    rel_bp_naindex_stats{q} = EasyClusterCorrect({squeeze(restmeas.rel_bp.vals(q,:,:)),allmeas{q}.naerspindex},settings.datasetinfo,'ft_statfun_spearman',opts2);
     
-    rel_bp_prestim_stats{q} = EasyClusterCorrect_spearman({squeeze(restmeas.rel_bp.vals(q,:,:)),restmeas.prestimamp.rel{q}},settings.datasetinfo,opts2);
+    rel_bp_prestim_stats{q} = EasyClusterCorrect({squeeze(restmeas.rel_bp.vals(q,:,:)),restmeas.prestimamp.rel{q}},settings.datasetinfo,'ft_statfun_spearman',opts2);
     
     if isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(rel_bp_prestim_stats{q}.posclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))
         rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...

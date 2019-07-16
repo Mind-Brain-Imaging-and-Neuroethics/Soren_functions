@@ -37,7 +37,7 @@ end
 
 %% First make raw figures
 
-%% Figure 1a. ERSP mean split schematic
+%% Figure 1a. ERSP median split schematic
 
 p = panel('no-manage-font');
 
@@ -146,6 +146,7 @@ p.marginleft = 20;
 p(2).marginleft = 22;
 p(3).marginleft = 18;
 p.marginbottom = 18;
+p.margintop = 7;
 
 AddFigureLabel(p(1,1).axis,'A');
 AddFigureLabel(p(2).axis,'B');
@@ -158,6 +159,8 @@ save('Panel1.mat','p')
 close
 
 %% Figure 2: Nonadditivity of ERSP in different frequency bands
+
+figure
 
 p = panel('no-manage-font');
 
@@ -220,7 +223,7 @@ for c = 1:settings.nfreqs
         end
         colormap(lkcmap2)
         if cc == 4
-            colorbar
+            cbars(c) = colorbar;
         end
         ax(cc) = p(2,c,cc+1).axis;
         title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
@@ -233,10 +236,18 @@ p.de.margin = [5 5 5 5];
 p(1).marginbottom = 18;
 p(1).de.marginright = 14;
 p(2).de.marginright = 14;
+p.marginright = 10;
 % fix margins here
 
 AddFigureLabel(p(1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B')
+
+set(gcf,'Color','w')
+
+for c = 1:settings.nfreqs
+    ax(c) = p(2,c,1).axis;
+    cbars(c).Position = [ax(c).Position(1)+ax(c).Position(3) ax(c).Position(2) cbars(c).Position(3) 0.15*ax(c).Position(4)];
+end
 
 savefig('Fig2.fig')
 export_fig('Fig2.png','-m4')
@@ -284,6 +295,7 @@ for c = 1:settings.nfreqs
     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
     %set(gca,'YLim',ylim)
     FixAxes(gca,14)
+    set(gca,'XLim',[0 max(t)])
     %set(gca,'FontSize',16)
     
     plotindx = linspace(0,max(settings.aucindex),5);
@@ -331,7 +343,7 @@ for c = 1:settings.nfreqs
             alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c)));
         end
         cluster_topoplot(real(alloutputs.ersp.corr.r(:,c)),settings.layout,...
-            1-(0.*alloutputs.ersp.corr.p(:,c))',0.*alloutputs.ersp.corr.stats{c}.mask);
+            alloutputs.ersp.corr.p(:,c)',alloutputs.ersp.corr.stats{c}.mask);
     end
     colormap(lkcmap2)
     cbars2(c) = colorbar('EastOutside');
@@ -345,9 +357,10 @@ Normalize_Clim(ax,1);
 
 
 p.de.margin = [5 5 5 5];
-p.marginleft = 22;
-p.marginbottom = 22;
+p.marginleft = 24;
+p.marginbottom = 25;
 p.margintop = 8;
+p.marginright = 10;
 p(1).marginbottom = 18;
 p(1).de.marginleft = 18;
 p(2).de.marginleft = 24;
@@ -358,7 +371,7 @@ AddFigureLabel(p(2,1,1).axis,'B')
 
 for c = 1:length(ax)
     ax(c) = p(2,c,1).axis;
-    cbars2(c).Position = [ax(c).Position(1)+0.85*ax(c).Position(3) ax(c).Position(2)+0.7*ax(c).Position(4) 0.07*ax(c).Position(3) 0.28*ax(c).Position(4)];
+    cbars2(c).Position = [ax(c).Position(1)+0.8*ax(c).Position(3) ax(c).Position(2)+0.7*ax(c).Position(4) 0.07*ax(c).Position(3) 0.28*ax(c).Position(4)];
     ax(c) = p(1,c,1).axis;
     cbars1(c).Position = [ax(c).Position(1)+ax(c).Position(3) ax(c).Position(2) cbars1(c).Position(3) 0.15*ax(c).Position(4)];
 end
@@ -369,8 +382,6 @@ savefig('Fig3.fig')
 export_fig('Fig3.png','-m4')
 save('Panel3.mat','p')
 close
-
-
 
 
 
@@ -396,6 +407,7 @@ stdshade(t,squeeze(nanmean(allmeas{1}.nadderp.pseudo(:,:,2,:),1)),'r--',0,1,'std
 xlabel('Time (ms)')
 ylabel('Voltage (uV)')
 title('ERP real trials and pseudotrials')
+legend({'Real prestim low','Pseudo prestim low','Real prestim high','Pseudo prestim high'},'EdgeColor','none','location','east')
 FixAxes(gca,16)
 
 
@@ -488,6 +500,7 @@ p(2,2).pack({[0.7 0 0.3 0.3]});
 p(2,2,1).select();
 nicecorrplot(nanmean(allmeas{1}.naerpindex,1),nanmean(allmeas{1}.ttvindex,1),{'Pseudotrial-based ERP nonadditivity','TTV-based ERP nonadditivity'});
 FixAxes(gca,16)
+title('Correlation of pseudotrial and TTV methods')
 p(2,2,2).select()
 plotdata = alloutputs.erp.corr.r(:,1);
 if isempty(find(~isnan(plotdata)))
@@ -508,8 +521,8 @@ colorbar('WestOutside')
 p.margin = [20 20 5 8];
 p.de.margin = [5 5 5 5];
 p(1).marginright = 25;
-p(1,1).marginbottom = 25;
-p(2,1).marginbottom = 18;
+p(1,1).marginbottom = 28;
+p(2,1).marginbottom = 28;
 AddFigureLabel(p(1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B');
 AddFigureLabel(p(1,2,1).axis,'C');
@@ -518,6 +531,7 @@ colormap(lkcmap2)
 p(1,2,1).select()
 Plot_sigmask(gca,alloutputs.erp.ttv.stats{1}.mask,'cmapline','LineWidth',5)
 
+set(gcf,'Color','w')
 
 %set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
 savefig('Fig4.fig')
@@ -545,7 +559,7 @@ if isfield(settings,'rest')
         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         p(1,c-1).pack()
         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
-        p(1,c-1).pack({[0 0 0.4 0.4]})
+        p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
         
         
         %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
@@ -564,7 +578,8 @@ if isfield(settings,'rest')
             cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
                 restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
         end
-        cbar = colorbar('peer',gca,'FontSize',12);
+        cbar = colorbar('WestOutside');
+        %cbar.Label.FontSize = 12;
         %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
         ax(c-1) = p(1,c-1,2).axis;
     end
@@ -579,9 +594,9 @@ if isfield(settings,'rest')
     for c = 2:settings.nfreqs
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
-                if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
+        if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
         p(2,c-1).pack();
-        p(2,c-1).pack({[0 0 0.4 0.4]})
+        p(2,c-1).pack({[0.7 0.7 0.3 0.3]})
         
         %p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
         p(2,c-1,1).select()
@@ -599,10 +614,11 @@ if isfield(settings,'rest')
                 restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
         end
         %title(settings.tfparams.fbandnames{c})
-        cbar = colorbar('peer',gca,'FontSize',12);
+        cbar = colorbar('WestOutside');
+        %set(cbar,'peer',gca,'FontSize',12);
         %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
         ax(c-1) = p(2,c-1,2).select();
-                end
+        end
     end
     %cbar.Label.String = 'Spearman''s rho';
     %cbar.Label.FontSize = 14;
@@ -616,7 +632,7 @@ if isfield(settings,'rest')
     opts.indvar = ['Rest' newline 'alpha' newline 'power'];
     opts.depvar = ['Poststim' newline 'alpha' newline 'power'];
     opts.mediator = ['Prestim' newline 'alpha' newline 'power'];
-    opts.sobelp = restmeas.rel_bp.mediation{bandindex}.sobel.p;
+    opts.sobelp = 0; %restmeas.rel_bp.mediation{bandindex}.sobel.p;
     mediationAnalysis0(double(nanmean(allmeas{bandindex}.erspindex(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',...
         double(squeeze(nanmean(restmeas.rel_bp.vals(bandindex,find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),2))),...
         double(nanmean(restmeas.prestimamp.rel{bandindex}(find(restmeas.rel_bp.prestim.stats{bandindex}.mask),:),1))',opts);
@@ -628,12 +644,12 @@ if isfield(settings,'rest')
     close(mediationfig);
     %fix margins here
     p.de.margin = [5 5 5 5];
-    p.marginleft = 18;
+    p.marginleft = 22;
     p.margintop = 8;
     p.marginbottom = 8;
-    p(1).de.marginleft = 14;
-    p(1).marginbottom = 15;
-    p(2).de.marginleft = 18;
+    p(1).de.marginleft = 18;
+    p(1).marginbottom = 18;
+    p(2).de.marginleft = 22;
     p(2).marginbottom = 14;
     
     
@@ -642,6 +658,8 @@ if isfield(settings,'rest')
     AddFigureLabel(p(1,1,1).axis,'A');
     AddFigureLabel(p(2,1,1).axis,'B');
     AddFigureLabel(p(3).axis,'C');
+    
+    set(gcf,'Color','w')
     
     savefig('Fig5.fig')
     export_fig('Fig5.png','-m4')
