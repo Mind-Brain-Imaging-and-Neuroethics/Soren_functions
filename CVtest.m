@@ -5,7 +5,7 @@ function [p,teststat] = CVtest(data)
 
 if iscell(data)
     newdat = cat(1,vert(data{1}),vert(data{2}));
-    grp = Make_designVect(cellfun(@length,data,'UniformOutput',true));
+    grp = Make_designVect(cellfun(@length,data,'UniformOutput',true))';
 else
     newdat = reshape(data,[],1);
     grp = Make_designVect([size(data,1) size(data,1)])';
