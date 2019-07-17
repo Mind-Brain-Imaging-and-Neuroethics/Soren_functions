@@ -778,7 +778,7 @@ if isfield(settings,'rest')
 end
 
 %% Figure ?: PLE correlation (for supplement?)
-p = panel('no-manage-font')
+p = panel('no-manage-font');
 
 pos = get(gcf,'position');
 set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
@@ -788,34 +788,37 @@ p.pack('h',repmat({1/(settings.nfreqs-1)},1,settings.nfreqs-1));
 
 for c = 2:settings.nfreqs
     %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
-    p(1,c-1).pack()
+    p(c-1).pack()
     %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
-    p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+    p(c-1).pack({[0.7 0.7 0.3 0.3]})
     
     
     %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
-    p(1,c-1,1).select()
+    p(c-1,1).select()
     nicecorrplot(nanmean(restmeas.ple.vals,2),nanmean(allmeas{c}.naerspindex,1),{'Resting-state PLE','ERSP Nonadditivity'})
     FixAxes(gca,14)
     title(settings.tfparams.fbandnames{c})
     
     
     %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
-    p(1,c-1,2).select()
+    p(c-1,2).select()
     if strcmpi(settings.datatype,'MEG')
-        ft_cluster_topoplot(settings.layout,restmeas.ple.naindex.r(:,c),settings.datasetinfo.label,...
-            restmeas.ple.naindex.p(:,c),restmeas.ple.naindex.stats{c}.mask);
+        ft_cluster_topoplot(settings.layout,real(restmeas.ple.naindex.r(:,c)),settings.datasetinfo.label,...
+            restmeas.ple.naindex.p(:,c),restmeas.rel_bp.ple.stats{c}.mask);
     else
         cluster_topoplot(restmeas.ple.naindex.r(:,c),settings.layout,...
-            restmeas.ple.naindex.p(:,c),(restmeas.ple.naindex.stats{c}.mask));
+            restmeas.ple.naindex.p(:,c),(restmeas.rel_bp.ple.stats{c}.mask));
     end
     cbar = colorbar('WestOutside');
     %cbar.Label.FontSize = 12;
     %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
-    ax(c-1) = p(1,c-1,2).axis;
+    ax(c-1) = p(c-1,2).axis;
 end
 colormap(lkcmap2)
 Normalize_Clim(ax,1)
+
+p.marginleft = 24;
+p.margintop = 8;
 
 set(gcf,'Color','w')
 

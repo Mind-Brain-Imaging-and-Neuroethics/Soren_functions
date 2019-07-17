@@ -181,16 +181,16 @@ parfor q = 1:settings.nfreqs
     
     rel_bp_prestim_stats{q} = EasyClusterCorrect({squeeze(restmeas.rel_bp.vals(q,:,:)),restmeas.prestimamp.rel{q}},settings.datasetinfo,'ft_statfun_spearman',opts2);
     
-    %if isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(rel_bp_prestim_stats{q}.posclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))
-    %    rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
-    %        double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
-    %        double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
-    %end
-%     if (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(rel_bp_prestim_stats{q}.negclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
-%         rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
-%             double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
-%             double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
-%     end
+    if isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(rel_bp_prestim_stats{q}.posclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))
+       rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
+           double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
+           double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
+    end
+    if (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(rel_bp_prestim_stats{q}.negclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
+        rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
+            double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
+            double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
+    end
 end
 
 
