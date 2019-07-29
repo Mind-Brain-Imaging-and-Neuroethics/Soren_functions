@@ -41,6 +41,12 @@ opts = setdefault(opts,'minnbchan',1);
 
 opts = setdefault(opts,'type','Spearman');
 
+if length(datasetinfo.label) >= 32
+    opts = setdefault(opts,'distmethod','distance');
+elseif length(datasetinfo.label) > 1
+    opts = setdefault(opts,'distmethod','triangulation');
+end
+
 fields = fieldnames(datasetinfo);
 badlabels = [];
 
@@ -84,11 +90,7 @@ for c = 1:length(data)
 end
 
 if isfield(datasetinfo,'grad') || isfield(datasetinfo,'elec')
-    if length(datasetinfo.label) >= 32
-        cfg = []; cfg.method = 'distance';
-    elseif length(datasetinfo.label) > 1
-        cfg = []; cfg.method = 'triangulation';
-    end
+    cfg = []; cfg.method = opts.distmethod;
     if length(datasetinfo.label) > 1
         neighbs = ft_prepare_neighbours(cfg,datasetinfo);
     end

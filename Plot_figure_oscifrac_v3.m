@@ -1,4 +1,4 @@
-function [smry1,smry2,cmpare] = Plot_figure_oscifrac_v3(spec,fbands,frange_ple,chanlocs,statsinfo,plotstats,opts)
+function [stats_mixd,stats_oscifrac,dev_mixd,dev_oscifrac] = Plot_figure_oscifrac_v3(spec,fbands,frange_ple,chanlocs,statsinfo,plotstats,opts)
 % Plots a standardized figure for the OsciFrac paper
 %
 % Input arguments:
@@ -71,7 +71,9 @@ for i = 1:length(fields)
         
         tmp = amri_sig_plawfit(spec.(fields{i})(c),frange_ple);
         ple.(fields{i})(c,:) = tmp.Beta;
-        bb.(fields{i})(c,:) = tmp.Cons;
+        
+        bb.(fields{i})(c,:) = 1./OsciFrac_EEG_wrapper(spec.(fields{i})(c),frange_ple);
+        %bb.(fields{i})(c,:) = tmp.Cons;
 %         spec.(fields{i})(c).linearized_frac = exp(vert(-tmp.Beta)*horz(log(spec.(fields{i})(c).freq))+vert(tmp.Cons));
 %         spec.(fields{i})(c).linearized_frac = spec.(fields{i})(c).linearized_frac';
 %         spec.(fields{i})(c).resid_frac = spec.(fields{i})(c).frac - spec.(fields{i})(c).linearized_frac;
@@ -203,7 +205,7 @@ line(xax,[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5])
 set(gca,'XLim',xax,'XTickLabel',plot_mixnames)
 ylabel('Coefficient')
 
-plot_oscifracnames = {'Osci Delta','Osci Theta','Osci Alpha','Osci Beta','Osci Gamma','Frac PLE','Frac broadband'}
+plot_oscifracnames = {'Osci Delta','Osci Theta','Osci Alpha','Osci Beta','Osci Gamma','Frac PLE','Frac broadband'};
 p(2,2).select()
 scatter(1:length(stats_oscifrac.beta(2:end)),stats_oscifrac.beta(2:end),'b');
 hold on
