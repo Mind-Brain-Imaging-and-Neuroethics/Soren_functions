@@ -1,10 +1,10 @@
-function [cellout] = cellcat(stringin,cellin,joiner,dirn)
+function [cellout] = cellcat(stringin,cellin,joiner,right)
 
 if nargin < 4
-    dirn = 0;
+    right = 0;
 end
 
-if dirn == 0
+if right == 0
     for c = 1:length(cellin)
         if iscell(cellin{c})
             cellout{c} = cellcat(stringin,cellin{c},joiner,0);
@@ -12,7 +12,7 @@ if dirn == 0
             cellout{c} = [stringin joiner cellin{c}];
         end
     end
-elseif dirn == 1
+elseif right == 1
     for c = 1:length(cellin)
         if iscell(cellin{c})
             cellout{c} = cellcat(stringin,cellin{c},joiner,1);

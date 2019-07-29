@@ -25,7 +25,7 @@ funcname = 'cvtest_matlab.R';
 filein = 'datatbl.csv';
 fileout = 'output.json';
 
-%setenv('PATH','/usr/local/fsl/bin:/anaconda3/bin:/Library/Frameworks/Python.framework/Versions/3.6/bin:/Library/Frameworks/Python.framework/Versions/3.5/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin')
+setenv('PATH','/usr/local/fsl/bin:/anaconda3/bin:/Library/Frameworks/Python.framework/Versions/3.6/bin:/Library/Frameworks/Python.framework/Versions/3.5/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin')
 
 system(['R -e ''source("' fullfile(path,funcname) '"); cvtest_matlab("'...
     fullfile(currdir,filein) '","' fullfile(currdir,fileout) '")'''])
