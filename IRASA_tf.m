@@ -41,11 +41,20 @@ if strcmpi(cfg.modifywindow,'yes')
         disp(['New window size is ' num2str(cfg.winsize)])
     end
 end
+
+if nargin < 3
+   calcspecs = 1;
+else
+    calcspecs = 0;
+end
+
 if strcmpi(cfg.parflag,'yes')
     parfor i = 1:length(data.trial)
         datawindows = getWindows(data.time{i},cfg.winsize,cfg.toi,data.trial{i});
         for c = 1:length(datawindows)
-            specs{i}(c) = amri_sig_fractal(datawindows{c},data.fsample,'hset',cfg.hset);
+            if calcspecs
+                specs{i}(c) = amri_sig_fractal(datawindows{c},data.fsample,'hset',cfg.hset);
+            end
             
             if ~isfield(cfg,'foi')
                 freqdata{i}(1,:,:,c) = specs{i}(c).(cfg.oscifrac);
@@ -65,7 +74,7 @@ else
     for i = 1:length(data.trial)
         datawindows = getWindows(data.time{i},cfg.winsize,cfg.toi,data.trial{i});
         for c = 1:length(datawindows)
-            if nargin < 3
+            if calcspecs
                 specs{i}(c) = amri_sig_fractal(datawindows{c},data.fsample,'hset',cfg.hset);
             end
             
