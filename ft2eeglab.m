@@ -40,6 +40,7 @@ EEG.icasphere  = [];
 EEG.icaweights = [];
 EEG.icaact     = [];
 EEG.saved      = 'no';
+EEG.etc = [];
 
 %[ALLEEG EEG CURRENTSET] = eeg_store(ALLEEG, EEG);
 %eeglab redraw

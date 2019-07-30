@@ -21,7 +21,7 @@ end
 
 for c = 1:length(cfg.event)
      trialdata.trial{c} = contdata.trial{1}(:,...
-         (cfg.event(c)+cfg.epoch(1)):(cfg.event(c)+cfg.epoch(2)));
+         (cfg.event(c)+cfg.epoch(1)):(cfg.event(c)+cfg.epoch(2)-1));
     trialdata.time{c} = linspace(cfg.epoch(1)/contdata.fsample,cfg.epoch(2)/contdata.fsample,size(trialdata.trial{c},2));
-    trialdata.sampleinfo(c,:) = [cfg.event(c)+cfg.epoch(1) cfg.event(c)+cfg.epoch(2)];
+    trialdata.sampleinfo(c,:) = [cfg.event(c)+cfg.epoch(1) cfg.event(c)+cfg.epoch(2)-1];
 end
