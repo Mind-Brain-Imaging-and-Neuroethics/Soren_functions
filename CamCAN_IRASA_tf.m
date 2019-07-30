@@ -28,11 +28,10 @@ for i = indices
         load(files(i).name)
         
         [osci,specs] = IRASA_tf(cfg,data);
-        
-        cfg.oscifrac = 'frac';
         save([files(i).name '_IRASAtf.mat'],'osci','specs','-v7.3');
         osci = [];
-        
+
+        cfg.oscifrac = 'frac';
         frac = IRASA_tf(cfg,data,specs);
         save([files(i).name '_IRASAtf.mat'],'frac','-v7.3','-append');
         frac = [];
