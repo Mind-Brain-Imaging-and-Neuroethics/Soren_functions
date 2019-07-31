@@ -48,11 +48,11 @@ if strcmpi(opts.interp,'yes')
 end
 
 % Create forward model
-cfg = []; 
+cfg = [];
 if strcmpi(opts.datatype,'MEG')
-cfg.grad = data.grad; 
+    cfg.grad = data.grad;
 elseif strcmpi(opts.datatype,'EEG')
-cfg.elec = data.elec
+    cfg.elec = data.elec;
 end
 cfg.channel = {opts.datatype};
 sourcemodel = ft_convert_units(sourcemodel,'mm');
@@ -74,7 +74,7 @@ end
 
 cfg = []; cfg.keeptrials = 'yes';
 tlock = ft_timelockanalysis(cfg,data);
-tlock.cov = noisecov;
+tlock.cov = permute(repmat(noisecov,1,1,length(data.trial)),[3 1 2]);
 
 % Estimate sources
 cfg = [];

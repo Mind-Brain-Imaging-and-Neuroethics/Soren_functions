@@ -89,7 +89,7 @@ parfor i = 1:length(files)
             
             for c = 1:length(foi{i})
                 for cc = 1:length(data.trial)
-                    timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,c,:));
+                    timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,1,:));
                 end
                 timefreq_data{c+1}.time = freqdata.time;
                 timefreq_data{c+1}.label = data.label;
@@ -105,6 +105,7 @@ parfor i = 1:length(files)
                         timefreq_data{c+1}.parent = length(freqs);
                     end
                 end
+                freqdata.fourierspctrm(:,:,1,:) = []; %remove bits of the matrix each time to save memory
             end
             freqdata = [];
         case 'fft'
@@ -130,7 +131,7 @@ parfor i = 1:length(files)
             
             for c = 1:length(foi{i})
                 for cc = 1:length(data.trial)
-                    timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,c,:));
+                    timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,1,:));
                 end
                 timefreq_data{c+1}.time = freqdata.time;
                 timefreq_data{c+1}.label = data.label;
@@ -146,6 +147,7 @@ parfor i = 1:length(files)
                         timefreq_data{c+1}.parent = length(freqs);
                     end
                 end
+                freqdata.fourierspctrm(:,:,1,:) = [];
             end
             freqdata = [];
             

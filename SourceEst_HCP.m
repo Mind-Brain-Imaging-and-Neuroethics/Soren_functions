@@ -19,6 +19,10 @@ noisedata = ft_preprocessing(cfg);
 cfg = []; cfg.resamplefs = 508.6275; cfg.detrend = 'no';
 noisedata = ft_resampledata(cfg,noisedata);
 
+% Select only the MEG channels
+cfg = []; cfg.channel = {'MEG'};
+data = ft_selectdata(cfg,data);
+
 %calculating noise covariance
 cfg = [];
 cfg.covariance = 'yes';
@@ -59,9 +63,6 @@ cfg.grid.pos = sourcemodel.pos; cfg.grid.inside = 1:size(sourcemodel.pos,1);
 cfg.headmodel = headmodel;
 leadfield = ft_prepare_leadfield(cfg);
 
- % Select only the MEG channels
- cfg = []; cfg.channel = {'MEG'};
- data = ft_selectdata(cfg,data);
 % clear data
 
 % % Epoch into arbitrary 2-second segments
@@ -72,7 +73,7 @@ leadfield = ft_prepare_leadfield(cfg);
 
 cfg = []; cfg.keeptrials = 'yes';
 tlock = ft_timelockanalysis(cfg,data);
-tlock.cov = noise_avg.cov;
+tlock.cov = permute(repmat(noise_avg.cov,1,1,length(data.trial)),[3 1 2]);
 
 % Estimate sources
 cfg = [];
