@@ -48,6 +48,9 @@ else
     calcspecs = 0;
 end
 
+freqdata = cell(1,length(data.trial));
+specs = cell(1,length(data.trial));
+
 if strcmpi(cfg.parflag,'yes')
     parfor i = 1:length(data.trial)
         datawindows = getWindows(data.time{i},cfg.winsize,cfg.toi,data.trial{i});

@@ -15,7 +15,7 @@ indices = ((indx-1)*32+1):(indx*32);
 indices(indices > length(files)) = [];
 
 cfg.oscifrac = 'osci'; cfg.winsize = 1.5; cfg.modifywindow = 'no';
-cfg.toi = [-1:0.02:1.5]; cfg.parflag = 'yes';
+cfg.toi = [-1.25:0.02:0.75]; cfg.parflag = 'yes';
 
 pc = parcluster('local');
 
