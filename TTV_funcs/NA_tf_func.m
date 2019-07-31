@@ -43,7 +43,7 @@ parfor i = 1:length(files)
             end
             
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
             
@@ -72,7 +72,7 @@ parfor i = 1:length(files)
             end            
 
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
             
@@ -113,7 +113,7 @@ parfor i = 1:length(files)
             data = ft_resampledata(cfg,data);
             
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
             
@@ -153,7 +153,7 @@ parfor i = 1:length(files)
             
         case 'irasa'
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
             
