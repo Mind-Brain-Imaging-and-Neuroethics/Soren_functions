@@ -20,6 +20,7 @@ parfor i = 1:length(files)
     if strcmpi(settings.datatype,'EEG')
         EEG = pop_loadset('filename',files(i).name,'filepath',settings.inputdir);
         data = eeglab2fieldtrip(EEG,'preprocessing','none');
+        data = ft_struct2single(data);
     else
         data = parload(files(i).name,'data');
     end
@@ -28,8 +29,8 @@ parfor i = 1:length(files)
     if strcmpi(settings.tfparams.pf_adjust,'yes')
         [freqs pf(i)] = NA_convert_alpha_pf(settings,ft_concat(data));
         allfreqs{i} = horz(freqs);
-else
-freqs = settings.tfparams.fbands;
+    else
+        freqs = settings.tfparams.fbands;
     end
     
     timefreq_data = cell(1,length(freqs));
@@ -42,8 +43,8 @@ freqs = settings.tfparams.fbands;
             end
             
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = settings.tfparams.trials;
-                data = ft_preprocessing(cfg,data);
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                data = ft_selectdata(cfg,data);
             end
             
             for q = 1:settings.nfreqs
@@ -65,15 +66,17 @@ freqs = settings.tfparams.fbands;
             end
             
         case 'wavelet'
-            cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
-            data = ft_resampledata(cfg,data);
-            
+            if settings.srate ~= data.fsample
+                cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
+                data = ft_resampledata(cfg,data);
+            end            
+
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = settings.tfparams.trials;
-                data = ft_preprocessing(cfg,data);
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                data = ft_selectdata(cfg,data);
             end
             
-            data_allrange = (settings.pseudo.prestim(1)-settings.srate/5):(settings.real.poststim(end));
+            data_allrange = (settings.pseudo.prestim(1)-ceil(settings.srate/5)):(settings.real.poststim(end));
             cfg = []; cfg.method = 'wavelet'; cfg.output = 'fourier'; cfg.foi = exp(linspace(log(freqs{2}(1)),log(freqs{end}(2)),50));
             cfg.keeptrials = 'yes'; cfg.toi = data.time{1}(data_allrange); cfg.width = 3;
             freqdata = ft_freqanalysis(cfg,data);
@@ -109,8 +112,8 @@ freqs = settings.tfparams.fbands;
             data = ft_resampledata(cfg,data);
             
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = settings.tfparams.trials;
-                data = ft_preprocessing(cfg,data);
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                data = ft_selectdata(cfg,data);
             end
             
             data_allrange = (settings.pseudo.prestim(1)-settings.srate/5):(settings.real.poststim(end));
@@ -148,8 +151,8 @@ freqs = settings.tfparams.fbands;
             
         case 'irasa'
             if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
-                cfg = []; cfg.trials = settings.tfparams.trials;
-                data = ft_preprocessing(cfg,data);
+                cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.trials));
+                data = ft_selectdata(cfg,data);
             end
             
             cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
@@ -200,10 +203,10 @@ end
 if ~strcmpi(settings.tfparams.method,'hilbert')
     settings.nfreqs = length(foi{1})+1;
     
-    prestim_pseudo = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
-    prestim_real = settings.real.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
-    poststim_pseudo = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
-    poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    prestim_pseudo = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
+    prestim_real = settings.real.prestim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
+    poststim_pseudo = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
+    poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
     
     
     settings.pseudo.prestim = prestim_pseudo;
@@ -236,10 +239,10 @@ if strcmpi(settings.tfparams.method,'hilbert')
     poststim_pseudo = settings.pseudo.poststim;
     poststim_real = settings.real.poststim;
 else
-    prestim_pseudo = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
-    prestim_real = settings.real.prestim - settings.pseudo.prestim(1)+1+settings.srate/5;
-    poststim_pseudo = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
-    poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+settings.srate/5;
+    prestim_pseudo = settings.pseudo.prestim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
+    prestim_real = settings.real.prestim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
+    poststim_pseudo = settings.pseudo.poststim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
+    poststim_real = settings.real.poststim - settings.pseudo.prestim(1)+1+ceil(settings.srate/5);
 end
 
 for q = 1:numbands

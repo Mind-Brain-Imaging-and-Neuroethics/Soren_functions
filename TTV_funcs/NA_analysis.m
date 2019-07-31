@@ -30,7 +30,9 @@ function NA_analysis(settings)
 %        implemented yet
 %        fbands: cell array of frequency bands - use [] for broadband
 %        fbandnames: names of the frequency bands of interest
-%        trials: indices of the trials of interest (default = 'all');
+%        condition: a number or numbers that indicate which condition to 
+%        include. These numbers should be found in the data.trialinfo field
+%        (only usable with fieldtrip data currently; default = 'all')
 %        pf_adjust: adjust frequency bands for theta, alpha, and beta (if
 %        input) using the subjects individual alpha frequency (default =
 %        'yes')
