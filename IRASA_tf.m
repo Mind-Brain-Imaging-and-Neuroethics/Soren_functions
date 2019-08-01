@@ -50,13 +50,16 @@ end
 
 freqdata = cell(1,length(data.trial));
 specs = cell(1,length(data.trial));
+trials = data.trial;
+times = data.time;
+fsample = data.fsample;
 
 if strcmpi(cfg.parflag,'yes')
     parfor i = 1:length(data.trial)
-        datawindows = getWindows(data.time{i},cfg.winsize,cfg.toi,data.trial{i});
+        datawindows = getWindows(times{i},cfg.winsize,cfg.toi,trials{i});
         for c = 1:length(datawindows)
             if calcspecs
-                specs{i}(c) = amri_sig_fractal(datawindows{c},data.fsample,'hset',cfg.hset);
+                specs{i}(c) = amri_sig_fractal(datawindows{c},fsample,'hset',cfg.hset);
             end
             
             if ~isfield(cfg,'foi')
