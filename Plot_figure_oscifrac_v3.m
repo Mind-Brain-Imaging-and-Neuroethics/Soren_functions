@@ -24,6 +24,10 @@ fields = fieldnames(spec);
 
 frange = intersect(find(spec.(fields{1})(1).freq(:,1) > opts.frange_ple(1)),find(spec.(fields{1})(1).freq(:,1) < opts.frange_ple(1,2)));
 
+if nargin < 3
+   opts = struct; 
+end
+
 opts = setdefault(opts,'paired','no');
 opts = setdefault(opts,'fbandnames',{'Delta','Theta','Alpha','Beta','Gamma'});
 opts = setdefault(opts,'statfields',fields);
