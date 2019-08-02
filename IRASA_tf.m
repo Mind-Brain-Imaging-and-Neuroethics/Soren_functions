@@ -10,6 +10,7 @@ function [freqdata,specs] = IRASA_tf(cfg,data,specs)
 %         max_freq] (default: outputs all frequencies from IRASA)
 %     hset: hset for irasa resampling (default = [1.1:0.05:1.95
 %     2.05:0.05:2.9])
+%     parflag: use parallel pool - 'yes' or 'no' 
 % data: a standard fieldtrip data structure (output from ft_preprocessing)
 % specs: optional argument - allows inputing the raw spectra from a
 %    previous iteration in order to get the time-frequency data in a
@@ -49,7 +50,9 @@ else
 end
 
 freqdata = cell(1,length(data.trial));
-specs = cell(1,length(data.trial));
+if calcspecs
+    specs = cell(1,length(data.trial));
+end
 trials = data.trial;
 times = data.time;
 fsample = data.fsample;
@@ -59,7 +62,7 @@ if strcmpi(cfg.parflag,'yes')
         datawindows = getWindows(times{i},cfg.winsize,cfg.toi,trials{i});
         for c = 1:length(datawindows)
             if calcspecs
-                specs{i}(c) = amri_sig_fractal(datawindows{c},fsample,'hset',cfg.hset);
+                specs{i}(c) = amri_sig_fractal(datawindows{c}',fsample,'hset',cfg.hset);
             end
             
             if ~isfield(cfg,'foi')
@@ -81,7 +84,7 @@ else
         datawindows = getWindows(data.time{i},cfg.winsize,cfg.toi,data.trial{i});
         for c = 1:length(datawindows)
             if calcspecs
-                specs{i}(c) = amri_sig_fractal(datawindows{c},data.fsample,'hset',cfg.hset);
+                specs{i}(c) = amri_sig_fractal(datawindows{c}',data.fsample,'hset',cfg.hset);
             end
             
             if ~isfield(cfg,'foi')
