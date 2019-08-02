@@ -49,7 +49,12 @@ else
     calcspecs = 0;
 end
 
-freqdata = cell(1,length(data.trial));
+if strcmpi(cfg.parflag,'yes')
+    freqdata = cell(1,length(data.trial));
+else
+    freqdata = struct;
+end
+
 if calcspecs
     specs = cell(1,length(data.trial));
 end
