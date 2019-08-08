@@ -11,14 +11,14 @@ mxmnr_compare <- function(filein,frmla1,frmla2,fileout){
   
   p <- set_prior('cauchy(0,2.5)',class='b')
   
-  mdl1 <- brm(frmla1,data=mydata,family=categorical(),iter=2000,prior=p,control=list(max_treedepth=15,adapt_delta=0.95))
+  mdl1 <- brm(frmla1,data=mydata,family=categorical(),iter=20000,prior=p,control=list(max_treedepth=15,adapt_delta=0.95))
   mdl1 <- add_criterion(mdl1,criterion='kfold')
   
   tmp <- summary(mdl1)
   smry1 <- list(fixed=tmp$fixed,random=tmp$random,samples=mdl1$fit@sim$samples,kfold=mdl1$kfold)
   smry1_json <- toJSON(smry1)
   
-  mdl2 <- brm(frmla2,data=mydata,family=categorical(),iter=2000,prior=p,control=list(max_treedepth=15,adapt_delta=0.95))
+  mdl2 <- brm(frmla2,data=mydata,family=categorical(),iter=20000,prior=p,control=list(max_treedepth=15,adapt_delta=0.95))
   mdl2 <- add_criterion(mdl2,criterion='kfold')
   
   tmp <- summary(mdl2)
