@@ -42,7 +42,7 @@ parfor i = 1:length(files)
                 data = ft_resampledata(cfg,data);
             end
             
-            if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
+            if isfield(settings.tfparams,'condition') && ~strcmpi(settings.tfparams.condition,'all')
                 cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
@@ -71,7 +71,7 @@ parfor i = 1:length(files)
                 data = ft_resampledata(cfg,data);
             end            
 
-            if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
+            if isfield(settings.tfparams,'condition') && ~strcmpi(settings.tfparams.condition,'all')
                 cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
@@ -112,7 +112,7 @@ parfor i = 1:length(files)
             cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
             data = ft_resampledata(cfg,data);
             
-            if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
+            if isfield(settings.tfparams,'condition') && ~strcmpi(settings.tfparams.condition,'all')
                 cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
@@ -152,7 +152,7 @@ parfor i = 1:length(files)
             freqdata = [];
             
         case 'irasa'
-            if isfield(settings.tfparams,'trials') && ~strcmpi(settings.tfparams.trials,'all')
+            if isfield(settings.tfparams,'condition') && ~strcmpi(settings.tfparams.condition,'all')
                 cfg = []; cfg.trials = find(ismember(data.trialinfo(:,1),settings.tfparams.condition));
                 data = ft_selectdata(cfg,data);
             end
@@ -347,7 +347,7 @@ for q = 1:numbands
                 datacalc{q}.naddersp.pseudo(c,:,2) = zscore(datacalc{q}.naddersp.pseudo(c,:,2),0,2);
             case 'log'
                 datacalc{q}.naddersp.pseudo(c,:,1) = 10*log10(datacalc{q}.naddersp.pseudo(c,:,1));
-                datacalc{q}.naddersp.pseudo(c,:,2) = 10*log10(datacalc{q}.naddersp.pseudo(c,:,2))
+                datacalc{q}.naddersp.pseudo(c,:,2) = 10*log10(datacalc{q}.naddersp.pseudo(c,:,2));
         end
         
         splitindex = split_real(c,:) > median(split_real(c,:));
@@ -439,7 +439,7 @@ for q = 1:numbands
         
         splitindex = split_real(c,:) > median(split_real(c,:));
         
-        datacalc{q}.nadderp.raw.real(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3); %NOT ACTUALLY THE RAW ERSP - used for plotting later
+        datacalc{q}.nadderp.raw.real(c,:,1) = mean(real(datacat(c,:,find(~splitindex))),3); 
         datacalc{q}.nadderp.raw.real(c,:,2) = mean(real(datacat(c,:,find(splitindex))),3);
         
         

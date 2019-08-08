@@ -138,7 +138,7 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
         %erp_corrstats{q} = EasyClusterCorrect({allmeas{q}.naerpindex,allmeas{q}.ttvindex},settings.datasetinfo,'ft_statfun_correlationT',opts);
         
         if strcmpi(settings.comparefreqs,'yes')
-        for c = (q+1):6
+        for c = (q+1):numbands
             ersp_pt_tcoursestats{q,c} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)-allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),...
                 permute(squeeze(allmeas{c}.naddersp.diff(:,:,2,:)-allmeas{c}.naddersp.diff(:,:,1,:)),[1 3 2])},...
             settings.datasetinfo,'ft_statfun_fast_signrank',opts);

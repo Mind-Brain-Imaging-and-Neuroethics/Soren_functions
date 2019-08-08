@@ -142,7 +142,7 @@ function settings = SetDefaults(settings)
 
 %settings = settings;
 
-settings = setdefault(settings,'comparefreqs','yes');
+settings = setdefault(settings,'comparefreqs','no');
 
 if ~isfield(settings,'files')
     if strmcpi(settings.datatype,'EEG')

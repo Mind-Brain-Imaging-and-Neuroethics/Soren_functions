@@ -207,6 +207,7 @@ for c = 1:settings.nfreqs
     set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
     
     plotindx = linspace(0,max(settings.aucindex),5);
+    plotindx = round(plotindx);
     plotindx(1) = [];
     %tindx =
     for cc = 1:4
@@ -257,6 +258,8 @@ close
 
 %% Figure 3: TTV of ERSP
 
+figure
+
 p = panel('no-manage-font');
 
 pos = get(gcf,'position');
@@ -299,6 +302,7 @@ for c = 1:settings.nfreqs
     %set(gca,'FontSize',16)
     
     plotindx = linspace(0,max(settings.aucindex),5);
+    plotindx = round(plotindx);
     plotindx(1) = [];
     for cc = 1:4
         p(1,c,cc+1).select()
