@@ -1,4 +1,4 @@
-function [stats_mixd,stats_oscifrac,cmpare] = Plot_figure_oscifrac_bayes(spec,fbands,opts)
+function [stats_mixd,stats_oscifrac,cmpare,] = Plot_figure_oscifrac_bayes(spec,fbands,opts)
 % Plots a standardized figure for the OsciFrac paper
 %
 % Input arguments:
@@ -7,7 +7,7 @@ function [stats_mixd,stats_oscifrac,cmpare] = Plot_figure_oscifrac_bayes(spec,fb
 %       subject
 %    fbands: an nx2 array containing the definitions of the frequency bands
 %       of interest
-%    opts: a structure with the following fields:
+%    opts: a structure with the following fields: 
 %       paired: 'yes' or 'no' for paired statistics. Currently not used
 %          (default = 'no')
 %       statfields: fields to do statistics on (default = all the fields in
@@ -15,22 +15,16 @@ function [stats_mixd,stats_oscifrac,cmpare] = Plot_figure_oscifrac_bayes(spec,fb
 %          reference category - the last field is taken as the reference
 %       fbandnames: names of the frequency bands you're using (default =
 %          {'Delta','Theta','Alpha','Beta','Gamma'})
-%       frange_ple: a 1x2 array containing the range over which the PLE
-%          should be calculated (estimate this graphically based on when
-%          the fractal power "drops off"; default = [lowest frequency in
+%       frange_ple: a 1x2 array containing the range over which the PLE 
+%          should be calculated (estimate this graphically based on when  
+%          the fractal power "drops off"; default = [lowest frequency in 
 %          fbands highest frequency in fbands])
-%       stats_mixd: can input the stats from a previous call to this
-%          function in order to do the plot faster
-%       stats_oscifrac: can input the stats from a previous call to this
-%          function in order to do the plot faster
-%       cmpare: can input the stats from a previous call to this
-%          function in order to do the plot faster
 
 %% Setting up options
 fields = fieldnames(spec);
 
 if nargin < 3
-    opts = struct;
+   opts = struct; 
 end
 
 opts = setdefault(opts,'paired','no');
@@ -69,89 +63,83 @@ end
 %     spec.(fields{c}) = structfun(@(data)nanmean(data,3),spec.(fields{c}),'UniformOutput',false);
 % end
 
-%% Logistic regression
+%% Logistic regression 
 
-if ~isfield(opts,'stats_mixd') && ~isfield(opts,'stats_oscifrac') && ~isfield(opts,'cmpare')
-    
-    data = [];
-    for i = 1:length(opts.statfields)
-        tmp = [squeeze(mean(absmixd.(opts.statfields{i}),2)) squeeze(mean(absosci.(opts.statfields{i}),2)) ...
-            mean(ple.(opts.statfields{i}),2) mean(bb.(opts.statfields{i}),2) ...
-            ones(size(mean(ple.(opts.statfields{i}),2)))*i];
-        data = cat(1,data,tmp);
-    end
-    
-    if strcmpi(opts.paired,'yes') %adding subjects for random effects
-        data = cat(2,data,(1:size(data,1))');
-    end
-    
-    if strcmpi(opts.paired,'yes')
-        varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
-            cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition' 'Subject'}];
-    else
-        varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
-            cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition'}];
-    end
-    
-    data = array2table(data,'VariableNames',varnames);
-    
-    mixnames = cellcat('+',cellcat('Mixd_',opts.fbandnames,'',0),'',1);
-    mixnames = [mixnames{:}];
-    mixnames(end) = [];
-    
-    oscinames = cellcat('+',cellcat('Osci_',opts.fbandnames,'',0),'',1);
-    oscinames = [oscinames{:}];
-    
-    frmla1 = ['Condition ~ ' mixnames];
-    frmla2 = ['Condition ~ ' oscinames 'PLE+Frac_BB'];
-    
-    if strcmpi(opts.paired, 'yes')
-        frmla1 = [frmla1 '+(1|Subject)-1'];
-        frmla2 = [frmla2 '+(1|Subject)-1'];
-    end
-    
-    if strcmpi(opts.paired,'yes')
-        data{:,1:end-2} = zscore(data{:,1:end-2},[],1);
-    else
-        data{:,1:end-1} = zscore(data{:,1:end-1},[],1);
-    end
-    
-    [stats_mixd,stats_oscifrac,cmpare] = mxmnr_compare(data,frmla1,frmla2);
-    
-    %stats_mixd.fixed = mergestructs(stats_mixd.fixed);
-    %stats_oscifrac.fixed = mergestructs(stats_oscifrac.fixed);
-    
-    stats_mixd.beta = extractfield(stats_mixd.fixed,'Estimate');
-    stats_mixd.ci = [extractfield(stats_mixd.fixed,'l_95_CI')' extractfield(stats_mixd.fixed,'u_95_CI')'];
-    stats_oscifrac.beta = extractfield(stats_oscifrac.fixed,'Estimate');
-    stats_oscifrac.ci = [extractfield(stats_oscifrac.fixed,'l_95_CI')' extractfield(stats_oscifrac.fixed,'u_95_CI')'];
-    
-    if ~strcmpi(opts.paired,'yes')
-        stats_mixd.beta(1) = [];
-        stats_oscifrac.beta(1) = [];
-        stats_mixd.ci(1,:) = [];
-        stats_oscifrac.ci(1,:) = [];
-    end
-    
-    stats_mixd.beta = reshape(stats_mixd.beta,length(opts.fbandnames),[]);
-    stats_oscifrac.beta = reshape(stats_oscifrac.beta,length(opts.fbandnames)+2,[]);
-    stats_mixd.ci = cat(2,reshape(stats_mixd.ci(:,1),length(opts.fbandnames),1,[]),...
-        reshape(stats_mixd.ci(:,2),length(opts.fbandnames),1,[]));
-    stats_oscifrac.ci = cat(2,reshape(stats_oscifrac.ci(:,1),length(opts.fbandnames)+2,1,[]),...
-        reshape(stats_oscifrac.ci(:,2),length(opts.fbandnames)+2,1,[]));
-    
-    
-    
-    cmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
-    cmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
-    cmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
-    cmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
-    cmpare.se_diff = cmpare(2).se_diff;
-else
-    stats_mixd = opts.stats_mixd;
-    stats_oscifrac = opts.stats_oscifrac;
-    cmpare = opts.cmpare;
+data = [];
+for i = 1:length(opts.statfields)
+    tmp = [squeeze(mean(absmixd.(opts.statfields{i}),2)) squeeze(mean(absosci.(opts.statfields{i}),2)) ...
+        mean(ple.(opts.statfields{i}),2) mean(bb.(opts.statfields{i}),2) ...
+        ones(size(mean(ple.(opts.statfields{i}),2)))*i];
+    data = cat(1,data,tmp);
 end
+
+if strcmpi(opts.paired,'yes') %adding subjects for random effects
+    data = cat(2,data,(1:size(data,1))');
+end
+
+if strcmpi(opts.paired,'yes')
+   varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
+    cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition' 'Subject'}];
+else
+   varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
+    cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition'}];
+end
+
+data = array2table(data,'VariableNames',varnames);
+
+mixnames = cellcat('+',cellcat('Mixd_',opts.fbandnames,'',0),'',1);
+mixnames = [mixnames{:}];
+mixnames(end) = [];
+
+oscinames = cellcat('+',cellcat('Osci_',opts.fbandnames,'',0),'',1);
+oscinames = [oscinames{:}];
+
+frmla1 = ['Condition ~ ' mixnames];
+frmla2 = ['Condition ~ ' oscinames 'PLE+Frac_BB'];
+
+if strcmpi(opts.paired, 'yes')
+   frmla1 = [frmla1 '+(1|Subject)-1'];
+   frmla2 = [frmla2 '+(1|Subject)-1'];
+end
+
+if strcmpi(opts.paired,'yes')
+    data{:,1:end-2} = zscore(data{:,1:end-2},[],1);
+else
+    data{:,1:end-1} = zscore(data{:,1:end-1},[],1);
+end
+
+[stats_mixd,stats_oscifrac,cmpare] = mxmnr_compare(data,frmla1,frmla2);
+
+%stats_mixd.fixed = mergestructs(stats_mixd.fixed);
+%stats_oscifrac.fixed = mergestructs(stats_oscifrac.fixed);
+
+stats_mixd.beta = extractfield(stats_mixd.fixed,'Estimate');
+stats_mixd.ci = [extractfield(stats_mixd.fixed,'l_95_CI')' extractfield(stats_mixd.fixed,'u_95_CI')'];
+stats_oscifrac.beta = extractfield(stats_oscifrac.fixed,'Estimate');
+stats_oscifrac.ci = [extractfield(stats_oscifrac.fixed,'l_95_CI')' extractfield(stats_oscifrac.fixed,'u_95_CI')'];
+
+if ~strcmpi(opts.paired,'yes')
+   stats_mixd.beta(1) = [];
+   stats_oscifrac.beta(1) = [];
+   stats_mixd.ci(1,:) = [];
+   stats_oscifrac.ci(1,:) = [];
+end
+
+stats_mixd.beta = reshape(stats_mixd.beta,length(opts.fbandnames),[]);
+stats_oscifrac.beta = reshape(stats_oscifrac.beta,length(opts.fbandnames)+2,[]);
+stats_mixd.ci = cat(2,reshape(stats_mixd.ci(:,1),length(opts.fbandnames),1,[]),...
+    reshape(stats_mixd.ci(:,2),length(opts.fbandnames),1,[]));
+stats_oscifrac.ci = cat(2,reshape(stats_oscifrac.ci(:,1),length(opts.fbandnames)+2,1,[]),...
+    reshape(stats_oscifrac.ci(:,2),length(opts.fbandnames)+2,1,[]));
+
+
+
+cmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
+cmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
+cmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
+cmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
+cmpare.se_diff = cmpare(2).se_diff;
+
 
 %[~,~,stats_mixd] = mnrfit(zscore(data{:,1:size(fbands,1)},[],1),data.Condition,'model','nominal');
 
@@ -239,9 +227,9 @@ FixAxes(gca,14)
 fix_xticklabels(gca,0.1,{'FontSize',12})
 
 p(2,3).select()
-scatter([1,2],[cmpare.elpd_mixd cmpare.elpd_oscifrac],72,[0 0 0],'x','LineWidth',2);
+scatter([1,2],[elpd_mixd elpd_oscifrac],72,[0 0 0],'x','LineWidth',2);
 hold on
-errorbar([1 2],[cmpare.elpd_mixd cmpare.elpd_oscifrac],4*[cmpare.elpd_mixd_se cmpare.elpd_oscifrac_se],'LineStyle','none','Color',[0 0 0],'LineWidth',2)
+errorbar([1 2],[elpd_mixd elpd_oscifrac],4*[elpd_mixd_se elpd_oscifrac_se],'LineStyle','none','Color',[0 0 0],'LineWidth',2)
 set(gca,'XLim',get(gca,'XLim')+[-0.1 0.1])
 set(gca,'XTick',[1 2],'XTickLabel',{'Mixed power','IRASA decomposition'})
 ylabel('Expected Log Predictive Density')
