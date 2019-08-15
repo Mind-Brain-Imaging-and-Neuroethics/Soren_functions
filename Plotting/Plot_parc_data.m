@@ -44,6 +44,8 @@ if ~EasyParse(varargin,'SinglePlot','on')
     trindx = find(max(sourcemodel.tri,[],2) <= cort_size);
     bnd.tri = sourcemodel.tri(trindx,:);
     
+    ft_plot_mesh(bnd,'vertexcolor',plotdata(1:length(plotdata)/2)','edgealpha',0);
+    
     set(gca,'CLim',clim);
     
     subplot(2,2,4)

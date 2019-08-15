@@ -1,7 +1,7 @@
 function [roidata,voxeldata,sources,sourcemodel2] = SourceEst_Def_EEG(EEG)
 
 [~,ftpath] = ft_version;
-ftpath = '/group/northoff/share/fieldtrip-master';
+%ftpath = '/group/northoff/share/fieldtrip-master';
 
 % Convert the data to Fieldtrip format
 data = eeglab2fieldtrip(EEG,'preprocessing','none');

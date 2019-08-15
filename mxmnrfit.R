@@ -9,9 +9,9 @@ mxmnrfit <- function(filein,frmla,fileout){
   
   #mdl <- MCMCglmm(fixed_frmla,random=random_frmla,data=mydata)
   
-  mdl <- brm(frmla,data=mydata,family=categorical())
+  p <- set_prior('cauchy(0,2.5)',class='b')
   
-  options(expressions=10000)
+  mdl <- brm(frmla,data=mydata,family=categorical(),prior=p,iter=100000,control=list(max_treedepth=15))
   
   mdl_json <- toJSON(mdl)
   

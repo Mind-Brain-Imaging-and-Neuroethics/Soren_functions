@@ -1,6 +1,8 @@
-function [mdl1,mdl2,comparison] = mxmnr_compare(data,frmla1,frmla2)
+function [mdl1,mdl2,comparison,data] = mxmnr_compare(data,frmla1,frmla2)
 % compares two logistic mixed-effects models using brms and loo in R
 % data should be a table in this case with all relevant data included
+% data should be normalized to 0 mean and 0.5 SD BEFORE passing to this
+% function
 % frmla1 and frmla2 are formulas for the two models
 
 
@@ -24,7 +26,14 @@ function [mdl1,mdl2,comparison] = mxmnr_compare(data,frmla1,frmla2)
 
 currdir = pwd;
 
-data{:,1:end-1} = zscore(data{:,1:end-1},[],1);
+% zindx = zeros(size(data,2));
+% for c = 1:size(data,2)
+%     if length(unique(data{:,c})) == size(data,1)
+%        zindx(c) = 1; 
+%     end
+% end
+% 
+% data{:,zindx} = zscore(data{:,zindx},[],1)./2;
 
 writetable(data,fullfile(currdir,'datatbl.csv'))
 
@@ -50,7 +59,7 @@ system(['R -e ''source("' fullfile(path,funcname) '"); mxmnr_compare("'...
 
 mdl1 = jsonread(fullfile(currdir,[fileout '_summary1.json']));
 mdl2 = jsonread(fullfile(currdir,[fileout '_summary2.json']));
-%comparison = jsonread(fullfile(currdir,[fileout '_cmpare.json']));
+comparison = jsonread(fullfile(currdir,[fileout '_cmpare.json']));
 
 system(['rm ' filein]);
 system(['rm ' fileout '_summary1.json']);

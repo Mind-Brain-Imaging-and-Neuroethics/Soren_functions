@@ -1,6 +1,10 @@
-function [OsciFrac] = IRASAPower_EEG_wrapper(spec,oscifrac,frange,normalize,method)
+function [OsciFrac] = IRASAPower_EEG_wrapper(spec,oscifrac,frange,normalize,method,silent)
 
 OsciFrac = zeros(1,size(spec.osci,2));
+
+if nargin < 6
+   silent = 0; 
+end
 
 if nargin < 5
     method = 'mean';
@@ -14,18 +18,22 @@ if nargin < 3
     frange = [0.5 50];
 end
 
+if ~silent
 disp(' ')
 if strcmpi(oscifrac,'osci')
     disp('Computing oscillatory power...')
 else
     disp('Computing fractal power...')
 end
+end
 
 freqindex = intersect(find(spec.freq > frange(1)),find(spec.freq < frange(2)));
 freqs = spec.freq(freqindex);
 
 for c = 1:size(spec.frac,2)
-    fprintf([num2str(c) ' ']);
+    if ~silent
+        fprintf([num2str(c) ' ']);
+    end
     %osci = sgolayfilt(spec.osci(:,c),5,1501);
     %osci = osci(freqindex);
     %frac = sgolayfilt(spec.frac(:,c),5,1501);
