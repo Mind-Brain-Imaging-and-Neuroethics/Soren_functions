@@ -171,8 +171,8 @@ for c = 1:size(fbands,1)
 end
 
 l = lines;
-l = l(1:3,:);
-for c = 1:3
+l = l(1:length(fields),:);
+for c = 1:length(fields)
     palel(c,:) = palecol(l(c,:));
 end
 for c = 1:size(fbands,1)

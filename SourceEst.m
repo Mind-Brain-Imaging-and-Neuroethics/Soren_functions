@@ -1,4 +1,4 @@
-function [roidata,voxeldata,sources] = SourceEst_MEG(data,headmodel,sourcemodel,atlas,noisecov,opts)
+function [roidata,voxeldata,sources] = SourceEst(data,headmodel,sourcemodel,atlas,opts)
 % opts should have the following fields
 %    atlasparam: the field of the atlas containing the parcellation
 %      information (default = 'parcellation')
@@ -7,7 +7,7 @@ function [roidata,voxeldata,sources] = SourceEst_MEG(data,headmodel,sourcemodel,
 %    interp: interpolate the sourcemodel onto the atlas ('yes' or 'no' -
 %      default = 'no')
 %    datatype: 'EEG' or 'MEG' - for channel selection (default = 'MEG')
-
+%    noisecov: noise covariance matrix, if desired
 
 %[~,ftpath] = ft_version;
 %ftpath = '/group/northoff/share/fieldtrip-master';
@@ -36,6 +36,10 @@ end
 
 if isstr(atlas)
     atlas = ft_read_atlas(atlas);
+end
+
+if strcmpi(opts.datatype,'EEG') && isfield(data,'data')
+   data = eeglab2fieldtrip(data,'preprocessing','none'); 
 end
 
 % % Interpolate template surface on atlas
@@ -74,7 +78,9 @@ end
 
 cfg = []; cfg.keeptrials = 'yes';
 tlock = ft_timelockanalysis(cfg,data);
-tlock.cov = permute(repmat(noisecov,1,1,length(data.trial)),[3 1 2]);
+if isfield(opts,'noisecov')
+tlock.cov = permute(repmat(opts.noisecov,1,1,length(data.trial)),[3 1 2]);
+end
 
 % Estimate sources
 cfg = [];
