@@ -1,11 +1,12 @@
 function parsave(filepath,varargin)
 
+count = 1;
 for c = 1:2:length(varargin)
-    varname = varargin{c};
+    varnames{count} = varargin{c};
     input = varargin{c+1};
-    eval([varname '=input;']);
-
+    eval([varnames{count} '=input;']);
+    count = count+1;
 end
-clear input varargin varname c
+clear input varargin count c
 
-save(filepath,'-v7.3')
+save(filepath,varnames{:},'-v7.3')

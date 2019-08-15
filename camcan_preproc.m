@@ -5,7 +5,7 @@ basedir = extractBefore(filename,['sub-' subid]);
 basedir = char(basedir);
 if contains(basedir,'task')
     do_epoch = 1;
-elseif contains(basedir,'rest')
+elseif contains(basedir,'Rest')
     do_epoch = 0;
 elseif exist('cont_data','var')
     do_epoch = 1;
