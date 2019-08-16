@@ -97,19 +97,19 @@ end;
 switch fieldbox
   case 'preprocessing'
     for index = 1:EEG.trials
-      eventcodes{index} = EEG.epoch(index).eventtype(find(EEG.epoch(index).eventlatency == 0)); 
+      eventcodes(index) = EEG.epoch(index).eventtype(find([EEG.epoch(index).eventlatency{:}] == 0)); 
     end
     
-    eventcodes = sort(eventcodes);
+    eventcodes = sort(unique(eventcodes));
     
     for index = 1:EEG.trials
       data.trial{index}  = EEG.data(:,:,index);
       data.time{index}   = linspace(EEG.xmin, EEG.xmax, EEG.pnts); % should be checked in FIELDTRIP
-      data.trialinfo(index) = find(strcmpi(eventcodes,EEG.epoch(index).eventtype(find(EEG.epoch(index).eventlatency==0))));
+      data.trialinfo(index) = find(strcmpi(eventcodes,EEG.epoch(index).eventtype(find([EEG.epoch(index).eventlatency{:}]==0))));
     end;
     data.label   = { tmpchanlocs(1:EEG.nbchan).labels };
     data.eventcodes = eventcodes;
-
+    data.trialinfo = vert(data.trialinfo);
     
   case 'timelockanalysis'
     data.avg  = mean(EEG.data, 3);   

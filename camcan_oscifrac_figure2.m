@@ -5,6 +5,8 @@ addpath('/project/def-gnorthof/sorenwt/fieldtrip-master')
 ft_defaults
 addpath([toolboxdir('signal'),'/signal'])
 
+load('settings_camcan_1Hz.mat')
+
 cd /scratch/sorenwt/camcan/Preprocessed/Task/Epoched/
 
 files = dir('*tf.mat');
@@ -26,6 +28,12 @@ for i = 1:length(files)
     end
 end
 
+for c = 1:length(fields)
+   meandata.(fields{c}).fourierspctrm = permute(meandata.(fields{c}).fourierspctrm,[1 3 2 4]); 
+   meandata.(fields{c}).fourierspctrm_dimord = meandata.(fields{c}).dimord;
+   meandata.(fields{c}).grad = settings.datasetinfo.grad;
+end
+
 
 %% Analysis and statistics
 
@@ -42,31 +50,38 @@ for c = 1:3
     meanbl.(fields{c}).time = meandata.(fields{c}).time(bl);
 end
 
-for i = 1:size(meanpost.frac.fourierspctrm,1)
+post = cell(1,size(meanpost.frac.fourierspctrm,1));
+bl = post;
+
+parfor i = 1:size(meanpost.frac.fourierspctrm,1)
     for ii = 1:size(meanpost.frac.fourierspctrm,2)
         for iii = 1:size(meanpost.frac.fourierspctrm,4)
-            tmp = log10(meanpost.frac.foi);
+            tmp = log10(meanpost.frac.freq);
             pow = log10(squeeze(meanpost.frac.fourierspctrm(i,ii,:,iii)));
-            lintmp = linspace(tmp(1),tmp(2),length(tmp));
+            lintmp = vert(linspace(tmp(1),tmp(end),length(tmp)));
             pow = interp1(tmp,pow,lintmp);
             p = polyfit(lintmp,pow,1);
-            meanple.post(i,ii,iii) = -p(1);
+            post{i}(1,ii,iii) = -p(1);
             
-            tmp = log10(meanbl.frac.foi);
+            tmp = log10(meanbl.frac.freq);
             pow = log10(squeeze(meanbl.frac.fourierspctrm(i,ii,:,iii)));
-            lintmp = linspace(tmp(1),tmp(2),length(tmp));
+            lintmp = vert(linspace(tmp(1),tmp(end),length(tmp)));
             pow = interp1(tmp,pow,lintmp);
             p = polyfit(lintmp,pow,1);
-            meanple.bl(i,ii,iii) = -p(1);
+            bl{i}(1,ii,iii) = -p(1);
         end
     end
 end
+
+pledata.post = cat(1,post{:});
+pledata.bl = cat(1,bl{:});
 
 for c = 1:3
     cfg = []; cfg.channel = {'MEG'}; cfg.avgoverchan = 'yes'; cfg.latency = [0 0.75];
     cfg.frequency = 'all'; cfg.method = 'montecarlo'; cfg.statistic = 'ft_statfun_actvsblT';
     cfg.correctm = 'cluster'; cfg.clusteralpha = 0.05; cfg.clusterstatistic = 'maxsum';
     cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.numrandomization = 1000;
+    cfg.parameter = 'fourierspctrm';
     
     ntrials = size(meanpost.(fields{c}).fourierspctrm,1);
     design  = zeros(2,2*ntrials);
@@ -79,41 +94,52 @@ for c = 1:3
     cfg.ivar = 1;
     cfg.uvar = 2;
     
+    cfg.parpool = 24;
+    
+    meanbl.(fields{c}).time = meanpost.(fields{c}).time;
+    
     stats{c} = ft_freqstatistics(cfg,meanpost.(fields{c}),meanbl.(fields{c}));
 end
 
-for c = 1:length(unique(stats{1}.posclusterslabelmat))
-    statmask = (stats{1}.posclusterslabelmat==c);
+
+
+for c = find(extractfield(stats{1}.posclusters,'prob') < 0.05)
+    statmask = squeeze(stats{1}.posclusterslabelmat==c);
     % for ple and broadband fractal, include those time points where a
     % number of frequencies greater than the median value in the cluster
     % are significant
     sum_statmask = sum(statmask,1);
     statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
-    meanmix(:,c) = sum(sum((mean(meanpost.mixd.fourierspctrm,2)...
-        -mean(mean(meanbl.mixd.fourierspctrm,4),2)).*statmask,3),4); % baseline correct, sum over time and freq for significant cluster
-    meanosci(:,c) = sum(sum((mean(meanpost.osci.fourierspctrm,2)...
-        -mean(mean(meanbl.osci.fourierspctrm,4),2)).*statmask,3),4);
-    meanfrac(:,c) = mean((mean(mean(meanpost.frac.fourierspctrm,2),3)...
-        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,4); %use only the time statmask here, not freq - broadband power
-    meanple(:,c) = sum((mean(meanple.post,2)-mean(mean(meanple.bl,2),3)).*statmask_time,4);
+    meanmix(:,c) = sum(sum(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
+        -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
+    meanosci(:,c) = sum(sum(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
+        -mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
+    meanfrac(:,c) = mean(squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)...
+        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+    meanple(:,c) = sum(squeeze(mean(pledata.post,2)-mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
-for c = 1:length(unique(stats{1}.negclusterslabelmat))
-    statmask = (stats{1}.negclusterslabelmat==c);
+for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
+    statmask = squeeze(stats{1}.negclusterslabelmat==c);
     % for ple and broadband fractal, include those time points where a
     % number of frequencies greater than the median value in the cluster
     % are significant
     sum_statmask = sum(statmask,1);
     statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
     
-    newindx = c+length(unique(stats{1}.posclusterslabelmat));
-    meanmix(:,newindx) = sum(sum((mean(meanpost.mixd.fourierspctrm,2)...
-        -mean(mean(meanbl.mixd.fourierspctrm,4),2)).*statmask,3),4); % baseline correct, sum over time and freq for significant cluster
-    meanosci(:,newindx) = sum(sum((mean(meanpost.osci.fourierspctrm,2)...
-        -mean(mean(meanbl.osci.fourierspctrm,4),2)).*statmask,3),4);
-    meanfrac(:,newindx) = mean((mean(mean(meanpost.frac.fourierspctrm,2),3)...
-        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,4); %use only the time statmask here, not freq - broadband power
-    meanple(:,newindx) = sum((mean(meanple.post,2)-mean(mean(meanple.bl,2),3)).*statmask_time,4);
+    newindx = c+length(find(extractfield(stats{1}.posclusters,'prob') < 0.05));
+    % for ple and broadband fractal, include those time points where a
+    % number of frequencies greater than the median value in the cluster
+    % are significant
+    sum_statmask = sum(statmask,1);
+    statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
+    meanmix(:,newindx) = sum(sum(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
+        -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
+    meanosci(:,newindx) = sum(sum(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
+        -mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
+    meanfrac(:,newindx) = mean(squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)...
+        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+    meanple(:,newindx) = sum(squeeze(mean(pledata.post,2)-mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
 %% Regression models
@@ -121,7 +147,7 @@ end
 for i = 1:size(meanmix,2)
    tbl{i} = array2table([meanmix(:,i) meanosci(:,i) meanple(:,i) meanfrac(:,i)],'VariableNames',{'Mixed_power','Osci_power','PLE','Frac_BB'});
    tbl{i}{:,:} = zscore(tbl{i}{:,:},[],1);
-   mdl{i} = fitlm(tbl,'Mixed_power~Osci_power+PLE+Frac_BB');
+   mdl{i} = fitlm(tbl{i},'Mixed_power~Osci_power+PLE+Frac_BB');
    % partial correlation stuff
 end
 
@@ -137,20 +163,29 @@ for c = 1:3
     p(1,c).select()
     
     plotdata = meandata.(fields{c});
-    plotdata.fourierspctrm(:,1,:,:) = mean(plotdata.fourierspctrm,2); % make the first channel the mean so you can use plotting mask
-    plotdata.mask = stats{c}.mask;
+    plotdata.fourierspctrm(find(plotdata.fourierspctrm < 0)) = min(min(min(min(plotdata.fourierspctrm(find(plotdata.fourierspctrm > 0))))));
+        plotdata.fourierspctrm(:,1,:,:) = mean(plotdata.fourierspctrm,2); % make the first channel the mean so you can use plotting mask
+    plotdata.mask = logical(cat(3,zeros(1,size(stats{c}.mask,2),length(plotdata.time)-size(stats{c}.mask,3)),stats{c}.mask));
+    plotdata.fourierspctrm_dimord = 'rpt_chan_freq_time';
+    plotdata.dimord = 'rpt_chan_freq_time';
     
     cfg = []; cfg.parameter = 'fourierspctrm'; cfg.baseline = [-Inf 0]; cfg.baselinetype = 'db';
-    cfg.maskparameter = 'mask'; cfg.maskstyle = 'saturation';
+    cfg.maskparameter = 'mask'; cfg.maskstyle = 'outline';
     cfg.layout = 'neuromag306mag.lay'; cfg.channel = 1; cfg.latency = [0 0.75];
     cfg.interactive = 'no';
     ft_singleplotTFR(cfg,plotdata);
+    xlabel('Time (s)')
+    ylabel('Frequency (Hz)')
+    set(gca,'XLim',[-0.2 0.75])
+    hold on
+    line([0 0],get(gca,'YLim'),'Color',[0 0 0],'LineWidth',2)
+    title(fields{c},'FontSize',14)
 end
 
 p(2).pack('h',repmat({1/length(mdl)},1,length(mdl)));
 
-for c = 1:length(mdl)
-   p(2,c).select()
+for i = 1:length(mdl)
+   p(2,i).select()
    scatter(1:3,mdl{i}.Coefficients.Estimate(2:end),36,[0 0 1],'x','LineWidth',2)
    hold on
    %scatter(1:3,partr(i,:),36,[1 0 0],'o','LineWidth',2)
@@ -158,7 +193,7 @@ for c = 1:length(mdl)
        'LineStyle','none','LineWidth',2,'Color',[0 0 1],'HandleVisibility','off');
    xl = get(gca,'XLim');
    line(xl+[-0.1 0.1],[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
-   set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{'Osci_power','PLE','Frac BB'})
+   set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{'Osci Power','PLE','Frac BB'})
    %legend({'Regression Coefficient','Partial R^2'})
    %ylabel('Regression Coefficient')
    FixAxes(gca,14)
