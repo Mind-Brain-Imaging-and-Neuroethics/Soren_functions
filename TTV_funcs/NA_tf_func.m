@@ -19,7 +19,7 @@ end
 parfor i = 1:length(files)
     if strcmpi(settings.datatype,'EEG')
         EEG = pop_loadset('filename',files(i).name,'filepath',settings.inputdir);
-        data = eeglab2fieldtrip(EEG,'preprocessing','none');
+        data = eeglab2fieldtrip_swt(EEG,'preprocessing','none');
         data = ft_struct2single(data);
     else
         data = parload(files(i).name,'data');
