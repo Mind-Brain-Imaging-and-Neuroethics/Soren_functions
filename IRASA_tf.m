@@ -66,6 +66,7 @@ if strcmpi(cfg.parflag,'yes')
     parfor i = 1:length(data.trial)
         datawindows = getWindows(times{i},cfg.winsize,cfg.toi,trials{i});
         for c = 1:length(datawindows)
+	   
             if calcspecs
                 specs{i}(c) = amri_sig_fractal(datawindows{c}',fsample,'hset',cfg.hset);
             end
