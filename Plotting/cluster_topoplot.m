@@ -17,7 +17,7 @@ if nargin < 5
    size = 3; 
 end
 topoplot(data,chanlocs,'emarker2',{find(sig),'o','k',size,1},'emarker3',{find(sigmask),'o','w',1.5*size,1},...
-    'electrodes','off','plotrad',0.5)
+    'electrodes','off','headrad','rim')
 
 
 % topoplot() - plot a topographic map of a scalp data field in a 2-D circular view

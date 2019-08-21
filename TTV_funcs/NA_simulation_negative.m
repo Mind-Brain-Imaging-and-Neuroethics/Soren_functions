@@ -17,7 +17,7 @@ for m = mvals
                 spont = createFN(1.75/2,2000);
                 spont = ft_preproc_lowpassfilter(spont,500,10,4);
                 spont = NormOntoRange(spont,[1 2]);
-                cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:1000)*pi/1000)];
+                cfg.osci.s1.ampl{cc} = horz(spont)-[zeros(1,1000) rand*sin((1:500)*pi/500) zeros(1,500)];
             end
             sim{c} = ft_freqsimulation_swt(cfg);
             

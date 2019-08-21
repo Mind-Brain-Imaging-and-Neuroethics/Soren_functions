@@ -19,7 +19,7 @@ for m = mvals
                 spont = NormOntoRange(spont,[1 2]);
                 %prestim(cc) = mean(spont(951:1000))-1;
                 corrfact = 0.5*(mean(spont(951:1000))-1+rand);
-                evoked = -[zeros(1,1000) corrfact*sin((1:1000)*pi/1000)];
+                evoked = -[zeros(1,1000) corrfact*sin((1:500)*pi/500) zeros(1,500)];
                 cfg.osci.s1.ampl{cc} = horz(spont)+horz(evoked);
                 %poststim(cc) = mean(evoked(1301:1400));
             end

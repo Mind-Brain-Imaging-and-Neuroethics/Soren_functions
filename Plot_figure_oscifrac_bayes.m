@@ -1,4 +1,4 @@
-function [stats_mixd,stats_oscifrac,cmpare] = Plot_figure_oscifrac_bayes(spec,fbands,opts)
+function [stats_mixd,stats_oscifrac,cmpare,newcmpare] = Plot_figure_oscifrac_bayes(spec,fbands,opts)
 % Plots a standardized figure for the OsciFrac paper
 %
 % Input arguments:
@@ -142,14 +142,15 @@ if ~isfield(opts,'stats_mixd') && ~isfield(opts,'stats_oscifrac') && ~isfield(op
     
     
     
-    cmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
-    cmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
-    cmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
-    cmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
-    cmpare.se_diff = cmpare(2).se_diff;
+    newcmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
+    newcmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
+    newcmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
+    newcmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
+    newcmpare.se_diff = cmpare(2).se_diff;
 else
     stats_mixd = opts.stats_mixd;
     stats_oscifrac = opts.stats_oscifrac;
+    newcmpare = opts.newcmpare;
     cmpare = opts.cmpare;
 end
 
@@ -239,9 +240,9 @@ FixAxes(gca,14)
 fix_xticklabels(gca,0.1,{'FontSize',12})
 
 p(2,3).select()
-scatter([1,2],[cmpare.elpd_mixd cmpare.elpd_oscifrac],72,[0 0 0],'x','LineWidth',2);
+scatter([1,2],[newcmpare.elpd_mixd newcmpare.elpd_oscifrac],72,[0 0 0],'x','LineWidth',2);
 hold on
-errorbar([1 2],[cmpare.elpd_mixd cmpare.elpd_oscifrac],4*[cmpare.elpd_mixd_se cmpare.elpd_oscifrac_se],'LineStyle','none','Color',[0 0 0],'LineWidth',2)
+errorbar([1 2],[newcmpare.elpd_mixd newcmpare.elpd_oscifrac],4*[newcmpare(1).elpd_mixd_se newcmpare(1).elpd_oscifrac_se],'LineStyle','none','Color',[0 0 0],'LineWidth',2)
 set(gca,'XLim',get(gca,'XLim')+[-0.1 0.1])
 set(gca,'XTick',[1 2],'XTickLabel',{'Mixed power','IRASA decomposition'})
 ylabel('Expected Log Predictive Density')

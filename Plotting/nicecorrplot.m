@@ -30,7 +30,7 @@ if nargin < 3
    labels = {'A','B'}; 
 end
 
-[B,~,~,~,stats] = regress(b,horzcat(ones(length(a),1),a));
+B = regress(b,horzcat(ones(length(a),1),a));
 
 if CheckInput(varargin,'Type')
     type = EasyParse(varargin,'Type');
@@ -44,11 +44,13 @@ else
     [corrrho,corrp] = corr(a,b,'Type',type);
 end
 
-h = scatter(a,b,64,'filled');
+l = lines;
+
+h = scatter(a,b,96,palecol(l(1,:),0.33),'filled');
 xl = xlabel(labels{1},'FontSize',16);
 yl = ylabel(labels{2},'FontSize',16);
 hold on;
-f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'r--');
+f = plot(linspace(min(a),max(a),1000),B(1)+B(2)*linspace(min(a),max(a),1000),'r');
 ax = gca;
 pos = ax.Position;
 
@@ -63,7 +65,9 @@ set(gca, ...
     'XColor'      , [.3 .3 .3], ...
     'YColor'      , [.3 .3 .3], ...
     'fontsize',14,...
-    'LineWidth'   , 1         );
+    'LineWidth'   , 1,...
+    'XLim',[min(a)-0.05*range(a) max(a)+0.05*range(a)],...
+    'YLim',[min(b)-0.05*range(b) max(b)+0.05*range(b)]);
 
 set(xl,'FontSize',20)
 set(yl,'FontSize',20)
@@ -88,3 +92,5 @@ end
 if isnan(corrrho) && isnan(corrp)
    delete(tb) 
 end
+
+FixAxes(gca,14)

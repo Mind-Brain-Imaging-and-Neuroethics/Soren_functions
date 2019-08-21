@@ -21,10 +21,14 @@ end
 
 %% Reading in data
 for i = 1:length(files)
+    try
     m = matfile(files(i).name);
     for c = 1:3
         tmp = m.(fields{c});
         meandata.(fields{c}).fourierspctrm(i,:,:,:) = nanmean(tmp.fourierspctrm,1);
+    end
+    donefiles{i} = files(i).name;
+    catch
     end
 end
 

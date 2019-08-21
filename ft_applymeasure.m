@@ -295,6 +295,13 @@ else
                 outputs.chanlocs = EEG.chanlocs;
                 if i == outputs.startsub-1
                     data = eeglab2fieldtrip(EEG,'preprocessing','none');
+                    
+                    if cfgcheck(cfg,'concatenate','yes')
+                        data = ft_concat(data);
+                        EEG = ft2eeglab(data);
+                        EEG.chanlocs = outputs.chanlocs;
+                    end
+                   
                     if isfield(data,'label')
                         outputs.chan = data.label;
                     end

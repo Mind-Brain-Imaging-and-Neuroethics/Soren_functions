@@ -194,7 +194,7 @@ end
 if length(data) == 2
     cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025;
 else
-    cfg.tail = 1; cfg.clustertail = 1; cfg.alpha = 0.05; cfg.clusteralpha = 0.05;
+    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.clusteralpha = 0.025; %look into this
 end
 cfg.numrandomization = opts.nrand; cfg.spmversion = 'spm12'; cfg.minnbchan = opts.minnbchan;
 

@@ -27,7 +27,7 @@ if nfft > length(time_series)
    nfft = []; % if nfft is too large, just use the default Welch window
 end
 
-[pdata,freq] = pwelch(time_series,[],[],2^nextpow2((3/low_range)*Fs),Fs); %want 3 cycles of lowest frequency in window
+[pdata,freq] = pwelch(time_series,[],[],nfft,Fs); %want 3 cycles of lowest frequency in window
 %     power_spec = psd(HS,time_series,'NFFT',nfft,'Fs',Fs);
 %pdata = pxx;
 %freq = f;

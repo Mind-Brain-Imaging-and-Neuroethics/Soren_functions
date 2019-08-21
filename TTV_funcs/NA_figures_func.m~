@@ -173,13 +173,11 @@ for c = 1:settings.nfreqs
     p(1,c).select()
     t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
     hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:),1)),'b',0.15,1,'sem');
+    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:),1)),'b',0.15,1,'std');
     
-    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,2,:),1)),'r',0.15,1,'sem');
+    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,2,:),1)),'r',0.15,1,'std');
     title(fbands{c})
-    if c == settings.nfreqs
-        legend({'Corrected prestim low','Corrected prestim high'})
-    end
+    %legend({'Corrected prestim low','Corrected prestim high'})
     xlabel('Time (s)')
     ylabelunits(settings)
     FixAxes(gca)
@@ -202,9 +200,7 @@ for c = 1:settings.nfreqs
         squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:))),'k',0.15,1,'sem');
     Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     
-    if cc == settings.nfreqs
-        legend({'Nonadditivity time course'})
-    end
+    %legend({'Corrected prestim low','Corrected prestim high'})
     xlabel('Time (s)')
     ylabelunits(settings)
     FixAxes(gca)
@@ -250,13 +246,9 @@ AddFigureLabel(p(2,1,1).axis,'B')
 set(gcf,'Color','w')
 
 for c = 1:settings.nfreqs
-    ax1(c) = p(1,c).axis;    
-    ax2(c) = p(2,c,1).axis;
-    cbars(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars(c).Position(3) 0.15*ax2(c).Position(4)];
+    ax(c) = p(2,c,1).axis;
+    cbars(c).Position = [ax(c).Position(1)+ax(c).Position(3) ax(c).Position(2) cbars(c).Position(3) 0.15*ax(c).Position(4)];
 end
-Normalize_Ylim(ax1)
-Normalize_Ylim(ax2)
-
 
 savefig('Fig2.fig')
 export_fig('Fig2.png','-m4')
@@ -295,7 +287,7 @@ for c = 1:settings.nfreqs
     %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
     %    zeros(1,length(poststimdata)));
     hold on
-    stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'sem')
+    stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'std')
     Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     
@@ -382,12 +374,11 @@ AddFigureLabel(p(1,1,1).axis,'A')
 AddFigureLabel(p(2,1,1).axis,'B')
 
 for c = 1:length(ax)
-    ax1(c) = p(2,c,1).axis;
-    cbars2(c).Position = [ax1(c).Position(1)+0.8*ax1(c).Position(3) ax1(c).Position(2)+0.7*ax1(c).Position(4) 0.07*ax1(c).Position(3) 0.28*ax1(c).Position(4)];
-    ax2(c) = p(1,c,1).axis;
-    cbars1(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars1(c).Position(3) 0.15*ax2(c).Position(4)];
+    ax(c) = p(2,c,1).axis;
+    cbars2(c).Position = [ax(c).Position(1)+0.8*ax(c).Position(3) ax(c).Position(2)+0.7*ax(c).Position(4) 0.07*ax(c).Position(3) 0.28*ax(c).Position(4)];
+    ax(c) = p(1,c,1).axis;
+    cbars1(c).Position = [ax(c).Position(1)+ax(c).Position(3) ax(c).Position(2) cbars1(c).Position(3) 0.15*ax(c).Position(4)];
 end
-Normalize_Ylim(ax1)
 
 set(gcf,'Color','w')
 
@@ -780,9 +771,7 @@ if isfield(settings,'rest')
     %AddFigureLabel('A',p(1,1,1,1).axis);
     %AddFigureLabel('B',p(2,1,1,1).axis);
     AddFigureLabel(p(1,1,1).axis,'A');
-    AddFigureLabel(p(1,1,1).axis,'Rest-ERSP correlation') %move this manually
     AddFigureLabel(p(2,1,1).axis,'B');
-    AddFigureLabel(p(2,1,1).axis,'Rest-Nonadditivity correlation') % move this manually
     AddFigureLabel(p(3).axis,'C');
     
     set(gcf,'Color','w')
