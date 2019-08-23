@@ -170,6 +170,8 @@ parfor i = 1:length(files)
                     freqdata = parload([files(i).name '_IRASAtf.mat']',settings.tfparams.oscifrac);
                 end
                 
+                cfg.foi = freqdata.freq;
+                
                 freqdata.fourierspctrm = permute(freqdata.fourierspctrm,[1 3 2 4]);
                 freqdata.fourierspctrm = freqdata.fourierspctrm + 0.001*min(min(min(min(freqdata.fourierspctrm))))*j; % add a tiny imaginary component for compatibility
                 
@@ -184,6 +186,16 @@ parfor i = 1:length(files)
                     end
                     timefreq_data{c+1}.time = freqdata.time;
                     timefreq_data{c+1}.label = data.label;
+                    
+                    for cc = 1:length(freqs)
+                        if ~isempty(freqs{cc}) && foi{i}(c) >= freqs{cc}(1) && foi{i}(c) <= freqs{cc}(2)
+                            timefreq_data{c+1}.parent = cc;
+                        end
+                    end
+                    
+                    if ~isfield(timefreq_data{c+1},'parent')
+                        timefreq_data{c+1}.parent = length(settings.tfparams.fbandnames)+1; % don't assign frequencies not in a specified band
+                    end
                 end
                 freqdata = [];
                 
