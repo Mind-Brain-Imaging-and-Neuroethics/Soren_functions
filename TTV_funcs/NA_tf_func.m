@@ -168,6 +168,12 @@ parfor i = 1:length(files)
                     freqdata = IRASA_tf(cfg,data);
                 else
                     freqdata = parload([files(i).name '_IRASAtf.mat']',settings.tfparams.oscifrac);
+                    
+                    cfg = []; cfg.resamplefs = settings.srate; cfg.detrend = 'no';
+                    newdata = ft_resampledata(cfg,data);
+                    
+                    data_allrange = round((settings.pseudo.prestim(1)-settings.srate/5)):(settings.real.poststim(end));
+                    
                 end
                 
                 cfg.foi = freqdata.freq;
