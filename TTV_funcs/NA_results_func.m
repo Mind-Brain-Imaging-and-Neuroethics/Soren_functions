@@ -124,7 +124,7 @@ if ~strcmpi(settings.datatype,'ECoG') || strcmpi(settings.ecog.method,'roi')
         zeromat = zeros(size(allmeas{q}.ttv.real));
         zeromat(find(isnan(allmeas{q}.ttv.real))) = NaN;
         
-        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
+%        ttv_diststats{q} = EasyClusterCorrect({alloutputs.itc.distrealreal(:,:,q),alloutputs.ersp.distrealreal(:,:,q)},settings.datasetinfo,'ft_statfun_fast_signrank',opts);
         
         ersp_pt_stats{q} = EasyClusterCorrect({permute(squeeze(allmeas{q}.naddersp.diff(:,:,1,:)),[1 3 2]),permute(squeeze(allmeas{q}.naddersp.diff(:,:,2,:)),[1 3 2])},...
             settings.datasetinfo,'ft_statfun_fast_signrank',opts);

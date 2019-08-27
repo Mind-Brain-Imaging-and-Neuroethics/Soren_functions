@@ -200,7 +200,6 @@ for c = 1:settings.nfreqs
     hold on
     stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,2,:),1))-...
         squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:))),'k',0.15,1,'sem');
-    Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     
     if cc == settings.nfreqs
         legend({'Nonadditivity time course'})
@@ -257,6 +256,11 @@ end
 Normalize_Ylim(ax1)
 Normalize_Ylim(ax2)
 
+for c = 1:settings.nfreqs
+p(2,c,1).select()
+    Plot_sigmask(p(2,c,1).axis,alloutputs.ersp.pt.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+end
+
 
 savefig('Fig2.fig')
 export_fig('Fig2.png','-m4')
@@ -296,7 +300,6 @@ for c = 1:settings.nfreqs
     %    zeros(1,length(poststimdata)));
     hold on
     stdshade(t,squeeze(nanmedian(allmeas{plotband}.ttversp.real,1)),'b',0.15,1,'sem')
-    Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
     %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
     
     title(fbands{c})
@@ -388,6 +391,11 @@ for c = 1:length(ax)
     cbars1(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars1(c).Position(3) 0.15*ax2(c).Position(4)];
 end
 Normalize_Ylim(ax1)
+
+for c = 1:settings.nfreqs
+   p(1,c,1).select()
+   Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+end
 
 set(gcf,'Color','w')
 

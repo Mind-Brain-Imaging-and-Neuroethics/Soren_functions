@@ -7,6 +7,8 @@ pool = gcp('nocreate');
 if ~isempty(pool) && pool.NumWorkers ~= settings.pool
     delete(pool)
     parpool(settings.pool)
+elseif isempty(pool)
+    parpool(settings.pool)
 end
 
 foi = cell(1,length(files));
@@ -176,6 +178,7 @@ parfor i = 1:length(files)
                     
                 end
                 
+		foi{i} = freqdata.freq;
                 cfg.foi = freqdata.freq;
                 
                 freqdata.fourierspctrm = permute(freqdata.fourierspctrm,[1 3 2 4]);
@@ -186,7 +189,7 @@ parfor i = 1:length(files)
                     timefreq_data{1}.trial{c} = timefreq_data{1}.trial{c}(:,data_allrange);
                 end
                 
-                for c = 1:length(cfg.foi)
+                for c = 1:length(foi{i})
                     for cc = 1:length(data.trial)
                         timefreq_data{c+1}.trial{cc} = squeeze(freqdata.fourierspctrm(cc,:,c,:));
                     end

@@ -5,7 +5,7 @@ addpath([toolboxdir('signal'),'/signal'])
 
 cd /home/soren/Documents/camcan/Preprocessed/Task/Epoched/
 
-files = dir('*epoched.mat');
+files = dir('*long.mat');
 
 indices = [29:32:length(files) 30:32:length(files)];
 

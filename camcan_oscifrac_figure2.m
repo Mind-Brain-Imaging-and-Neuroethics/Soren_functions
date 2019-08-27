@@ -87,7 +87,7 @@ for c = 1:3
     cfg = []; cfg.channel = {'MEG'}; cfg.avgoverchan = 'yes'; cfg.latency = [0 0.75];
     cfg.frequency = 'all'; cfg.method = 'montecarlo'; cfg.statistic = 'ft_statfun_actvsblT';
     cfg.correctm = 'cluster'; cfg.clusteralpha = 0.05; cfg.clusterstatistic = 'maxsum';
-    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.numrandomization = 1000;
+    cfg.tail = 0; cfg.clustertail = 0; cfg.alpha = 0.025; cfg.numrandomization = 2000;
     cfg.parameter = 'fourierspctrm';
     
     ntrials = size(meanpost.(fields{c}).fourierspctrm,1);
@@ -101,12 +101,25 @@ for c = 1:3
     cfg.ivar = 1;
     cfg.uvar = 2;
     
-    cfg.parpool = 24;
+    cfg.parpool = 48;
     
     meanbl.(fields{c}).time = meanpost.(fields{c}).time;
     
     stats{c} = ft_freqstatistics(cfg,meanpost.(fields{c}),meanbl.(fields{c}));
 end
+
+% Cluster stats for PLE and broadband
+
+datasetinfo = settings.datasetinfo;
+
+opts = []; opts.nrand = 2000; opts.parpool = 48; opts.minnbchan = 0;
+opts.external = cfg.design;
+
+stats_ple = EasyClusterCorrect({permute(pledata.post,[2 1 3]) repmat(mean(pledata.bl,3)',1,1,38)},...
+    datasetinfo,'ft_statfun_signrank',opts);
+
+stats_bb = EasyClusterCorrect({permute(squeeze(mean(meanpost.frac.fourierspctrm,3)),[2 1 3]) repmat(mean(squeeze(mean(meanbl.frac.fourierspctrm,3)),3)',1,1,38)},...
+    datasetinfo,'ft_statfun_signrank',opts);
 
 
 
@@ -116,7 +129,8 @@ for c = find(extractfield(stats{1}.posclusters,'prob') < 0.05)
     % number of frequencies greater than the median value in the cluster
     % are significant
     sum_statmask = sum(statmask,1);
-    statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
+    %statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
+    statmask_time = sum_statmask > 0;
     meanmix(:,c) = sum(sum(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
         -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
     meanosci(:,c) = sum(sum(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
@@ -132,7 +146,8 @@ for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
     % number of frequencies greater than the median value in the cluster
     % are significant
     sum_statmask = sum(statmask,1);
-    statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
+    %statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
+    statmask_time = sum_statmask > 0;
     
     newindx = c+length(find(extractfield(stats{1}.posclusters,'prob') < 0.05));
     % for ple and broadband fractal, include those time points where a
@@ -164,7 +179,7 @@ p = panel('no-manage-font');
 
 p.pack('v',{50 50})
 
-p(1).pack('h',{1/3 1/3 1/3})
+p(1).pack('h',{1/4 1/4 1/4 1/4})
 
 for c = 1:3
     p(1,c).select()
@@ -189,6 +204,26 @@ for c = 1:3
     title(fields{c},'FontSize',14)
 end
 
+p(1,4).pack('v',{50 50})
+
+p(1,4,1).select()
+stdshade(meanpost.mixd.time,squeeze(mean(pledata.post,2)),'k',0.15,2,'sem')
+Plot_sigmask(gca,stats_ple.mask,'cmapline')
+FixAxes(gca,14)
+xlabel('Time (s)')
+ylabel('PLE')
+set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
+
+p(1,4,2).select()
+stdshade(meanpost.mixd.time,squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)),'k',0.15,2,'sem')
+Plot_sigmask(gca,stats_bb.mask,'cmapline')
+FixAxes(gca,14)
+xlabel('Time (s)')
+ylabel('Fractal broadband power')
+set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
+
+
+
 p(2).pack('h',repmat({1/length(mdl)},1,length(mdl)));
 
 for i = 1:length(mdl)
@@ -200,13 +235,18 @@ for i = 1:length(mdl)
        'LineStyle','none','LineWidth',2,'Color',[0 0 1],'HandleVisibility','off');
    xl = get(gca,'XLim');
    line(xl+[-0.1 0.1],[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
-   set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{'Osci Power','PLE','Frac BB'})
+   set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{'Oscilatory Power','PLE','Fractal Broadband'})
    %legend({'Regression Coefficient','Partial R^2'})
    %ylabel('Regression Coefficient')
    FixAxes(gca,14)
    fix_xticklabels(gca,0.1,{'FontSize',14}) 
+   ylabel('Coefficient')
 end
 
+p(1).de.marginleft = 30;
+p.marginright = 20;
+p.marginleft = 18;
+p.margintop = 8;
 
 
 
