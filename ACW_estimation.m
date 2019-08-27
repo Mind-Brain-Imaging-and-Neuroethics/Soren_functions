@@ -1,4 +1,4 @@
-function [ACW, ACF_mean] = ACW_estimation(EEG,fs,window,overlap,lag)
+function [ACW, ACF_mean,time] = ACW_estimation(EEG,fs,window,overlap,lag)
 % AWC The function estimates the width of the mean lobe of the
 % autocorrelation. It is defined as the full-width-at-half-maximum of the
 % temporal autocorrelation function of the power time course.
@@ -87,6 +87,6 @@ time=linspace(-lag/fs,lag/fs,2*lag+1);
 % h=fill(time,ACF_mean>=max(ACF_mean)/2,'r');
 % set(h, 'FaceAlpha',.3);
 % hold off
-%fprintf('Number of coefficients (or samples) computed for each window: %i\n', length(time));
-
+% fprintf('Number of coefficients (or samples) computed for each window: %i\n', length(time));
+% 
 

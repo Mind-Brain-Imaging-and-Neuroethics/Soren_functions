@@ -43,3 +43,9 @@ for i = 1:nperm
 end
 
 p = value_prctile(perm_tstat,orig_tstat);
+
+if p > 0.5
+   p = 1-p; 
+end
+
+p = 2*p; %two-sided test

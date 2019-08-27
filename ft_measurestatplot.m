@@ -260,8 +260,8 @@ elseif cfgcheck(cfg,'plotmode','combined')
         p.marginleft = 20;
         p(1).marginbottom = 5;
         
-        AddFigureLabel(p(1,1).axis,'A','yes')
-        AddFigureLabel(p(2).axis,'B')
+        %AddFigureLabel(p(1,1).axis,'A','yes')
+        %AddFigureLabel(p(2).axis,'B')
         
         set(figs(i),'name',cfg.measname{c})
         

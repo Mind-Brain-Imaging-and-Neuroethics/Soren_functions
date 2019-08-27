@@ -21,7 +21,7 @@ end
 
 %% Calculate bandpower for each frequency band
 %if strcmpi(settings.datatype,'EEG')
-    files = dir(settings.rest.restfiles);
+files = dir(settings.rest.restfiles);
 %else
 %    files = dir(settings.rest.restfiles);
 %end
@@ -50,22 +50,24 @@ end
 
 ple = cell(1,length(files));
 parfor i = 1:length(files)
-    if strcmpi(settings.datatype,'EEG')
+    if strcmpi(settings.rest.powermode,'irasa')
+        data = parload([files(i).name '_IRASA_specs.mat'],'EEG');
+    elseif strcmpi(settings.datatype,'EEG')
         EEG = pop_loadset(files(i).name,pwd);
         data = eeglab2fieldtrip(EEG,'preprocessing','none');
     else
         data = parload(files(i).name,'data');
-    end 
+    end
     
     data = ft_concat(data);
     
     fbands = settings.tfparams.fbands;
     
     if strcmpi(settings.tfparams.pf_adjust,'yes')
-%        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
-%        rest_fbands{i} = horz(fbands);
+        %        [fbands pf(i)] = NA_convert_alpha_pf(settings,data)
+        %        rest_fbands{i} = horz(fbands);
         fbands = alloutputs.fbands_adjusted(i,:); % don't actually use the frequency bands calculated from rest, just get them for posterity
-         rest_fbands{i} = horz(fbands);
+        rest_fbands{i} = horz(fbands);
     end
     
     for c = 1:length(fbands)
@@ -75,9 +77,16 @@ parfor i = 1:length(files)
         elseif ~isempty(find(isnan(fband)))
             fband(find(isnan(fband))) = settings.rest.bandpass(1);
         end
-        for cc = 1:length(data.label)
-            bp{i}(c,cc) = bandpower(data.trial{1}(cc,:),data.fsample,fband);
-            rel_bp{i}(c,cc) = bp{i}(c,cc)/bandpower(data.trial{1}(cc,:),data.fsample,settings.rest.bandpass);
+        if ~strcmpi(settings.rest.powermode,'irasa')
+            for cc = 1:length(data.label)
+                bp{i}(c,cc) = bandpower(data.trial{1}(cc,:),data.fsample,fband);
+                rel_bp{i}(c,cc) = bp{i}(c,cc)/bandpower(data.trial{1}(cc,:),data.fsample,settings.rest.bandpass);
+            end
+        else
+            frange = intersect(find(data.freq > fband(1)),find(data.freq < fband(2)));
+            frange_bandpass = intersect(find(data.freq > settings.rest.bandpass(1)),find(data.freq < settings.rest.bandpass(2)));
+            bp{i}(c,:) = trapz(data.freq(frange),data.(settings.rest.oscifrac)(frange,:),1);
+            rel_bp{i}(c,:) = bp{i}(c,:)./trapz(data.freq(frange_bandpass),data.(settings.rest.oscifrac)(frange_bandpass,:),1);
         end
     end
     ple{i} = PLE_JF_EEG_wrapper(ft2eeglab(data),settings.rest.bandpass);
@@ -182,9 +191,9 @@ parfor q = 1:settings.nfreqs
     rel_bp_prestim_stats{q} = EasyClusterCorrect({squeeze(restmeas.rel_bp.vals(q,:,:)),restmeas.prestimamp.rel{q}},settings.datasetinfo,'ft_statfun_spearman',opts2);
     
     if isfield(rel_bp_prestim_stats{q},'posclusters') && ~isempty(rel_bp_prestim_stats{q}.posclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.posclusters,'prob') < 0.05))
-       rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
-           double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
-           double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
+        rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...
+            double(squeeze(mean(restmeas.rel_bp.vals(q,find(rel_bp_prestim_stats{q}.mask),:),2))),...
+            double(mean(restmeas.prestimamp.rel{q}(find(rel_bp_prestim_stats{q}.mask),:),1))',opts);
     end
     if (isfield(rel_bp_prestim_stats{q},'negclusters') && ~isempty(rel_bp_prestim_stats{q}.negclusters) && ~isempty(find(extractfield(rel_bp_prestim_stats{q}.negclusters,'prob') < 0.05)))
         rel_bp_mediation_stats{q} = mediationAnalysis0(double(mean(allmeas{q}.erspindex(find(rel_bp_prestim_stats{q}.mask),:),1))',...

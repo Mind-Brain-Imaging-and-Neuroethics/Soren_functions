@@ -116,37 +116,57 @@ if ~isfield(opts,'stats_mixd') && ~isfield(opts,'stats_oscifrac') && ~isfield(op
         data{:,1:end-1} = zscore(data{:,1:end-1},[],1);
     end
     
-    [stats_mixd,stats_oscifrac,cmpare] = mxmnr_compare(data,frmla1,frmla2);
-    
-    %stats_mixd.fixed = mergestructs(stats_mixd.fixed);
-    %stats_oscifrac.fixed = mergestructs(stats_oscifrac.fixed);
-    
-    stats_mixd.beta = extractfield(stats_mixd.fixed,'Estimate');
-    stats_mixd.ci = [extractfield(stats_mixd.fixed,'l_95_CI')' extractfield(stats_mixd.fixed,'u_95_CI')'];
-    stats_oscifrac.beta = extractfield(stats_oscifrac.fixed,'Estimate');
-    stats_oscifrac.ci = [extractfield(stats_oscifrac.fixed,'l_95_CI')' extractfield(stats_oscifrac.fixed,'u_95_CI')'];
-    
-    if ~strcmpi(opts.paired,'yes')
-        stats_mixd.beta(1) = [];
-        stats_oscifrac.beta(1) = [];
-        stats_mixd.ci(1,:) = [];
-        stats_oscifrac.ci(1,:) = [];
+    if strcmpi(opts.paired,'yes')
+        for c = 1:size(fbands,1)
+            t = rm_anova2(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
+                cat(1,data.Subject,data.Subject),cat(1,data.Condition,data.Condition),...
+                Make_designVect([height(data) height(data)])',{'Condition','Oscifrac'});
+            p_dif_irasa(c) = t{4,6};
+        end
+    else
+        for c = 1:size(fbands,1)
+            [~,t] = anovan(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
+                {Make_designVect([height(data) height(data)])',cat(1,data.Condition,data.Condition)},'model','interaction');
+            p_dif_irasa(c) = t{4,7};
+            %get p value for interaction term here
+        end
     end
-    
-    stats_mixd.beta = reshape(stats_mixd.beta,length(opts.fbandnames),[]);
-    stats_oscifrac.beta = reshape(stats_oscifrac.beta,length(opts.fbandnames)+2,[]);
-    stats_mixd.ci = cat(2,reshape(stats_mixd.ci(:,1),length(opts.fbandnames),1,[]),...
-        reshape(stats_mixd.ci(:,2),length(opts.fbandnames),1,[]));
-    stats_oscifrac.ci = cat(2,reshape(stats_oscifrac.ci(:,1),length(opts.fbandnames)+2,1,[]),...
-        reshape(stats_oscifrac.ci(:,2),length(opts.fbandnames)+2,1,[]));
+
+    %[stats_mixd,stats_oscifrac,cmpare] = mxmnr_compare(data,frmla1,frmla2);
     
     
     
-    newcmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
-    newcmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
-    newcmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
-    newcmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
-    newcmpare.se_diff = cmpare(2).se_diff;
+    
+%     
+%     %stats_mixd.fixed = mergestructs(stats_mixd.fixed);
+%     %stats_oscifrac.fixed = mergestructs(stats_oscifrac.fixed);
+%     
+%     stats_mixd.beta = extractfield(stats_mixd.fixed,'Estimate');
+%     stats_mixd.ci = [extractfield(stats_mixd.fixed,'l_95_CI')' extractfield(stats_mixd.fixed,'u_95_CI')'];
+%     stats_oscifrac.beta = extractfield(stats_oscifrac.fixed,'Estimate');
+%     stats_oscifrac.ci = [extractfield(stats_oscifrac.fixed,'l_95_CI')' extractfield(stats_oscifrac.fixed,'u_95_CI')'];
+%     
+%     if ~strcmpi(opts.paired,'yes')
+%         stats_mixd.beta(1) = [];
+%         stats_oscifrac.beta(1) = [];
+%         stats_mixd.ci(1,:) = [];
+%         stats_oscifrac.ci(1,:) = [];
+%     end
+%     
+%     stats_mixd.beta = reshape(stats_mixd.beta,length(opts.fbandnames),[]);
+%     stats_oscifrac.beta = reshape(stats_oscifrac.beta,length(opts.fbandnames)+2,[]);
+%     stats_mixd.ci = cat(2,reshape(stats_mixd.ci(:,1),length(opts.fbandnames),1,[]),...
+%         reshape(stats_mixd.ci(:,2),length(opts.fbandnames),1,[]));
+%     stats_oscifrac.ci = cat(2,reshape(stats_oscifrac.ci(:,1),length(opts.fbandnames)+2,1,[]),...
+%         reshape(stats_oscifrac.ci(:,2),length(opts.fbandnames)+2,1,[]));
+%     
+%     
+%     
+%     newcmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
+%     newcmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
+%     newcmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
+%     newcmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
+%     newcmpare.se_diff = cmpare(2).se_diff;
 else
     stats_mixd = opts.stats_mixd;
     stats_oscifrac = opts.stats_oscifrac;

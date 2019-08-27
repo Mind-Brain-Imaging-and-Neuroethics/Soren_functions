@@ -36,10 +36,10 @@ slope_index = find(freq > low_range & freq < high_range);
 %freq = freq(slope_index)';
 fitfreq = log10(freq(slope_index));
 fitdata = log10(pdata(slope_index));
-linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
-fitdata = interp1(fitfreq,fitdata,linfreq);
+%linfreq = linspace(min(fitfreq),max(fitfreq),length(fitfreq));
+%fitdata = interp1(fitfreq,fitdata,linfreq);
 
-p = polyfit(vert(linfreq),vert(fitdata),1);
+p = polyfit(vert(fitfreq),vert(fitdata),1);
 ple = -p(1);
 
 
