@@ -1,4 +1,4 @@
-function [stats_mixd,stats_oscifrac,cmpare,newcmpare] = Plot_figure_oscifrac_bayes(spec,fbands,opts)
+function [pvals] = Plot_figure_oscifrac_final(spec,fbands,opts)
 % Plots a standardized figure for the OsciFrac paper
 %
 % Input arguments:
@@ -44,12 +44,16 @@ frange = intersect(find(spec.(fields{1})(1).freq(:,1) > opts.frange_ple(1)),find
 for i = 1:length(fields)
     for c = 1:length(spec.(fields{i}))
         for cc = 1:size(fbands,1)
-            relmixd.(fields{i})(c,:,cc) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'mixd',fbands(cc,:),{'mixd',[fbands(1,1),fbands(end,end)]},'trapz');
+            if strcmpi(opts.powermode,'rel')
+                relmixd.(fields{i})(c,:,cc) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'mixd',fbands(cc,:),{'mixd',[fbands(1,1),fbands(end,end)]},'trapz');
+            end
             absmixd.(fields{i})(c,:,cc) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'mixd',fbands(cc,:),0,'mean');
         end
         
         for cc = 1:size(fbands,1)
-            relosci.(fields{i})(c,:,cc) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'osci',fbands(cc,:),{'osci',[fbands(1,1),fbands(end,end)]},'trapz');
+            if strcmpi(opts.powermode,'rel')
+                relosci.(fields{i})(c,:,cc) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'osci',fbands(cc,:),{'osci',[fbands(1,1),fbands(end,end)]},'trapz');
+            end
             absosci.(fields{i})(c,:,cc) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'osci',fbands(cc,:),0,'mean');
         end
         
@@ -59,9 +63,20 @@ for i = 1:length(fields)
         
         tmp = amri_sig_plawfit(spec.(fields{i})(c),opts.frange_ple);
         ple.(fields{i})(c,:) = tmp.Beta;
-        
-        bb.(fields{i})(c,:) = 1./OsciFrac_EEG_wrapper(spec.(fields{i})(c),[fbands(1,1) fbands(end,end)]);
+        if strcmpi(opts.powermode,'rel')
+            bb.(fields{i})(c,:) = 1./OsciFrac_EEG_wrapper(spec.(fields{i})(c),[fbands(1,1) fbands(end,end)]);
+        else
+            bb.(fields{i})(c,:) = IRASAPower_EEG_wrapper(spec.(fields{i})(c),'osci',[fbands(1,1) fbands(end,end)],0,'mean');
+        end
     end
+end
+
+if strcmpi(opts.powermode,'rel')
+    mixd = relmixd;
+    osci = relosci;
+else
+    mixd = absmixd;
+    osci = relosci;
 end
 
 % for c = 1:length(fields)
@@ -71,119 +86,242 @@ end
 
 %% Logistic regression
 
-if ~isfield(opts,'stats_mixd') && ~isfield(opts,'stats_oscifrac') && ~isfield(opts,'cmpare')
-    
-    data = [];
-    for i = 1:length(opts.statfields)
-        tmp = [squeeze(mean(absmixd.(opts.statfields{i}),2)) squeeze(mean(absosci.(opts.statfields{i}),2)) ...
-            mean(ple.(opts.statfields{i}),2) mean(bb.(opts.statfields{i}),2) ...
-            ones(size(mean(ple.(opts.statfields{i}),2)))*i];
-        data = cat(1,data,tmp);
-    end
-    
-    if strcmpi(opts.paired,'yes') %adding subjects for random effects
-        data = cat(2,data,repmat([1:size(tmp,1)]',length(fields),1));
-    end
-    
-    if strcmpi(opts.paired,'yes')
-        varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
-            cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition' 'Subject'}];
-    else
-        varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
-            cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition'}];
-    end
-    
-    data = array2table(data,'VariableNames',varnames);
-    
-    mixnames = cellcat('+',cellcat('Mixd_',opts.fbandnames,'',0),'',1);
-    mixnames = [mixnames{:}];
-    mixnames(end) = [];
-    
-    oscinames = cellcat('+',cellcat('Osci_',opts.fbandnames,'',0),'',1);
-    oscinames = [oscinames{:}];
-    
-    frmla1 = ['Condition ~ ' mixnames];
-    frmla2 = ['Condition ~ ' oscinames 'PLE+Frac_BB'];
-    
-    if strcmpi(opts.paired, 'yes')
-        frmla1 = [frmla1 '+(1|Subject)-1'];
-        frmla2 = [frmla2 '+(1|Subject)-1'];
-    end
-    
-    if strcmpi(opts.paired,'yes')
-        data{:,1:end-2} = zscore(data{:,1:end-2},[],1);
-    else
-        data{:,1:end-1} = zscore(data{:,1:end-1},[],1);
-    end
-    
-    if strcmpi(opts.paired,'yes')
-        for c = 1:size(fbands,1)
-            t = rm_anova2(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
-                cat(1,data.Subject,data.Subject),cat(1,data.Condition,data.Condition),...
-                Make_designVect([height(data) height(data)])',{'Condition','Oscifrac'});
-            p_dif_irasa(c) = t{4,6};
-        end
-    else
-        for c = 1:size(fbands,1)
-            [~,t] = anovan(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
-                {Make_designVect([height(data) height(data)])',cat(1,data.Condition,data.Condition)},'model','interaction');
-            p_dif_irasa(c) = t{4,7};
-            %get p value for interaction term here
-        end
-    end
 
-    %[stats_mixd,stats_oscifrac,cmpare] = mxmnr_compare(data,frmla1,frmla2);
-    
-    
-    
-    
-%     
-%     %stats_mixd.fixed = mergestructs(stats_mixd.fixed);
-%     %stats_oscifrac.fixed = mergestructs(stats_oscifrac.fixed);
-%     
-%     stats_mixd.beta = extractfield(stats_mixd.fixed,'Estimate');
-%     stats_mixd.ci = [extractfield(stats_mixd.fixed,'l_95_CI')' extractfield(stats_mixd.fixed,'u_95_CI')'];
-%     stats_oscifrac.beta = extractfield(stats_oscifrac.fixed,'Estimate');
-%     stats_oscifrac.ci = [extractfield(stats_oscifrac.fixed,'l_95_CI')' extractfield(stats_oscifrac.fixed,'u_95_CI')'];
-%     
-%     if ~strcmpi(opts.paired,'yes')
-%         stats_mixd.beta(1) = [];
-%         stats_oscifrac.beta(1) = [];
-%         stats_mixd.ci(1,:) = [];
-%         stats_oscifrac.ci(1,:) = [];
-%     end
-%     
-%     stats_mixd.beta = reshape(stats_mixd.beta,length(opts.fbandnames),[]);
-%     stats_oscifrac.beta = reshape(stats_oscifrac.beta,length(opts.fbandnames)+2,[]);
-%     stats_mixd.ci = cat(2,reshape(stats_mixd.ci(:,1),length(opts.fbandnames),1,[]),...
-%         reshape(stats_mixd.ci(:,2),length(opts.fbandnames),1,[]));
-%     stats_oscifrac.ci = cat(2,reshape(stats_oscifrac.ci(:,1),length(opts.fbandnames)+2,1,[]),...
-%         reshape(stats_oscifrac.ci(:,2),length(opts.fbandnames)+2,1,[]));
-%     
-%     
-%     
-%     newcmpare.elpd_mixd = stats_mixd.kfold.estimates(1).Estimate;
-%     newcmpare.elpd_oscifrac = stats_oscifrac.kfold.estimates(1).Estimate;
-%     newcmpare.elpd_mixd_se = stats_mixd.kfold.estimates(1).SE;
-%     newcmpare.elpd_oscifrac_se = stats_oscifrac.kfold.estimates(1).SE;
-%     newcmpare.se_diff = cmpare(2).se_diff;
-else
-    stats_mixd = opts.stats_mixd;
-    stats_oscifrac = opts.stats_oscifrac;
-    newcmpare = opts.newcmpare;
-    cmpare = opts.cmpare;
+data = [];
+for i = 1:length(opts.statfields)
+    tmp = [squeeze(mean(mixd.(opts.statfields{i}),2)) squeeze(mean(osci.(opts.statfields{i}),2)) ...
+        mean(ple.(opts.statfields{i}),2) mean(bb.(opts.statfields{i}),2) ...
+        ones(size(mean(ple.(opts.statfields{i}),2)))*i];
+    data = cat(1,data,tmp);
 end
 
-%[~,~,stats_mixd] = mnrfit(zscore(data{:,1:size(fbands,1)},[],1),data.Condition,'model','nominal');
+if strcmpi(opts.paired,'yes') %adding subjects for random effects
+    data = cat(2,data,repmat([1:size(tmp,1)]',length(fields),1));
+end
 
-%[~,~,stats_oscifrac] = mnrfit(zscore(data{:,(1+size(fbands,1)):(7+size(fbands,1))},[],1),data.Condition,'model','nominal');
+if strcmpi(opts.paired,'yes')
+    varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
+        cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition' 'Subject'}];
+else
+    varnames = [cellcat('Mixd_',opts.fbandnames,'',0) ...
+        cellcat('Osci_',opts.fbandnames,'',0) {'PLE' 'Frac_BB' 'Condition'}];
+end
+
+data = array2table(data,'VariableNames',varnames);
+
+mixnames = cellcat('+',cellcat('Mixd_',opts.fbandnames,'',0),'',1);
+mixnames = [mixnames{:}];
+mixnames(end) = [];
+
+oscinames = cellcat('+',cellcat('Osci_',opts.fbandnames,'',0),'',1);
+oscinames = [oscinames{:}];
+
+frmla1 = ['Condition ~ ' mixnames];
+frmla2 = ['Condition ~ ' oscinames 'PLE+Frac_BB'];
+
+if strcmpi(opts.paired, 'yes')
+    frmla1 = [frmla1 '+(1|Subject)-1'];
+    frmla2 = [frmla2 '+(1|Subject)-1'];
+end
+
+if strcmpi(opts.paired,'yes')
+    data{:,1:end-2} = zscore(data{:,1:end-2},[],1);
+else
+    data{:,1:end-1} = zscore(data{:,1:end-1},[],1);
+end
+
+if strcmpi(opts.paired,'yes')
+    for c = 1:size(fbands,1)
+        %         t = rm_anova2(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
+        %            cat(1,data.Subject,data.Subject),cat(1,data.Condition,data.Condition),...
+        %            Make_designVect([height(data) height(data)])',{'Condition','Oscifrac'});
+        %                 pvals.p_dif_irasa(c) = t{4,6};
+        
+        t = Permtest_rmanova2(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
+            cat(1,data.Subject,data.Subject),cat(1,data.Condition,data.Condition),...
+            Make_designVect([height(data) height(data)])',{'Condition','Oscifrac'},1000);
+        pvals.p_dif_irasa(c) = t(end);
+        
+        
+        if length(fields) > 2
+            tbl2 = [];
+            for cc = 1:length(fields)
+                tbl2 = [tbl2 mean(mixd.(fields{cc})(:,:,c),2)];
+            end
+            pvals.p_mixd(c) = friedman(tbl2,1,'off');
+            
+            pvals.p_mixd_mcompare(:,:,c) = mcompare_bfholm(tbl2,@signrank);
+            
+            tbl2 = [];
+            for cc = 1:length(fields)
+                tbl2 = [tbl2 mean(osci.(fields{cc})(:,:,c),2)];
+            end
+            pvals.p_osci(c) = friedman(tbl2,1,'off');
+            
+            pvals.p_osci_mcompare(:,:,c) = mcompare_bfholm(tbl2,@signrank);
+            
+            
+        else
+            pvals.p_mixd(c) = signrank(mean(mixd.(fields{1})(:,:,c),2),mean(mixd.(fields{2})(:,:,c),2));
+            pvals.p_osci(c) = signrank(mean(osci.(fields{1})(:,:,c),2),mean(osci.(fields{2})(:,:,c),2));
+        end
+    end
+    
+    if length(fields) > 2
+        tbl2 = [];
+        for cc = 1:length(fields)
+            tbl2 = [tbl2 mean(ple.(fields{cc}),2)];
+        end
+        pvals.p_ple = friedman(tbl2,1,'off');
+        
+        pvals.p_ple_mcompare = mcompare_bfholm(tbl2,@signrank);
+        
+        tbl2 = [];
+        for cc = 1:length(fields)
+            tbl2 = [tbl2 mean(bb.(fields{cc}),2)];
+        end
+        pvals.p_bb = friedman(tbl2,1,'off');
+        
+        pvals.p_bb_mcompare = mcompare_bfholm(tbl2,@signrank);
+        
+    else
+        pvals.p_ple = signrank(mean(ple.(fields{1}),2),mean(ple.(fields{2}),2));
+        pvals.p_bb = signrank(mean(bb.(fields{1}),2),mean(bb.(fields{2}),2));
+    end
+else
+    for c = 1:size(fbands,1)
+        %[~,t] = anovan(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
+        %    {Make_designVect([height(data) height(data)])',cat(1,data.Condition,data.Condition)},'model','interaction');
+        %pvals.p_dif_irasa(c) = t{4,7};
+        t = Permtest_anovan(cat(1,data.(['Mixd_' opts.fbandnames{c}]),data.(['Osci_' opts.fbandnames{c}])),...
+            {Make_designVect([height(data) height(data)])',cat(1,data.Condition,data.Condition)},1000);
+        pvals.p_dif_irasa(c) = t(end);
+        pvals.p_mixd(c) = ranksum(mean(mixd.(fields{1})(:,:,c),2),mean(mixd.(fields{2})(:,:,c),2));
+        pvals.p_osci(c) = ranksum(mean(osci.(fields{1})(:,:,c),2),mean(osci.(fields{2})(:,:,c),2));
+    end
+    
+    pvals.p_ple = ranksum(mean(ple.(fields{1}),2),mean(ple.(fields{2}),2));
+    pvals.p_bb = ranksum(mean(bb.(fields{1}),2),mean(bb.(fields{2}),2));
+end
+
+% %% Do multiple comparison correction across the whole dataset
+%
+% pfields = fieldnames(pvals);
+% for c = 1:length(pfields)
+%
+% end
 
 %% Plotting the figure
+
+for c = 1:length(fields)
+    spec.(fields{c}) = mergestructs(spec.(fields{c}));
+    spec.(fields{c}) = structfun(@(data)nanmean(data,3),spec.(fields{c}),'UniformOutput',false);
+end
+
 p = panel('no-manage-font');
 
-p.pack('v',{40 60})
+pos = get(gcf,'position');
+set(gcf,'position',[pos(1:2) pos(3)*3 pos(4)*3],'color','w');
 
-p(1).select()
+p.de.margin = [5 5 5 5];
+
+%fix margins
+p.marginleft = 18;
+p.margintop = 8;
+
+p.pack('h',{1/3 2/3})
+
+%p(1).pack('v',{1/2 1/2})
+p(1).pack('v',{40 30 30})
+%p(1,1).marginbottom = 24;
+p(1,2).pack('h',{1/2 1/2})
+
+cmap = lines;
+
+
+p(1,1).select()
+hold on
+for c = 1:length(fields)
+    if strcmpi(opts.powermode,'abs')
+        loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).mixd(frange,:),2),'LineWidth',1.5)
+    else
+        loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).mixd(frange,:),2)./...
+            nanmean(nanmean(spec.(fields{c}).mixd(frange,:))),'LineWidth',1.5)
+    end
+end
+legend(fields)
+FixAxes(gca,12)
+title('Mixed power spectrum')
+xlabel('Frequency (Hz)')
+ylabel('Power')
+set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
+
+p(1,2,1).select()
+hold on
+for c = 1:length(fields)
+    if strcmpi(opts.powermode,'abs')
+    plot(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2),'LineWidth',1.5)
+    else
+         plot(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2)./...
+            nanmean(nanmean(spec.(fields{c}).mixd(frange,:))),'LineWidth',1.5) 
+    end
+end
+FixAxes(gca,12)
+title('Oscillatory power spectrum')
+xlabel('Frequency (Hz)')
+ylabel('Power')
+set(gca,'XLim',opts.frange_ple)
+
+p(1,2,2).select()
+hold on
+for c = 1:length(fields)
+    if strcmpi(opts.powermode,'abs')
+    loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).frac(frange,:),2),'LineWidth',1.5)
+    else
+               loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).frac(frange,:),2)./...
+            nanmean(nanmean(spec.(fields{c}).mixd(frange,:))),'LineWidth',1.5) 
+    end
+end
+FixAxes(gca,12)
+title('Fractal power spectrum')
+xlabel('Frequency (Hz)')
+ylabel('Power')
+set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
+
+
+%p(2,1).pack(2,6)
+%p(2,2).pack(2,6)
+%p(2,2).pack('h',{1/6 1/6 1/6 1/6 1/6 1/6})
+
+plotstruct = struct;
+for c = 1:length(fields)
+    plotstruct.(fields{c}) = [];
+end
+
+fbandnames = opts.fbandnames;
+%ple_fbands = {'2-8 Hz','8-13 Hz','13-50 Hz'};
+%ple_fbands = {'2-50 Hz'};
+
+% if ~exist('plotstats','var')
+%     plotstats = cell(2,6);
+% end
+
+% if ~strcmpi(statfun,'ft_statfun_friedman') && ~strcmpi(statfun,'ft_statfun_kruskal')
+%     numstat = 2;
+% else
+%     numstat = length(fields);
+% end
+
+p(1,3).select()
+for c = 1:size(fbands,1)
+    for cc = 1:length(fields)
+        plotstack(c,cc,1) = nanmean(nanmean(absfrac.(fields{cc})(:,:,c),2),1);
+        plotstack(c,cc,2) = nanmean(nanmean(absosci.(fields{cc})(:,:,c),2),1);
+        %plotstack(c,cc,2) = nanmean(nanmean(linfrac.(fields{cc})(:,:,c),2),1);
+        %plotstack(c,cc,3) = nanmean(nanmean(resfrac.(fields{cc})(:,:,c),2),1);
+    end
+end
+
 for c = 1:size(fbands,1)
     for cc = 1:length(fields)
         plotstack(c,cc,1) = nanmean(nanmean(absfrac.(fields{cc})(:,:,c),2),1);
@@ -210,8 +348,8 @@ end
 [h,barpos] = plotBarStackGroups(plotstack,opts.fbandnames,col);
 hold on;
 for cc = 1:length(fields)
-    if size(absmixd.(fields{cc}),1) > 1
-        er = errorbar(barpos(cc,:),mixsum(:,cc),squeeze(nanstd(nanmean(absmixd.(fields{cc}),2),[],1)));
+    if size(mixd.(fields{cc}),1) > 1
+        er = errorbar(barpos(cc,:),mixsum(:,cc),squeeze(nanstd(nanmean(absmixd.(fields{cc}),2),[],1)./sqrt(size(absmixd.(fields{cc}),1))));
         er.Color = [0 0 0];
         er.LineStyle = 'none';
     end
@@ -221,58 +359,209 @@ FixAxes(gca,14)
 ylabel('Power')
 set(gca,'YScale','log')
 
-p(2).pack('h',{35 45 20})
-%pris = prism;
-%pris = pris(5:10,:);
-pris = lines;
-pris = pris(2:7,:);
-plot_mixnames = cellcat('Mixed ',opts.fbandnames,'',0);
-p(2,1).select()
-for c = 1:size(stats_mixd.beta,2)
-    scatter((1:size(stats_mixd.beta(:,c),1))+c*0.15-0.15,stats_mixd.beta(:,c),36,pris(c,:),'HandleVisibility','off');
-    hold on
-    er = errorbar((1:size(stats_mixd.beta(:,c),1))+c*0.15-0.15,stats_mixd.beta(:,c),...
-        stats_mixd.ci(:,1,c)-stats_mixd.beta(:,c),abs(stats_mixd.ci(:,2,c)-stats_mixd.beta(:,c)),...
-        'LineStyle','none','Color',pris(c,:),'LineWidth',2);
+
+p(2).pack('v',{75 25})
+p(2,1).pack('v',{50 50})
+p(2,2).pack('h',{50 50})
+p(2,2).de.margin = [10 10 5 5];
+
+%p(2,2,1).pack('v',{50 50})
+
+l = lines;
+
+p(2,1,1).select()
+
+
+%scalefact = 0.8/length(fields);
+h = cell(1,length(fields));
+
+if length(fields) == 2
+    s = 2;
+else
+    s = 3;
 end
-xax = get(gca,'XLim');
-line(xax,[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5])
-set(gca,'XLim',xax+[-0.1 0.1],'XTick',...
-    (1:size(stats_mixd.beta(:,:),1))+(size(stats_mixd.beta,2)*0.15-0.15)/2,'XTickLabel',plot_mixnames)
-ylabel('Coefficient')
-legend(cellcat('Likelihood ',cellcat(opts.statfields{1},opts.statfields(2:end),'-',0),'',0))
-FixAxes(gca,14)
-fix_xticklabels(gca,0.1,{'FontSize',12})
-
-plot_oscifracnames = [cellcat('Osci ',opts.fbandnames,'',0) {'Frac PLE','Frac broadband'}];
-p(2,2).select()
-for c = 1:size(stats_mixd.beta,2)
-    scatter((1:size(stats_oscifrac.beta(:,c),1))+c*0.15-0.15,stats_oscifrac.beta(:,c),36,pris(c,:),'HandleVisibility','off');
-    hold on
-    er = errorbar((1:size(stats_oscifrac.beta(:,c),1))+c*0.15-0.15,stats_oscifrac.beta(:,c),...
-        stats_oscifrac.ci(:,1,c)-stats_oscifrac.beta(:,c),...
-        abs(stats_oscifrac.ci(:,2,c)-stats_oscifrac.beta(:,c)),...
-        'LineStyle','none','Color',pris(c,:),'LineWidth',2);
+for c = 1:length(fields)
+    %     tmpstruct = mixd;
+    %     for cc = 1:length(fields)
+    %         tmpstruct.(fields{cc}) = tmpstruct.(fields{cc})(:,:,c);
+    %     end
+    %     violinplot(tmpstruct)
+    plotdata = mean(mixd.(fields{c}),2);
+    plotdata(find(plotdata <= 0)) = min(min(plotdata));
+    h{c} = notBoxPlot(squeeze(log10(plotdata)),(1:s:s*size(fbands,1))+((c-1)*0.4));
+    for cc = 1:size(fbands,1)
+        set(h{c}(cc).sdPtch,'FaceColor',palel(c,:),'EdgeColor',palel(c,:).*0.75,'HandleVisibility','off')
+        set(h{c}(cc).semPtch,'FaceColor',l(c,:),'EdgeColor',l(c,:).*0.75,'HandleVisibility','off')
+        set(h{c}(cc).mu,'Color',[0 0 0],'HandleVisibility','off')
+        set(h{c}(cc).data,'HandleVisibility','off')
+    end
+    set(h{c}(1).semPtch,'HandleVisibility','on')
 end
-xax = get(gca,'XLim');
-line(xax,[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5])
-set(gca,'XLim',xax+[-0.1 0.1],'XTick',...
-    (1:length(stats_oscifrac.beta(2:end)))+(size(stats_oscifrac.beta,2)*0.15-0.15)/2,'XTickLabel',plot_oscifracnames)
-ylabel('Coefficient')
-legend(cellcat('Likelihood ',cellcat(opts.statfields{1},opts.statfields(2:end),'-',0),'',0))
-FixAxes(gca,14)
-fix_xticklabels(gca,0.1,{'FontSize',12})
+xl = get(gca,'XLim');
+set(gca,'XLim',[0.5 max(xl)])
 
-p(2,3).select()
-scatter([1,2],[newcmpare.elpd_mixd newcmpare.elpd_oscifrac],72,[0 0 0],'x','LineWidth',2);
-hold on
-errorbar([1 2],[newcmpare.elpd_mixd newcmpare.elpd_oscifrac],4*[newcmpare(1).elpd_mixd_se newcmpare(1).elpd_oscifrac_se],'LineStyle','none','Color',[0 0 0],'LineWidth',2)
-set(gca,'XLim',get(gca,'XLim')+[-0.1 0.1])
-set(gca,'XTick',[1 2],'XTickLabel',{'Mixed power','IRASA decomposition'})
-ylabel('Expected Log Predictive Density')
-FixAxes(gca,14)
-fix_xticklabels(gca,0.1,{'FontSize',12})
+if length(fields) == 2
+    %hard coded for now
+    barlocs = {[1 1.4],[3 3.4],[5 5.4],[7 7.4]};
+    sigstar(barlocs(find(pvals.p_mixd < 0.05)),pvals.p_mixd(find(pvals.p_mixd < 0.05)),0,18)
+else
+    for c = 1:size(fbands,1)
+        barpos = (1+s*(c-1)):0.4:(1+s*(c-1)+0.4*(length(fields)-1));
+        barmat = cat(3,repmat(barpos,5,1),repmat(barpos',1,5));
+        barcell = mat2cell(barmat,ones(5,1),ones(5,1),2);
+        barcell = cellfun(@squeeze,barcell,'UniformOutput',false);
+        tmpp = pvals.p_mixd_mcompare(:,:,c);
+        tmpp = tmpp(find(belowDiag(ones(5))));
+        barcell = barcell(find(belowDiag(ones(5))));
+        barcell = barcell(find(tmpp < 0.05));
+        tmpp = tmpp(find(tmpp < 0.05));
+        sigstar(barcell,tmpp,0,18);
+    end
+end
 
-p.marginleft = 24;
-p.marginbottom = 18;
+ax = gca;
+ax.XAxis.Visible = 'off';
+
+ylabel('Log mixed power')
+legend(fields)
+FixAxes(gca,14)
+
+p(2,1,2).select()
+for c = 1:length(fields)
+    %     tmpstruct = mixd;
+    %     for cc = 1:length(fields)
+    %         tmpstruct.(fields{cc}) = tmpstruct.(fields{cc})(:,:,c);
+    %     end
+    %     violinplot(tmpstruct)
+    plotdata = mean(osci.(fields{c}),2);
+    plotdata(find(plotdata <= 0)) = min(min(plotdata(find(plotdata > 0)))); % fix this later
+    h{c} = notBoxPlot(squeeze(log10(plotdata)),(1:s:s*size(fbands,1))+((c-1)*0.4));
+    for cc = 1:size(fbands,1)
+        set(h{c}(cc).sdPtch,'FaceColor',palel(c,:),'EdgeColor',palel(c,:).*0.75,'HandleVisibility','off')
+        set(h{c}(cc).semPtch,'FaceColor',l(c,:),'EdgeColor',l(c,:).*0.75,'HandleVisibility','off')
+        set(h{c}(cc).mu,'Color',[0 0 0],'HandleVisibility','off')
+        set(h{c}(cc).data,'HandleVisibility','off')
+    end
+    set(h{c}(1).semPtch,'HandleVisibility','on')
+end
+xl = get(gca,'XLim')
+set(gca,'XLim',[0.5 max(xl)])
+
+if length(fields) == 2
+    %hard coded for now
+    barlocs = {[1 1.4],[3 3.4],[5 5.4],[7 7.4]};
+    sigstar(barlocs(find(pvals.p_osci < 0.05)),pvals.p_osci(find(pvals.p_osci < 0.05)),0,18)
+else
+    for c = 1:size(fbands,1)
+        barpos = (1+s*(c-1)):0.4:(1+s*(c-1)+0.4*(length(fields)-1));
+        barmat = cat(3,repmat(barpos,5,1),repmat(barpos',1,5))
+        barcell = mat2cell(barmat,ones(5,1),ones(5,1),2);
+        barcell = cellfun(@squeeze,barcell,'UniformOutput',false);
+        tmpp = pvals.p_osci_mcompare(:,:,c);
+        tmpp = tmpp(find(belowDiag(ones(5))));
+        barcell = barcell(find(belowDiag(ones(5))));
+        barcell = barcell(find(tmpp < 0.05));
+        tmpp = tmpp(find(tmpp < 0.05));
+        sigstar(barcell,tmpp,0,18);
+    end
+end
+
+set(gca,'XTick',(1:s:s*size(fbands,1))+(0.4*(length(fields)-1)/2),'XTickLabel',opts.fbandnames)
+
+ylabel('Log oscillatory power')
+FixAxes(gca,14)
+
+
+p(2,2,1).select()
+if strcmpi(opts.paired,'yes')
+    plotstruct = table;
+end
+for cc = 1:length(fields)
+    plotstruct.(fields{cc}) = squeeze(nanmean(ple.(fields{cc}),2));
+end
+clear h
+if strcmpi(opts.paired,'yes')
+    h=notBoxPlot(plotstruct{:,:})
+else
+    h(1) = notBoxPlot(plotstruct.(fields{1}),1);
+    h(2) = notBoxPlot(plotstruct.(fields{2}),2);
+end
+for c = 1:length(fields)
+    set(h(c).sdPtch,'FaceColor',palel(c,:),'EdgeColor',palel(c,:).*0.75,'HandleVisibility','off')
+    set(h(c).semPtch,'FaceColor',l(c,:),'EdgeColor',l(c,:).*0.75)
+    set(h(c).mu,'Color',[0 0 0],'HandleVisibility','off')
+end
+if length(fields) == 2
+    sigstar({[1 2]},pvals.p_ple,0,18)
+else
+    barpos = 1:length(fields);
+    barmat = cat(3,repmat(barpos,5,1),repmat(barpos',1,5))
+    barcell = mat2cell(barmat,ones(5,1),ones(5,1),2);
+    barcell = cellfun(@squeeze,barcell,'UniformOutput',false);
+    tmpp = pvals.p_ple_mcompare;
+    tmpp = tmpp(find(belowDiag(ones(5))));
+    barcell = barcell(find(belowDiag(ones(5))));
+    barcell = barcell(find(tmpp < 0.05));
+    tmpp = tmpp(find(tmpp < 0.05));
+    sigstar(barcell,tmpp,0,18);
+end
+%violinplot(plotstruct)
+title('Fractal PLE')
+set(gca,'XTickLabel',fields)
+ylabel('PLE')
+FixAxes(gca,14)
+
+p(2,2,2).select()
+if strcmpi(opts.paired,'yes')
+    plotstruct = table;
+end
+for cc = 1:length(fields)
+    plotstruct.(fields{cc}) = squeeze(nanmean(bb.(fields{cc}),2));
+end
+clear h
+if strcmpi(opts.paired,'yes')
+    h=notBoxPlot(plotstruct{:,:})
+else
+    h(1) = notBoxPlot(plotstruct.(fields{1}),1);
+    h(2) = notBoxPlot(plotstruct.(fields{2}),2);
+end
+for c = 1:length(fields)
+    set(h(c).sdPtch,'FaceColor',palel(c,:),'EdgeColor',palel(c,:).*0.75,'HandleVisibility','off')
+    set(h(c).semPtch,'FaceColor',l(c,:),'EdgeColor',l(c,:).*0.75)
+    set(h(c).mu,'Color',[0 0 0],'HandleVisibility','off')
+end
+if length(fields) == 2
+    sigstar({[1 2]},pvals.p_bb,0,18)
+else
+    barpos = 1:length(fields);
+    barmat = cat(3,repmat(barpos,5,1),repmat(barpos',1,5))
+    barcell = mat2cell(barmat,ones(5,1),ones(5,1),2);
+    barcell = cellfun(@squeeze,barcell,'UniformOutput',false);
+    tmpp = pvals.p_bb_mcompare;
+    tmpp = tmpp(find(belowDiag(ones(5))));
+    barcell = barcell(find(belowDiag(ones(5))));
+    barcell = barcell(find(tmpp < 0.05));
+    tmpp = tmpp(find(tmpp < 0.05));
+    sigstar(barcell,tmpp,0,18);
+end
+title('Fractal broadband power')
+set(gca,'XTickLabel',fields)
+ylabel('Fractal broadband power')
+FixAxes(gca,14)
+
+
+% pvals = struct;
+% pvals.pvals.p_irasa_dif = pvals.p_dif_irasa;
+% pvals.pvals.p_mixd = pvals.p_mixd;
+% pvals.pvals.p_osci = pvals.p_osci;
+% pvals.pvals.p_ple = pvals.p_ple;
+% pvals.pvals.p_bb = pvals.p_bb;
+%
+% if length(fields) > 2
+%    pvals.pvals.p_mixd_mcompare = pvals.p_mixd_mcompare;
+%    pvals.pvals.p_osci_mcompare = pvals.p_osci_mcompare;
+%    pvals.pvals.p_ple_mcompare = pvals.p_ple_mcompare;
+%    pvals.pvals.p_bb_mcompare = pvals.p_bb_mcompare;
+% end
+
 
