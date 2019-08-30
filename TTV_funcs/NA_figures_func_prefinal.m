@@ -277,13 +277,14 @@ p = panel('no-manage-font');
 pos = get(gcf,'position');
 set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)*3.5],'Color','w');
 
-p.pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
+p.pack('v',{50 50});
+p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 for c = 1:settings.nfreqs
-    p(c).pack();
+    p(1,c).pack();
     for cc = 1:4
-        p(c).pack({[0.25*(cc-1) 0 0.25 0.15]})
+        p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
     end
-    p(c,1).select();
+    p(1,c,1).select();
     plotband = c;
     
     t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
@@ -315,7 +316,7 @@ for c = 1:settings.nfreqs
     plotindx = round(plotindx);
     plotindx(1) = [];
     for cc = 1:4
-        p(c,cc+1).select()
+        p(1,c,cc+1).select()
         plotdata = mean(allmeas{c}.ttversp.real(:,plotindx(cc),:),3);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
@@ -328,7 +329,7 @@ for c = 1:settings.nfreqs
         if cc == 4
             cbars1(c) = colorbar;
         end
-        ax(cc) = p(c,cc+1).axis;
+        ax(cc) = p(1,c,cc+1).axis;
         title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
         Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
     end
@@ -336,38 +337,16 @@ for c = 1:settings.nfreqs
 end
 clear ax
 
-for c = 1:settings.nfreqs
-    ax1(c) = p(c,1).axis;
-    cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
-
-    p(c,1).select()
-    Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
-end
-
-p.de.margin = [5 5 5 5];
-p.marginleft = 24;
-p.marginbottom = 25;
-p.margintop = 8;
-p.marginright = 10;
-p.de.marginleft = 18;
-
-%% Figure 4: Method correlation
-
-figure
-
-p = panel('no-manage-font')
-
-
-p.pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
+p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 alloutputs.ersp.corr.r = real(alloutputs.ersp.corr.r);
 for c = 1:settings.nfreqs
-    p(c).pack()
-    p(c).pack({[0 0.7 0.5 0.3]})
+    p(2,c).pack()
+    p(2,c).pack({[0 0.7 0.5 0.3]})
     if ~isempty(find(~isnan(alloutputs.ersp.corr.r(:,c)))) && ~isempty(find(alloutputs.ersp.corr.r(:,c)))
-    p(c,1).select()
+    p(2,c,1).select()
     nicecorrplot(nanmean(allmeas{c}.naerspindex,1),nanmean(allmeas{c}.ttverspindex,1),{['Pseudotrial-based' newline 'ERSP nonadditivity'],'TTV-based ERSP nonadditivity'});
     FixAxes(gca,14)
-    p(c,2).select()
+    p(2,c,2).select()
     if strcmpi(settings.datatype,'MEG')
         if isempty(find(~isnan(alloutputs.ersp.corr.r(:,c))))
             alloutputs.ersp.corr.r(:,c) = zeros(size(alloutputs.ersp.corr.r(:,c)));
@@ -384,8 +363,8 @@ for c = 1:settings.nfreqs
     colormap(lkcmap2)
     cbars2(c) = colorbar('EastOutside');
     FixAxes(gca,14)
-    ax(c) = p(c,2).axis;
-    ax2(c) =p(c,1).axis;
+    ax(c) = p(2,c,2).axis;
+    ax2(c) =p(2,c,1).axis;
     end
     %cbar(c).Position = [ax2(c).Position(1)+ax2(c).Position(3)-cbar(c).Position(3) ax2(c).Position(2) cbar(c).Position(3) cbar(c).Position(4)];
 end
@@ -397,14 +376,26 @@ p.marginleft = 24;
 p.marginbottom = 25;
 p.margintop = 8;
 p.marginright = 10;
-p.de.marginleft = 24;
+p(1).marginbottom = 18;
+p(1).de.marginleft = 18;
+p(2).de.marginleft = 24;
 % fix margins here
 
-for c = 1:settings.nfreqs
-    ax2(c) = p(c,1).axis;
-    cbars2(c).Position = [ax2(c).Position(1)+0.8*ax2(c).Position(3) ax2(c).Position(2)+0.7*ax2(c).Position(4) 0.07*ax2(c).Position(3) 0.28*ax2(c).Position(4)];
+AddFigureLabel(p(1,1,1).axis,'A')
+AddFigureLabel(p(2,1,1).axis,'B')
+
+for c = 1:length(ax)
+    ax1(c) = p(2,c,1).axis;
+    cbars2(c).Position = [ax1(c).Position(1)+0.8*ax1(c).Position(3) ax1(c).Position(2)+0.7*ax1(c).Position(4) 0.07*ax1(c).Position(3) 0.28*ax1(c).Position(4)];
+    ax2(c) = p(1,c,1).axis;
+    cbars1(c).Position = [ax2(c).Position(1)+ax2(c).Position(3) ax2(c).Position(2) cbars1(c).Position(3) 0.15*ax2(c).Position(4)];
 end
-Normalize_Ylim(ax2)
+Normalize_Ylim(ax1)
+
+for c = 1:settings.nfreqs
+   p(1,c,1).select()
+   Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
+end
 
 set(gcf,'Color','w')
 
@@ -568,38 +559,39 @@ savefig('Fig4.fig')
 export_fig('Fig4.png','-m4')
 save('Panel4.mat','p')
 close
-
+%
 
 %% Figure 5: Resting state
-if isfield(settings,'rest')
-    mainfig = figure;
-    
-    pos = get(gcf,'position');
-    set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
-    
-    p = panel('no-manage-font');
-    p.pack('v',{40 60});
-    
-    pwidth = ceil((settings.nfreqs-1)/2);
-    %p(1).pack(2,pwidth);
+
+% if isfield(settings,'rest')
+%     mainfig = figure;
+%         
+%     pos = get(gcf,'position');
+%     set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+%     
+%     p = panel('no-manage-font');
+%     p.pack('v',{25 25 40});
+%     
+%     pwidth = ceil((settings.nfreqs-1)/2);
+%     p(1).pack(2,pwidth);
 %     p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
 %     
-%     %plotindx = [1:pwidth 1:pwidth];
+%     plotindx = [1:pwidth 1:pwidth];
 %     for c = 2:settings.nfreqs
-%         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
 %         p(1,c-1).pack()
-%         %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
 %         p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
 %         
 %         
-%         %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
 %         p(1,c-1,1).select()
 %         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
 %         FixAxes(gca,14)
 %         title(settings.tfparams.fbandnames{c})
 %         
 %         
-%         %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+%         p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
 %         p(1,c-1,2).select()
 %         if strcmpi(settings.datatype,'MEG')
 %             ft_cluster_topoplot(settings.layout,restmeas.rel_bp.index.r.subject(:,c),settings.datasetinfo.label,...
@@ -609,32 +601,142 @@ if isfield(settings,'rest')
 %                 restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
 %         end
 %         cbar = colorbar('WestOutside');
-%         %cbar.Label.FontSize = 12;
-%         %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+%         cbar.Label.FontSize = 12;
+%         ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
 %         ax(c-1) = p(1,c-1,2).axis;
 %     end
-%     %cbar.Label.String = 'Spearman''s rho';
-%     %cbar.Label.FontSize = 14;
+%     cbar.Label.String = 'Spearman''s rho';
+%     cbar.Label.FontSize = 14;
 %     colormap(lkcmap2)
 %     Normalize_Clim(ax,1);
+%     
+%     p(2).pack(2,pwidth);
+%     p(2).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+%     
+%     for c = 2:settings.nfreqs
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+%         if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
+%         p(2,c-1).pack();
+%         p(2,c-1).pack({[0.7 0.7 0.3 0.3]})
+%         
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+%         p(2,c-1,1).select()
+%         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.naerspindex,1),{'Resting-state relative power','ERSP nonadditivity'})
+%         FixAxes(gca,14)
+%         
+%         p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+%         p(2,c-1,2).select()
+%         restmeas.rel_bp.naindex.r.subject = real(restmeas.rel_bp.naindex.r.subject);
+%         if strcmpi(settings.datatype,'MEG')
+%             ft_cluster_topoplot(settings.layout,real(restmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
+%                 restmeas.rel_bp.naindex.p.subject(:,c),restmeas.rel_bp.naindex.stats{c}.mask);
+%         else
+%             cluster_topoplot(real(restmeas.rel_bp.index.r.subject(:,c)),settings.layout,...
+%                 restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
+%         end
+%         title(settings.tfparams.fbandnames{c})
+%         cbar = colorbar('WestOutside');
+%         set(cbar,'peer',gca,'FontSize',12);
+%         ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+%         ax(c-1) = p(2,c-1,2).select();
+%         end
+%     end
+%     cbar.Label.String = 'Spearman''s rho';
+%     cbar.Label.FontSize = 14;
+%     colormap(lkcmap2)
+%     Normalize_Clim(ax,1);
+%     
+%     close(mediationfig);
+%     fix margins here
+%     p.de.margin = [5 5 5 5];
+%     p.marginleft = 22;
+%     p.margintop = 8;
+%     p.marginbottom = 8;
+%     p(1).de.marginleft = 18;
+%     p(1).marginbottom = 18;
+%     p(2).de.marginleft = 22;
+%     p(2).marginbottom = 14;
+%     
+%     
+%     AddFigureLabel('A',p(1,1,1,1).axis);
+%     AddFigureLabel('B',p(2,1,1,1).axis);
+%     AddFigureLabel(p(1,1,1).axis,'A');
+%     AddFigureLabel(p(2,1,1).axis,'B');
+%     AddFigureLabel(p(3).axis,'C');
+%     
+%     set(gcf,'Color','w')
+%     
+%     savefig('Fig5.fig')
+%     export_fig('Fig5.png','-m4')
+%     save('Panel5.mat','p')
+% end
+
+% %% Figure 5: Resting state
+if isfield(settings,'rest')
+    mainfig = figure;
+    
+    pos = get(gcf,'position');
+    set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*3],'Color','w');
+    
+    p = panel('no-manage-font');
+    p.pack('v',{30 30 40});
+    
+    pwidth = ceil((settings.nfreqs-1)/2);
+    %p(1).pack(2,pwidth);
+    p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+    
+    %plotindx = [1:pwidth 1:pwidth];
+    for c = 2:settings.nfreqs
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack()
+        p(1,c-1).pack()
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
+        p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+        
+        
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1),1).select();
+        p(1,c-1,1).select()
+        nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.erspindex,1),{'Resting-state relative power','ERSP AUC'})
+        FixAxes(gca,14)
+        title(settings.tfparams.fbandnames{c})
+        
+        
+        %p(1,ceil((c-1)/pwidth),plotindx(c-1),2).select();
+        p(1,c-1,2).select()
+        if strcmpi(settings.datatype,'MEG')
+            ft_cluster_topoplot(settings.layout,restmeas.rel_bp.index.r.subject(:,c),settings.datasetinfo.label,...
+                restmeas.rel_bp.index.p.subject(:,c),restmeas.rel_bp.index.stats{c}.mask);
+        else
+            cluster_topoplot(restmeas.rel_bp.index.r.subject(:,c),settings.layout,...
+                restmeas.rel_bp.index.p.subject(:,c),(restmeas.rel_bp.index.stats{c}.mask));
+        end
+        cbar = colorbar('WestOutside');
+        %cbar.Label.FontSize = 12;
+        %ax(c-1) = p(1,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
+        ax(c-1) = p(1,c-1,2).axis;
+    end
+    %cbar.Label.String = 'Spearman''s rho';
+    %cbar.Label.FontSize = 14;
+    colormap(lkcmap2)
+    Normalize_Clim(ax,1);
     
     %p(2).pack(2,pwidth);
-    p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+    p(2).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
     
     for c = 2:settings.nfreqs
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
         if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
-        p(1,c-1).pack();
-        p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+        p(2,c-1).pack();
+        p(2,c-1).pack({[0.7 0.7 0.3 0.3]})
         
         %p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
-        p(1,c-1,1).select()
+        p(2,c-1,1).select()
         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.naerspindex,1),{'Resting-state relative power','ERSP nonadditivity'})
         FixAxes(gca,14)
         
         %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
-        p(1,c-1,2).select()
+        p(2,c-1,2).select()
         restmeas.rel_bp.naindex.r.subject = real(restmeas.rel_bp.naindex.r.subject);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,real(restmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
@@ -647,7 +749,7 @@ if isfield(settings,'rest')
         cbar = colorbar('WestOutside');
         %set(cbar,'peer',gca,'FontSize',12);
         %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
-        ax(c-1) = p(1,c-1,2).select();
+        ax(c-1) = p(2,c-1,2).select();
         end
     end
     %cbar.Label.String = 'Spearman''s rho';
@@ -669,7 +771,7 @@ if isfield(settings,'rest')
     mediationfig = gcf;
     figaxes = findobj('Parent',gcf,'Type','axes');
     
-    p(2).select(figaxes)
+    p(3).select(figaxes)
     
     close(mediationfig);
     %fix margins here
@@ -677,15 +779,19 @@ if isfield(settings,'rest')
     p.marginleft = 22;
     p.margintop = 8;
     p.marginbottom = 8;
-    p(1).de.marginleft = 22;
-    p(1).marginbottom = 14;
+    p(1).de.marginleft = 18;
+    p(1).marginbottom = 18;
+    p(2).de.marginleft = 22;
+    p(2).marginbottom = 14;
     
     
     %AddFigureLabel('A',p(1,1,1,1).axis);
     %AddFigureLabel('B',p(2,1,1,1).axis);
-    AddFigureLabel(p(2,1,1).axis,'A');
+    AddFigureLabel(p(1,1,1).axis,'A');
+    AddFigureLabel(p(1,1,1).axis,'Rest-ERSP correlation') %move this manually
+    AddFigureLabel(p(2,1,1).axis,'B');
     AddFigureLabel(p(2,1,1).axis,'Rest-Nonadditivity correlation') % move this manually
-    AddFigureLabel(p(3).axis,'B');
+    AddFigureLabel(p(3).axis,'C');
     
     set(gcf,'Color','w')
     
@@ -742,266 +848,6 @@ set(gcf,'Color','w')
 savefig('Fig6.fig')
 export_fig('Fig6.png','-m4')
 save('Panel6.mat','p')
-
-%% Figure ??: IRASA osci and frac power time course
-% Need allmeas_osci and allmeas_frac, alloutputs_osci and alloutputs_frac
-
-figure
-
-p = panel('no-manage-font');
-
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*3.5 pos(4)*3.5],'Color','w');
-
-p.pack('v',{50 50})
-p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-for c = 1:settings.nfreqs
-    p(1,c).pack();
-    for cc = 1:4
-        p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
-    end
-    p(1,c,1).select();
-    plotband = c;
-    
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-    %prestimdata = nanmean(nanmean(prestimdata,3),1);
-    poststimdata = (allmeas_osci{plotband}.ersp.real);
-    poststimdata = nanmean(nanmean(poststimdata,3),1);
-    %plotdata = [prestimdata poststimdata];
-    plotdata = poststimdata;
-    %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
-    %    zeros(1,length(poststimdata)));
-    hold on
-    stdshade(t,squeeze(nanmedian(allmeas_osci{plotband}.ersp.real,1)),'b',0.15,1,'sem')
-    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
-    
-    title(fbands{c})
-    xlabel('Time (s)')
-    ylabel('% change of ERSP')
-    %ylim = get(gca,'YLim');
-    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
-    %set(gca,'YLim',ylim)
-    FixAxes(gca,14)
-    set(gca,'XLim',[0 max(t)])
-    %set(gca,'FontSize',16)
-    
-    plotindx = linspace(0,max(settings.aucindex),5);
-    plotindx = round(plotindx);
-    plotindx(1) = [];
-    for cc = 1:4
-        p(1,c,cc+1).select()
-        plotdata = mean(allmeas_osci{c}.ersp.real(:,plotindx(cc),:),3);
-        if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        else
-            cluster_topoplot(plotdata,settings.layout,...
-                1-(0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs_osci.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        end
-        colormap(lkcmap2)
-        if cc == 4
-            cbars1(c) = colorbar;
-        end
-        ax(cc) = p(1,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
-        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
-    end
-    Normalize_Clim(ax,1);
-end
-clear ax
-
-for c = 1:settings.nfreqs
-    ax1(c) = p(1,c,1).axis;
-    cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
-
-    %p(1,c,1).select()
-    %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
-end
-
-p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-
-for c = 1:settings.nfreqs
-    p(2,c).pack();
-    for cc = 1:4
-        p(2,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
-    end
-    p(2,c,1).select();
-    plotband = c;
-    
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-    %t = linspace(-length(settings.real.prestim)*(1/settings.srate),length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim)+length(settings.real.prestim));
-    %prestimdata = 100*(allmeas{plotband}.raw.ttversp(:,prestim_real,:)-nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2))./...
-    %    nanmean(allmeas{plotband}.raw.ttversp(:,prestim_real,:),2); %assuming percent change units
-    %prestimdata = nanmean(nanmean(prestimdata,3),1);
-    poststimdata = (allmeas_frac{plotband}.ersp.real);
-    poststimdata = nanmean(nanmean(poststimdata,3),1);
-    %plotdata = [prestimdata poststimdata];
-    plotdata = poststimdata;
-    %FillBetween(t((length(settings.real.prestim)+1):end),poststimdata,...
-    %    zeros(1,length(poststimdata)));
-    hold on
-    stdshade(t,squeeze(nanmedian(allmeas_frac{plotband}.ersp.real,1)),'b',0.15,1,'sem')
-    %plot(t,zeros(1,length(plotdata)),'k--','LineWidth',1.5)
-    
-    title(fbands{c})
-    xlabel('Time (s)')
-    ylabel('% change of TTV of ERSP')
-    %ylim = get(gca,'YLim');
-    %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
-    %set(gca,'YLim',ylim)
-    FixAxes(gca,14)
-    set(gca,'XLim',[0 max(t)])
-    %set(gca,'FontSize',16)
-    
-    plotindx = linspace(0,max(settings.aucindex),5);
-    plotindx = round(plotindx);
-    plotindx(1) = [];
-    for cc = 1:4
-        p(2,c,cc+1).select()
-        plotdata = mean(allmeas_frac{c}.ersp.real(:,plotindx(cc),:),3);
-        if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)),0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        else
-            cluster_topoplot(plotdata,settings.layout,...
-                1-(0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc))),0.*alloutputs_frac.ersp.ttv.stats{c}.mask(:,plotindx(cc)));
-        end
-        colormap(lkcmap2)
-        if cc == 4
-            cbars1(c) = colorbar;
-        end
-        ax(cc) = p(2,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
-        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
-    end
-    Normalize_Clim(ax,1);
-end
-clear ax
-
-for c = 1:settings.nfreqs
-    ax1(c) = p(2,c,1).axis;
-    cbars1(c).Position = [ax1(c).Position(1)+ax1(c).Position(3) ax1(c).Position(2) cbars1(c).Position(3) 0.15*ax1(c).Position(4)];
-
-    %p(1,c,1).select()
-    %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
-end
-
-p.de.margin = [5 5 5 5];
-p.marginleft = 24;
-p.marginbottom = 25;
-p.margintop = 8;
-p.marginright = 10;
-p.de.marginleft = 18;
-
-%% Figure ???: Nonadditivity for IRASA oscillatory vs fractal
-
-
-figure
-
-p = panel('no-manage-font');
-
-pos = get(gcf,'position');
-set(gcf,'position',[pos(1:2) pos(3)*4 pos(4)*4],'Color','w');
-
-p.pack('v',{50 50})
-p(1).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-for c = 1:settings.nfreqs
-        p(1,c).pack();
-    for cc = 1:4
-        p(1,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
-    end
-    p(1,c,1).select();
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-    hold on
-    stdshade(t,squeeze(nanmean(allmeas_osci{c}.naddersp.diff(:,:,1,:),1)),'b',0.15,1,'sem');
-    
-    stdshade(t,squeeze(nanmean(allmeas_osci{c}.naddersp.diff(:,:,2,:),1)),'r',0.15,1,'sem');
-    title(fbands{c})
-    if c == settings.nfreqs
-        legend({'Corrected prestim low','Corrected prestim high'})
-    end
-    xlabel('Time (s)')
-    ylabelunits(settings)
-    FixAxes(gca)
-    set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
-    
-        plotindx = linspace(0,max(settings.aucindex),5);
-    plotindx = round(plotindx);
-    plotindx(1) = [];
-    %tindx =
-    for cc = 1:4
-        p(1,c,cc+1).select()
-        %axes(p(2,c,cc+1).axis)
-        plotdata = nanmedian(squeeze(allmeas_osci{c}.naddersp.diff(:,plotindx(cc),2,:))...
-            - squeeze(allmeas_osci{c}.naddersp.diff(:,plotindx(cc),1,:)),2);
-        if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)),0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
-        else
-            cluster_topoplot(plotdata,settings.layout,...
-                ~(0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc))),0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
-        end
-        colormap(lkcmap2)
-        if cc == 4
-            cbars(c) = colorbar;
-        end
-        ax(cc) = p(1,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
-        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
-    end
-    Normalize_Clim(ax,1);
-end
-
-p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
-for c = 1:settings.nfreqs
-    p(2,c).pack();
-    for cc = 1:4
-        p(2,c).pack({[0.25*(cc-1) 0 0.25 0.15]})
-    end
-    p(2,c,1).select();
-    t = linspace(0,length(settings.real.poststim)*(1/settings.srate),length(settings.real.poststim));
-    hold on
-    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,1,:),1)),'b',0.15,1,'sem');
-    
-    stdshade(t,squeeze(nanmean(allmeas{c}.naddersp.diff(:,:,2,:),1)),'r',0.15,1,'sem');
-    title(fbands{c})
-    if c == settings.nfreqs
-        legend({'Corrected prestim low','Corrected prestim high'})
-    end
-    xlabel('Time (s)')
-    ylabelunits(settings)
-    FixAxes(gca)
-    set(gca,'FontSize',11,'TitleFontSizeMultiplier',1.1)
-    
-        plotindx = linspace(0,max(settings.aucindex),5);
-    plotindx = round(plotindx);
-    plotindx(1) = [];
-    %tindx =
-    for cc = 1:4
-        p(2,c,cc+1).select()
-        %axes(p(2,c,cc+1).axis)
-        plotdata = nanmedian(squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),2,:))...
-            - squeeze(allmeas{c}.naddersp.diff(:,plotindx(cc),1,:)),2);
-        if strcmpi(settings.datatype,'MEG')
-            ft_cluster_topoplot(settings.layout,plotdata,settings.datasetinfo.label,...
-                0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)),0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
-        else
-            cluster_topoplot(plotdata,settings.layout,...
-                ~(0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc))),0.*alloutputs.ersp.pt.stats{c}.mask(:,plotindx(cc)));
-        end
-        colormap(lkcmap2)
-        if cc == 4
-            cbars(c) = colorbar;
-        end
-        ax(cc) = p(2,c,cc+1).axis;
-        title([num2str(plotindx(cc)*(1000/settings.srate)) ' ms'],'FontSize',10)
-        Set_Clim(ax(cc),[prctile(plotdata,20) prctile(plotdata,80)]);
-    end
-    Normalize_Clim(ax,1);
-end
 
 %% Figure 2.5 (or supplement) - pseudotrial-based and ttv-based time course differences?
 
