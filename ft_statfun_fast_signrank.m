@@ -47,9 +47,9 @@ switch cfg.tail
     case 0
         s.critval = [-1.96 1.96];
     case 1
-        s.critval = 1.96;
+        s.critval = 1.645;
     case -1
-        s.critval = -1.96;
+        s.critval = -1.645;
 end
 
 s.df = size(dat,2)-2;

@@ -36,7 +36,7 @@ filesorder = cell(1,length(files));
 rest_fbands = cell(length(files),length(settings.tfparams.fbandnames));
 pf = zeros(1,length(files));
 
-if strcmpi(settings.tfparams.method,'hilbert') || ~isempty(find(contains(settings.steps,'tf_filter')))
+if strcmpi(settings.tfparams.method,'hilbert') || ~isempty(find(contains(settings.steps,'tf_filter'))) || strcmpi(settings.tfparams.method,'irasa')
     prestim_pseudo = settings.pseudo.prestim;
     prestim_real = settings.real.prestim;
     poststim_pseudo = settings.pseudo.poststim;
@@ -58,8 +58,9 @@ parfor i = 1:length(files)
     else
         data = parload(files(i).name,'data');
     end
-    
+    if ~strcmpi(settings.rest.powermode,'irasa')
     data = ft_concat(data);
+end
     
     fbands = settings.tfparams.fbands;
     
@@ -89,7 +90,11 @@ parfor i = 1:length(files)
             rel_bp{i}(c,:) = bp{i}(c,:)./trapz(data.freq(frange_bandpass),data.(settings.rest.oscifrac)(frange_bandpass,:),1);
         end
     end
-    ple{i} = PLE_JF_EEG_wrapper(ft2eeglab(data),settings.rest.bandpass);
+    if ~strcmpi(settings.rest.powermode,'irasa')
+        ple{i} = PLE_JF_EEG_wrapper(ft2eeglab(data),settings.rest.bandpass);
+    else
+        ple{i} = PLE_IRASA_EEG_wrapper(data,settings.rest.bandpass);
+    end
     filesorder{i} = files(i).name;
 end
 if strcmpi(settings.tfparams.pf_adjust,'yes')

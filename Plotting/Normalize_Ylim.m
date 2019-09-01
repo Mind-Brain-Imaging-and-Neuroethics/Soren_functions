@@ -1,4 +1,4 @@
-function [newlim] = Normalize_Clim(fighandle,equal)
+function [newlim] = Normalize_Ylim(fighandle,equal)
 
 if nargin < 2
     equal = 0;

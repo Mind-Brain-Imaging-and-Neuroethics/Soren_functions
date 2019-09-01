@@ -113,13 +113,13 @@ end
 datasetinfo = settings.datasetinfo;
 
 opts = []; opts.nrand = 2000; opts.parpool = 48; opts.minnbchan = 0;
-opts.external = cfg.design;
+%opts.external = cfg.design;
 
 stats_ple = EasyClusterCorrect({permute(pledata.post,[2 1 3]) repmat(mean(pledata.bl,3)',1,1,38)},...
-    datasetinfo,'ft_statfun_signrank',opts);
+    datasetinfo,'ft_statfun_fast_signrank',opts);
 
 stats_bb = EasyClusterCorrect({permute(squeeze(mean(meanpost.frac.fourierspctrm,3)),[2 1 3]) repmat(mean(squeeze(mean(meanbl.frac.fourierspctrm,3)),3)',1,1,38)},...
-    datasetinfo,'ft_statfun_signrank',opts);
+    datasetinfo,'ft_statfun_fast_signrank',opts);
 
 
 
@@ -131,12 +131,14 @@ for c = find(extractfield(stats{1}.posclusters,'prob') < 0.05)
     sum_statmask = sum(statmask,1);
     %statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
     statmask_time = sum_statmask > 0;
-    meanmix(:,c) = sum(sum(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
+    meanmix(:,c) = mean(mean(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
         -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
-    meanosci(:,c) = sum(sum(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
+    meanosci(:,c) = mean(mean(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
         -mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
     meanfrac(:,c) = mean(squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)...
         -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+    meanfrac2(:,c) = mean(mean(permute(permute(squeeze(mean(meanpost.frac.fourierspctrm,2)...
+        -mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
     meanple(:,c) = sum(squeeze(mean(pledata.post,2)-mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
@@ -155,12 +157,14 @@ for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
     % are significant
     sum_statmask = sum(statmask,1);
     statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
-    meanmix(:,newindx) = sum(sum(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
+    meanmix(:,newindx) = mean(mean(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
         -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
-    meanosci(:,newindx) = sum(sum(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
+    meanosci(:,newindx) = mean(mean(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
         -mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
     meanfrac(:,newindx) = mean(squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)...
         -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+    meanfrac2(:,newindx) = mean(mean(permute(permute(squeeze(mean(meanpost.frac.fourierspctrm,2)...
+        -mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
     meanple(:,newindx) = sum(squeeze(mean(pledata.post,2)-mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
@@ -202,51 +206,85 @@ for c = 1:3
     hold on
     line([0 0],get(gca,'YLim'),'Color',[0 0 0],'LineWidth',2)
     title(fields{c},'FontSize',14)
+    ax(c) = gca;
+    colormap(jet)
 end
+
+Set_Clim(ax,[-4 4])
 
 p(1,4).pack('v',{50 50})
 
 p(1,4,1).select()
 stdshade(meanpost.mixd.time,squeeze(mean(pledata.post,2)),'k',0.15,2,'sem')
-Plot_sigmask(gca,stats_ple.mask,'cmapline')
-FixAxes(gca,14)
+Plot_sigmask(gca,stats_ple.mask,'cmapline','LineWidth',3)
+FixAxes(gca,12)
 xlabel('Time (s)')
 ylabel('PLE')
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
 
 p(1,4,2).select()
 stdshade(meanpost.mixd.time,squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)),'k',0.15,2,'sem')
-Plot_sigmask(gca,stats_bb.mask,'cmapline')
-FixAxes(gca,14)
+Plot_sigmask(gca,stats_bb.mask,'cmapline','LineWidth',3)
+FixAxes(gca,12)
 xlabel('Time (s)')
 ylabel('Fractal broadband power')
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
 
 
+p(2).pack('h',repmat({1/size(meanfrac,2)},1,size(meanfrac,2)))
+l = [1 0 0; 0 0 1];
 
-p(2).pack('h',repmat({1/length(mdl)},1,length(mdl)));
+palel = cat(1,palecol(l(1,:)),palecol(l(2,:)));
 
-for i = 1:length(mdl)
-   p(2,i).select()
-   scatter(1:3,mdl{i}.Coefficients.Estimate(2:end),36,[0 0 1],'x','LineWidth',2)
-   hold on
-   %scatter(1:3,partr(i,:),36,[1 0 0],'o','LineWidth',2)
-   er = errorbar(1:3,mdl{i}.Coefficients.Estimate(2:end),mdl{i}.Coefficients.SE(2:end)*1.96,...
-       'LineStyle','none','LineWidth',2,'Color',[0 0 1],'HandleVisibility','off');
-   xl = get(gca,'XLim');
-   line(xl+[-0.1 0.1],[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
-   set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{'Oscilatory Power','PLE','Fractal Broadband'})
-   %legend({'Regression Coefficient','Partial R^2'})
-   %ylabel('Regression Coefficient')
-   FixAxes(gca,14)
-   fix_xticklabels(gca,0.1,{'FontSize',14}) 
-   ylabel('Coefficient')
+for i = 1:size(meanfrac,2)
+    p(2,i).select()
+    
+    h{i}=notBoxPlot([meanmix(:,i), meanosci(:,i), meanfrac2(:,i)],(1:3));
+    
+    for cc = 1:3
+        set(h{i}(cc).sdPtch,'FaceColor',palel(i,:),'EdgeColor',palel(i,:).*0.75,'HandleVisibility','off')
+        set(h{i}(cc).semPtch,'FaceColor',l(i,:),'EdgeColor',l(i,:).*0.75,'HandleVisibility','off')
+        set(h{i}(cc).mu,'Color',[0 0 0],'HandleVisibility','off')
+        set(h{i}(cc).data,'HandleVisibility','off')
+    end
+    set(h{i}(1).semPtch,'HandleVisibility','on')
+    set(gca,'XTickLabel',{'Mixed power','Oscillatory power','Fractal power'})
+    ylabel(['Mean power over cluster ' num2str(i)])
+    FixAxes(gca,14)
 end
 
-p(1).de.marginleft = 30;
-p.marginright = 20;
-p.marginleft = 18;
+p(1).de.marginleft = 10;
+p(1,3).marginright = 32;
 p.margintop = 8;
+p(2,2).marginleft = 18;
+
+
+
+% 
+% 
+% p(2).pack('h',repmat({1/length(mdl)},1,length(mdl)));
+% 
+% for i = 1:length(mdl)
+%    p(2,i).select()
+%    scatter(1:3,mdl{i}.Coefficients.Estimate(2:end),36,[0 0 1],'x','LineWidth',2)
+%    hold on
+%    %scatter(1:3,partr(i,:),36,[1 0 0],'o','LineWidth',2)
+%    er = errorbar(1:3,mdl{i}.Coefficients.Estimate(2:end),mdl{i}.Coefficients.SE(2:end)*1.96,...
+%        'LineStyle','none','LineWidth',2,'Color',[0 0 1],'HandleVisibility','off');
+%    xl = get(gca,'XLim');
+%    line(xl+[-0.1 0.1],[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+%    set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{'Oscilatory Power','PLE','Fractal Broadband'})
+%    %legend({'Regression Coefficient','Partial R^2'})
+%    %ylabel('Regression Coefficient')
+%    FixAxes(gca,14)
+%    fix_xticklabels(gca,0.1,{'FontSize',14}) 
+%    ylabel('Coefficient')
+% end
+
+% p(1).de.marginleft = 30;
+% p.marginright = 20;
+% p.marginleft = 18;
+% p.margintop = 8;
 
 
 
