@@ -231,9 +231,9 @@ p.margintop = 8;
 
 p.pack('h',{1/3 2/3})
 
-%p(1).pack('v',{1/2 1/2})
-p(1).pack('v',{40 30 30})
-%p(1,1).marginbottom = 24;
+p(1).pack('v',{1/2 1/2})
+%p(1).pack('v',{40 30 30})
+p(1,1).marginbottom = 24;
 p(1,2).pack('h',{1/2 1/2})
 
 cmap = lines;
@@ -252,24 +252,24 @@ end
 legend(fields)
 FixAxes(gca,12)
 title('Mixed power spectrum')
-xlabel('Frequency (Hz)')
-ylabel('Power')
+xlabel('Log Frequency (Hz)')
+ylabel('Log Power')
 set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
 
 p(1,2,1).select()
 hold on
 for c = 1:length(fields)
     if strcmpi(opts.powermode,'abs')
-    plot(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2),'LineWidth',1.5)
+    loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2),'LineWidth',1.5)
     else
-         plot(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2)./...
+         loglog(spec.(fields{c}).freq(frange,1),nanmean(spec.(fields{c}).osci(frange,:),2)./...
             nanmean(nanmean(spec.(fields{c}).mixd(frange,:))),'LineWidth',1.5) 
     end
 end
 FixAxes(gca,12)
 title('Oscillatory power spectrum')
-xlabel('Frequency (Hz)')
-ylabel('Power')
+xlabel('Log Frequency (Hz)')
+ylabel('Log Power')
 set(gca,'XLim',opts.frange_ple)
 
 p(1,2,2).select()
@@ -284,8 +284,8 @@ for c = 1:length(fields)
 end
 FixAxes(gca,12)
 title('Fractal power spectrum')
-xlabel('Frequency (Hz)')
-ylabel('Power')
+xlabel('Log Frequency (Hz)')
+ylabel('Log Power')
 set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
 
 
@@ -312,7 +312,7 @@ fbandnames = opts.fbandnames;
 %     numstat = length(fields);
 % end
 
-p(1,3).select()
+p(2).select()
 for c = 1:size(fbands,1)
     for cc = 1:length(fields)
         plotstack(c,cc,1) = nanmean(nanmean(absfrac.(fields{cc})(:,:,c),2),1);
@@ -360,16 +360,20 @@ ylabel('Power')
 set(gca,'YScale','log')
 
 
-p(2).pack('v',{75 25})
-p(2,1).pack('v',{50 50})
-p(2,2).pack('h',{50 50})
-p(2,2).de.margin = [10 10 5 5];
+figure
+
+p = panel('no-manage-font')
+
+p.pack('v',{75 25})
+p(1).pack('v',{50 50})
+p(2).pack('h',{50 50})
+p(2).de.margin = [10 10 5 5];
 
 %p(2,2,1).pack('v',{50 50})
 
 l = lines;
 
-p(2,1,1).select()
+p(1,1).select()
 
 
 %scalefact = 0.8/length(fields);
@@ -426,7 +430,7 @@ ylabel('Log mixed power')
 legend(fields)
 FixAxes(gca,14)
 
-p(2,1,2).select()
+p(1,2).select()
 for c = 1:length(fields)
     %     tmpstruct = mixd;
     %     for cc = 1:length(fields)
@@ -471,47 +475,7 @@ set(gca,'XTick',(1:s:s*size(fbands,1))+(0.4*(length(fields)-1)/2),'XTickLabel',o
 ylabel('Log oscillatory power')
 FixAxes(gca,14)
 
-
-p(2,2,1).select()
-if strcmpi(opts.paired,'yes')
-    plotstruct = table;
-end
-for cc = 1:length(fields)
-    plotstruct.(fields{cc}) = squeeze(nanmean(ple.(fields{cc}),2));
-end
-clear h
-if strcmpi(opts.paired,'yes')
-    h=notBoxPlot(plotstruct{:,:})
-else
-    h(1) = notBoxPlot(plotstruct.(fields{1}),1);
-    h(2) = notBoxPlot(plotstruct.(fields{2}),2);
-end
-for c = 1:length(fields)
-    set(h(c).sdPtch,'FaceColor',palel(c,:),'EdgeColor',palel(c,:).*0.75,'HandleVisibility','off')
-    set(h(c).semPtch,'FaceColor',l(c,:),'EdgeColor',l(c,:).*0.75)
-    set(h(c).mu,'Color',[0 0 0],'HandleVisibility','off')
-end
-if length(fields) == 2
-    sigstar({[1 2]},pvals.p_ple,0,18)
-else
-    barpos = 1:length(fields);
-    barmat = cat(3,repmat(barpos,5,1),repmat(barpos',1,5))
-    barcell = mat2cell(barmat,ones(5,1),ones(5,1),2);
-    barcell = cellfun(@squeeze,barcell,'UniformOutput',false);
-    tmpp = pvals.p_ple_mcompare;
-    tmpp = tmpp(find(belowDiag(ones(5))));
-    barcell = barcell(find(belowDiag(ones(5))));
-    barcell = barcell(find(tmpp < 0.05));
-    tmpp = tmpp(find(tmpp < 0.05));
-    sigstar(barcell,tmpp,0,18);
-end
-%violinplot(plotstruct)
-title('Fractal PLE')
-set(gca,'XTickLabel',fields)
-ylabel('PLE')
-FixAxes(gca,14)
-
-p(2,2,2).select()
+p(2,1).select()
 if strcmpi(opts.paired,'yes')
     plotstruct = table;
 end
@@ -549,6 +513,45 @@ set(gca,'XTickLabel',fields)
 ylabel('Fractal broadband power')
 FixAxes(gca,14)
 
+
+p(2,2).select()
+if strcmpi(opts.paired,'yes')
+    plotstruct = table;
+end
+for cc = 1:length(fields)
+    plotstruct.(fields{cc}) = squeeze(nanmean(ple.(fields{cc}),2));
+end
+clear h
+if strcmpi(opts.paired,'yes')
+    h=notBoxPlot(plotstruct{:,:})
+else
+    h(1) = notBoxPlot(plotstruct.(fields{1}),1);
+    h(2) = notBoxPlot(plotstruct.(fields{2}),2);
+end
+for c = 1:length(fields)
+    set(h(c).sdPtch,'FaceColor',palel(c,:),'EdgeColor',palel(c,:).*0.75,'HandleVisibility','off')
+    set(h(c).semPtch,'FaceColor',l(c,:),'EdgeColor',l(c,:).*0.75)
+    set(h(c).mu,'Color',[0 0 0],'HandleVisibility','off')
+end
+if length(fields) == 2
+    sigstar({[1 2]},pvals.p_ple,0,18)
+else
+    barpos = 1:length(fields);
+    barmat = cat(3,repmat(barpos,5,1),repmat(barpos',1,5))
+    barcell = mat2cell(barmat,ones(5,1),ones(5,1),2);
+    barcell = cellfun(@squeeze,barcell,'UniformOutput',false);
+    tmpp = pvals.p_ple_mcompare;
+    tmpp = tmpp(find(belowDiag(ones(5))));
+    barcell = barcell(find(belowDiag(ones(5))));
+    barcell = barcell(find(tmpp < 0.05));
+    tmpp = tmpp(find(tmpp < 0.05));
+    sigstar(barcell,tmpp,0,18);
+end
+%violinplot(plotstruct)
+title('Fractal PLE')
+set(gca,'XTickLabel',fields)
+ylabel('PLE')
+FixAxes(gca,14)
 
 % pvals = struct;
 % pvals.pvals.p_irasa_dif = pvals.p_dif_irasa;

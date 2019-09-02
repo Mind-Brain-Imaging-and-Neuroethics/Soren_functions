@@ -131,15 +131,22 @@ for c = find(extractfield(stats{1}.posclusters,'prob') < 0.05)
     sum_statmask = sum(statmask,1);
     %statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
     statmask_time = sum_statmask > 0;
-    meanmix(:,c) = mean(mean(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
-        -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
-    meanosci(:,c) = mean(mean(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
-        -mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
-    meanfrac(:,c) = mean(squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)...
-        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
-    meanfrac2(:,c) = mean(mean(permute(permute(squeeze(mean(meanpost.frac.fourierspctrm,2)...
-        -mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
-    meanple(:,c) = sum(squeeze(mean(pledata.post,2)-mean(mean(pledata.bl,2),3)).*statmask_time,2);
+    
+    newindx = c;
+    % for ple and broadband fractal, include those time points where a
+    % number of frequencies greater than the median value in the cluster
+    % are significant
+    sum_statmask = sum(statmask,1);
+    statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
+    meanmix(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.mixd.fourierspctrm,2)...
+        -mean(mean(meanbl.mixd.fourierspctrm,4),2))./mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
+    meanosci(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.osci.fourierspctrm,2)...
+        -mean(mean(meanbl.osci.fourierspctrm,4),2))./mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
+    meanfrac(:,newindx) = mean(squeeze((mean(mean(meanpost.frac.fourierspctrm,2),3)...
+        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)./mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+    meanfrac2(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.frac.fourierspctrm,2)...
+        -mean(mean(meanbl.frac.fourierspctrm,4),2))./mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
+    meanple(:,newindx) = sum(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
 for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
@@ -157,15 +164,15 @@ for c = find(extractfield(stats{1}.negclusters,'prob') < 0.05)
     % are significant
     sum_statmask = sum(statmask,1);
     statmask_time = sum_statmask > median(sum_statmask(find(sum_statmask>0))); 
-    meanmix(:,newindx) = mean(mean(permute(permute(squeeze(mean(meanpost.mixd.fourierspctrm,2)...
-        -mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
-    meanosci(:,newindx) = mean(mean(permute(permute(squeeze(mean(meanpost.osci.fourierspctrm,2)...
-        -mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
-    meanfrac(:,newindx) = mean(squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)...
-        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)).*statmask_time,2); %use only the time statmask here, not freq - broadband power
-    meanfrac2(:,newindx) = mean(mean(permute(permute(squeeze(mean(meanpost.frac.fourierspctrm,2)...
-        -mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
-    meanple(:,newindx) = sum(squeeze(mean(pledata.post,2)-mean(mean(pledata.bl,2),3)).*statmask_time,2);
+    meanmix(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.mixd.fourierspctrm,2)...
+        -mean(mean(meanbl.mixd.fourierspctrm,4),2))./mean(mean(meanbl.mixd.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3); % baseline correct, sum over time and freq for significant cluster
+    meanosci(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.osci.fourierspctrm,2)...
+        -mean(mean(meanbl.osci.fourierspctrm,4),2))./mean(mean(meanbl.osci.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
+    meanfrac(:,newindx) = mean(squeeze((mean(mean(meanpost.frac.fourierspctrm,2),3)...
+        -mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2)./mean(mean(mean(meanbl.frac.fourierspctrm,4),3),2))).*statmask_time,2); %use only the time statmask here, not freq - broadband power
+    meanfrac2(:,newindx) = mean(mean(permute(permute(squeeze((mean(meanpost.frac.fourierspctrm,2)...
+        -mean(mean(meanbl.frac.fourierspctrm,4),2))./mean(mean(meanbl.frac.fourierspctrm,4),2)),[2 3 1]).*statmask,[3 1 2]),2),3);
+    meanple(:,newindx) = sum(squeeze((mean(pledata.post,2)-mean(mean(pledata.bl,2),3))./mean(mean(pledata.bl,2),3)).*statmask_time,2);
 end
 
 %% Regression models
@@ -183,7 +190,7 @@ p = panel('no-manage-font');
 
 p.pack('v',{50 50})
 
-p(1).pack('h',{1/4 1/4 1/4 1/4})
+p(1).pack('h',{22 22 22 34})
 
 for c = 1:3
     p(1,c).select()
@@ -212,23 +219,23 @@ end
 
 Set_Clim(ax,[-4 4])
 
-p(1,4).pack('v',{50 50})
+%p(1,4).pack('v',{50 50})
 
-p(1,4,1).select()
+p(1,4).select()
 stdshade(meanpost.mixd.time,squeeze(mean(pledata.post,2)),'k',0.15,2,'sem')
-Plot_sigmask(gca,stats_ple.mask,'cmapline','LineWidth',3)
+Plot_sigmask(gca,stats_ple.mask,'cmapline','LineWidth',4)
 FixAxes(gca,12)
 xlabel('Time (s)')
-ylabel('PLE')
+ylabel('Fractal PLE')
 set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
 
-p(1,4,2).select()
-stdshade(meanpost.mixd.time,squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)),'k',0.15,2,'sem')
-Plot_sigmask(gca,stats_bb.mask,'cmapline','LineWidth',3)
-FixAxes(gca,12)
-xlabel('Time (s)')
-ylabel('Fractal broadband power')
-set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
+% p(1,4,2).select()
+% stdshade(meanpost.mixd.time,squeeze(mean(mean(meanpost.frac.fourierspctrm,2),3)),'k',0.15,2,'sem')
+% Plot_sigmask(gca,stats_bb.mask,'cmapline','LineWidth',3)
+% FixAxes(gca,12)
+% xlabel('Time (s)')
+% ylabel('Fractal broadband power')
+% set(gca,'XLim',[min(meanpost.mixd.time) max(meanpost.mixd.time)])
 
 
 p(2).pack('h',repmat({1/size(meanfrac,2)},1,size(meanfrac,2)))

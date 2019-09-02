@@ -629,23 +629,29 @@ if isfield(settings,'rest')
 %     Normalize_Clim(ax,1);
     
     %p(2).pack(2,pwidth);
-    p(1).pack('h',repmat({1/(settings.nfreqs-1)},settings.nfreqs-1,1)');
+    %plotfreqs = 2:settings.nfreqs;
+    plotfreqs = [find(strcmpi(fbands,'Delta')) find(strcmpi(fbands,'Alpha'))];
     
-    for c = 2:settings.nfreqs
+    p(1).pack('h',repmat({1/(length(plotfreqs))},length(plotfreqs),1)');
+    
+    
+    
+    for c = plotfreqs
+        panelindx = find(plotfreqs == c);
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack()
         %p(2,ceil((c-1)/pwidth),plotindx(c-1)).pack({[0 0 0.4 0.4]})
         if ~isempty(find(restmeas.rel_bp.naindex.r.subject(:,c))) && ~isempty(find(~isnan(restmeas.rel_bp.naindex.r.subject(:,c))))
-        p(1,c-1).pack();
-        p(1,c-1).pack({[0.7 0.7 0.3 0.3]})
+        p(1,panelindx).pack();
+        p(1,panelindx).pack({[0.7 0.7 0.3 0.3]})
         
         %p(2,ceil((c-1)/pwidth),plotindx(c-1),1).select();
-        p(1,c-1,1).select()
+        p(1,panelindx,1).select()
         nicecorrplot(nanmean(squeeze(restmeas.rel_bp.vals(c,:,:)),1),nanmean(allmeas{c}.naerspindex,1),...
             {'Resting-state relative power','ERSP nonadditivity'},'Plot','r')
         FixAxes(gca,14)
         
         %p(2,ceil((c-1)/pwidth),plotindx(c-1),2).select();
-        p(1,c-1,2).select()
+        p(1,panelindx,2).select()
         restmeas.rel_bp.naindex.r.subject = real(restmeas.rel_bp.naindex.r.subject);
         if strcmpi(settings.datatype,'MEG')
             ft_cluster_topoplot(settings.layout,real(restmeas.rel_bp.naindex.r.subject(:,c)),settings.datasetinfo.label,...
@@ -655,12 +661,12 @@ if isfield(settings,'rest')
                 restmeas.rel_bp.naindex.p.subject(:,c),(restmeas.rel_bp.naindex.stats{c}.mask));
         end
         %title(settings.tfparams.fbandnames{c})
-        if c == settings.nfreqs
+        if c == plotfreqs(end)
             cbar = colorbar('EastOutside');
         end
         %set(cbar,'peer',gca,'FontSize',12);
         %ax(c-1) = p(2,ceil((c-1)/pwidth),plotindx(c-1),2).axis;
-        ax(c-1) = p(1,c-1,2).select();
+        ax(c) = p(1,panelindx,2).select();
         end
     end
     %cbar.Label.String = 'Spearman''s rho';
@@ -833,6 +839,7 @@ for c = 1:settings.nfreqs
     %p(1,c,1).select()
     %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
 end
+Normalize_Ylim(ax1)
 
 p(2).pack('h',repmat({1/settings.nfreqs},settings.nfreqs,1)')
 
@@ -861,7 +868,7 @@ for c = 1:settings.nfreqs
     
     title(fbands{c})
     xlabel('Time (s)')
-    ylabel('% change of TTV of ERSP')
+    ylabel('% change of ERSP')
     %ylim = get(gca,'YLim');
     %line([0 0],ylim,'Color',[0.5 0.5 0.5],'LineWidth',2)
     %set(gca,'YLim',ylim)
@@ -901,6 +908,7 @@ for c = 1:settings.nfreqs
     %p(1,c,1).select()
     %Plot_sigmask(p(1,c,1).axis,alloutputs.ersp.ttv.stats{c}.prob < 0.05,'cmapline','LineWidth',5)
 end
+Normalize_Ylim(ax1)
 
 p.de.margin = [5 5 5 5];
 p.marginleft = 24;

@@ -1,4 +1,4 @@
-function [data] = camcan_oscifrac_figure1(spec,fbands,opts)
+function [data,anovatbl] = camcan_oscifrac_figure1(spec,fbands,opts)
 
 fields = fieldnames(spec);
 
@@ -68,6 +68,8 @@ for i = 1:size(fbands,1)
     end
 end
 
+[~,anovatbl] = friedman(squeeze(mean(oscifrac,2)));
+
 %partr = partr.^2;
 %partr_ci = partr_ci.^2;
 
@@ -113,22 +115,28 @@ set(gca,'XScale','log','YScale','log','XLim',opts.frange_ple)
 
 
 p.marginleft = 22;
-p(1).marginbottom = 32;
 p(1,1).marginbottom = 24;
 p.margintop = 8;
 
-p(2).pack(2,size(fbands,1))
+
+figure
+
+p = panel('no-manage-font')
+
+p.pack('v',{2/3 1/3})
+
+p(1).pack(2,size(fbands,1))
 
 count = 1;
 for i = 1:size(fbands,1)
-    p(2,1,i).select()
+    p(1,1,i).select()
     ft_topoplot_vec('neuromag306mag.lay',mean(absosci(:,:,i),1),opts.datasetinfo.label)
     title(['Oscillatory power' newline opts.fbandnames{i}],'FontSize',14)
     colorbar
     %ax(count) = gca;
     %count = count+1;
     
-    p(2,2,i).select()
+    p(1,2,i).select()
     ft_topoplot_vec('neuromag306mag.lay',mean(absfrac(:,:,i),1),opts.datasetinfo.label)
     title(['Fractal power' newline opts.fbandnames{i}],'FontSize',14)
     %if i == size(fbands,1)
@@ -141,16 +149,9 @@ end
 %clear ax
 
 
-figure
-
-p = panel('no-manage-font')
-
-p.pack('v',{1/4 1/4 1/4 1/4})
-
-
 p.marginright = 10;
 
-p(1).select()
+p(2).select()
 
 for c = 1:size(fbands,1)
     plotstack(c,1,1) = nanmean(nanmean(absfrac(:,:,c),2),1);
@@ -179,58 +180,58 @@ end
 legend({'Fractal Power','Oscillatory Power'})
 FixAxes(gca,14)
 ylabel('Power')
-
-p(2).pack('h',repmat({1/size(fbands,1)},1,size(fbands,1)))
-for i = 1:size(fbands,1)
-    p(2,i).select()
-    ft_topoplot_vec('neuromag306mag.lay',mean(oscifrac(:,:,i),1),opts.datasetinfo.label)
-    title(['Oscillatory-Fractal ratio' newline opts.fbandnames{i}],'FontSize',14)
-    %if i == size(fbands,1)
-    colorbar
-    %end
-    %ax(i) = gca;
-end
-%Normalize_Clim(ax,0)
-
-p(3).select()
-
-l = lines;
-for i = 1:size(fbands,1)
-    %scatter((1:3)+0.1*i,mdl{i}.Coefficients.Estimate(2:end),36,l(i,:),'x','LineWidth',2)
-    hold on
-    er = errorbar((1:3)+0.1*i,mdl{i}.Coefficients.Estimate(2:end),mdl{i}.Coefficients.SE(2:end)*1.96,...
-        'LineStyle','none','LineWidth',2,'Color',l(i,:));
-end
-FixAxes(gca,14)
-xl = get(gca,'XLim');
-line(xl,[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off')
-set(gca,'XLim',xl,'XTick',(1:3)+0.1*(size(fbands,1)/2+1),...
-    'XTickLabel',{'Oscillatory Power','Fractal PLE','Fractal Broadband'})
-legend(opts.fbandnames)
-ylabel('Regression coefficient')
-
-
-p(4).pack('h',repmat({1/size(fbands,1)},1,size(fbands,1)))
-for i = 1:size(fbands,1)
-    p(4,i).select()
-    hold on
-    scatter(1:3,partr(i,:),36,[0 0 0],'o','LineWidth',2)
-    %er = errorbar(1:3,partr(i,:),partr(i,:)-partr_ci(i,:,1),partr_ci(i,:,2)-partr(i,:),...
-    %    'LineStyle','none','LineWidth',2,'Color',[0 0 0],'HandleVisibility','off');
-
-    xl = get(gca,'XLim');
-    line(xl+[-0.1 0.1],[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
-    set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{['Osci ' opts.fbandnames{i}],'PLE','Frac BB'},'YLim',[-1 1])
-    %legend({'Regression Coefficient','Partial R^2'})
-    if i == 1
-    ylabel('Partial R^2')
-    end
-    FixAxes(gca,14)
-    fix_xticklabels(gca,0.1,{'FontSize',14})
-end
-
-p.marginleft = 20;
-p(1).marginbottom = 24;
+% 
+% p(2).pack('h',repmat({1/size(fbands,1)},1,size(fbands,1)))
+% for i = 1:size(fbands,1)
+%     p(2,i).select()
+%     ft_topoplot_vec('neuromag306mag.lay',mean(oscifrac(:,:,i),1),opts.datasetinfo.label)
+%     title(['Oscillatory-Fractal ratio' newline opts.fbandnames{i}],'FontSize',14)
+%     %if i == size(fbands,1)
+%     colorbar
+%     %end
+%     %ax(i) = gca;
+% end
+% %Normalize_Clim(ax,0)
+% 
+% p(3).select()
+% 
+% l = lines;
+% for i = 1:size(fbands,1)
+%     %scatter((1:3)+0.1*i,mdl{i}.Coefficients.Estimate(2:end),36,l(i,:),'x','LineWidth',2)
+%     hold on
+%     er = errorbar((1:3)+0.1*i,mdl{i}.Coefficients.Estimate(2:end),mdl{i}.Coefficients.SE(2:end)*1.96,...
+%         'LineStyle','none','LineWidth',2,'Color',l(i,:));
+% end
+% FixAxes(gca,14)
+% xl = get(gca,'XLim');
+% line(xl,[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off')
+% set(gca,'XLim',xl,'XTick',(1:3)+0.1*(size(fbands,1)/2+1),...
+%     'XTickLabel',{'Oscillatory Power','Fractal PLE','Fractal Broadband'})
+% legend(opts.fbandnames)
+% ylabel('Regression coefficient')
+% 
+% 
+% p(4).pack('h',repmat({1/size(fbands,1)},1,size(fbands,1)))
+% for i = 1:size(fbands,1)
+%     p(4,i).select()
+%     hold on
+%     scatter(1:3,partr(i,:),36,[0 0 0],'o','LineWidth',2)
+%     %er = errorbar(1:3,partr(i,:),partr(i,:)-partr_ci(i,:,1),partr_ci(i,:,2)-partr(i,:),...
+%     %    'LineStyle','none','LineWidth',2,'Color',[0 0 0],'HandleVisibility','off');
+% 
+%     xl = get(gca,'XLim');
+%     line(xl+[-0.1 0.1],[0 0],'LineWidth',1.5,'Color',[0.5 0.5 0.5],'HandleVisibility','off');
+%     set(gca,'XLim',xl + [-0.1 0.1],'XTickLabel',{['Osci ' opts.fbandnames{i}],'PLE','Frac BB'},'YLim',[-1 1])
+%     %legend({'Regression Coefficient','Partial R^2'})
+%     if i == 1
+%     ylabel('Partial R^2')
+%     end
+%     FixAxes(gca,14)
+%     fix_xticklabels(gca,0.1,{'FontSize',14})
+% end
+% 
+% p.marginleft = 20;
+% p(1).marginbottom = 24;
 
 data.absosci = absosci;
 data.absmixd = absmixd;
